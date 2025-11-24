@@ -1,10 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProductCard from '@/components/ProductCard';
+import ProductModal from '@/components/ProductModal';
 import { products } from '@/data/products';
+import { Product } from '@/types/product';
 import { Button } from '@/components/ui/button';
 
 const Loja = () => {
   const [filter, setFilter] = useState<'all' | 'pomada' | 'barba' | 'camiseta'>('all');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenModal = (e: Event) => {
+      const customEvent = e as CustomEvent<Product>;
+      setSelectedProduct(customEvent.detail);
+      setIsModalOpen(true);
+    };
+
+    window.addEventListener('openProductModal', handleOpenModal);
+    return () => window.removeEventListener('openProductModal', handleOpenModal);
+  }, []);
+
+  const handleOpenModal = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedProduct(null), 200);
+  };
 
   const filteredProducts = filter === 'all' 
     ? products 
@@ -49,10 +74,18 @@ const Loja = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} onOpenModal={handleOpenModal} />
           ))}
         </div>
       </div>
+
+      {selectedProduct && (
+        <ProductModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };

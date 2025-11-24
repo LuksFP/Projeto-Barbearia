@@ -3,7 +3,7 @@ import HaircutCard from '@/components/HaircutCard';
 import lowFade from '@/assets/low-fade.jpg';
 import taperFade from '@/assets/taper-fade.jpg';
 import americano from '@/assets/americano.jpg';
-import corteJaca from '@/assets/corte-jaca.jpg';
+import midFade from '@/assets/mid-fade.jpg';
 
 const Cortes = () => {
   const haircuts = [
@@ -23,9 +23,9 @@ const Cortes = () => {
       description: 'Clássico atemporal com topo texturizado e laterais curtas, perfeito para qualquer ocasião.'
     },
     {
-      image: corteJaca,
-      title: 'CORTE JACA',
-      description: 'Topete volumoso com laterais raspadas, o estilo que nunca sai de moda.'
+      image: midFade,
+      title: 'MID FADE',
+      description: 'Degradê médio versátil, perfeito para todos os estilos e tipos de cabelo.'
     },
   ];
 
