@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Scissors, Moon, Sun, Menu, X } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
+import CartDrawer from './CartDrawer';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
@@ -81,8 +82,9 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Theme Toggle */}
-          <div className="flex items-center gap-4">
+          {/* Theme Toggle & Cart */}
+          <div className="flex items-center gap-2">
+            <CartDrawer />
             <Button
               variant="ghost"
               size="icon"
