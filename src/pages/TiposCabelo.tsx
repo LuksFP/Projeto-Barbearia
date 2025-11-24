@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import SectionTitle from '@/components/SectionTitle';
 import HairTypeCard from '@/components/HairTypeCard';
 import cabeloLiso from '@/assets/cabelo-liso.jpg';
@@ -5,6 +6,7 @@ import cabeloOndulado from '@/assets/cabelo-ondulado.jpg';
 import cabeloCrespo from '@/assets/cabelo-crespo.jpg';
 
 const TiposCabelo = () => {
+  const navigate = useNavigate();
   const hairTypes = [
     {
       image: cabeloLiso,
@@ -55,14 +57,19 @@ const TiposCabelo = () => {
           {/* Cards Grid */}
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {hairTypes.map((type, index) => (
-              <HairTypeCard
-                key={index}
-                image={type.image}
-                title={type.title}
-                description={type.description}
-                tips={type.tips}
-                delay={index * 150}
-              />
+              <div
+                key={type.title}
+                onClick={() => navigate(`/tipos-cabelo/${type.title.toLowerCase()}`)}
+                className="cursor-pointer"
+              >
+                <HairTypeCard
+                  image={type.image}
+                  title={type.title}
+                  description={type.description}
+                  tips={type.tips}
+                  delay={index * 150}
+                />
+              </div>
             ))}
           </div>
         </div>

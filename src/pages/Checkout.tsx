@@ -84,7 +84,14 @@ const Checkout = () => {
       status: 'pending',
     };
 
+    // Salvar no localStorage geral
     localStorage.setItem('lastOrder', JSON.stringify(order));
+
+    // Salvar no histórico do usuário
+    const existingOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    existingOrders.push(order);
+    localStorage.setItem('userOrders', JSON.stringify(existingOrders));
+
     clearCart();
     navigate('/confirmacao');
   };

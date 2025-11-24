@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Scissors, Moon, Sun, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Scissors, Moon, Sun, Menu, X, User } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import CartDrawer from './CartDrawer';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -25,7 +28,6 @@ const Header = () => {
     { to: '/cortes', label: 'Cortes Modernos' },
     { to: '/tipos-cabelo', label: 'Tipos de Cabelo' },
     { to: '/loja', label: 'Loja' },
-    { to: '/login', label: 'Login' },
   ];
 
   const scrollToTop = () => {
@@ -82,18 +84,35 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Theme Toggle & Cart */}
+          {/* Theme Toggle, Cart, User & Mobile Menu */}
           <div className="flex items-center gap-2">
-            <CartDrawer />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="relative group"
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-foreground group-hover:text-primary" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-foreground group-hover:text-primary" />
-            </Button>
+            <div className="hidden md:flex items-center gap-2">
+              <CartDrawer />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="relative group"
+              >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-foreground group-hover:text-primary" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-foreground group-hover:text-primary" />
+              </Button>
+
+              {isAuthenticated ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/perfil')}
+                  className="gap-2"
+                >
+                  <User className="h-5 w-5" />
+                  <span>{user?.name}</span>
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => navigate('/login')}>
+                  Entrar
+                </Button>
+              )}
+            </div>
 
             {/* Mobile Menu Button */}
             <Button
