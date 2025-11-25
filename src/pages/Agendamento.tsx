@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLoyalty } from '@/contexts/LoyaltyContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import { ptBR } from 'date-fns/locale';
 
 const Agendamento = () => {
   const { user, isAuthenticated } = useAuth();
+  const { addPoints } = useLoyalty();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [date, setDate] = useState<Date>();
@@ -38,10 +40,10 @@ const Agendamento = () => {
   }, [user]);
 
   const services = [
-    { id: 'corte' as ServiceType, name: 'Corte de Cabelo', price: 'R$ 50,00' },
-    { id: 'barba' as ServiceType, name: 'Barba', price: 'R$ 40,00' },
-    { id: 'combo' as ServiceType, name: 'Corte + Barba', price: 'R$ 80,00' },
-    { id: 'tratamento' as ServiceType, name: 'Tratamento Especial', price: 'R$ 100,00' },
+    { id: 'corte' as ServiceType, name: 'Corte de Cabelo', price: 'R$ 50,00', value: 50 },
+    { id: 'barba' as ServiceType, name: 'Barba', price: 'R$ 40,00', value: 40 },
+    { id: 'combo' as ServiceType, name: 'Corte + Barba', price: 'R$ 80,00', value: 80 },
+    { id: 'tratamento' as ServiceType, name: 'Tratamento Especial', price: 'R$ 100,00', value: 100 },
   ];
 
   const generateTimeSlots = (): TimeSlot[] => {
@@ -99,6 +101,13 @@ const Agendamento = () => {
     );
     existingAppointments.push(appointment);
     localStorage.setItem('userAppointments', JSON.stringify(existingAppointments));
+
+    // Adicionar pontos de fidelidade pelo serviço agendado
+    const selectedServiceData = services.find(s => s.id === selectedService);
+    if (selectedServiceData) {
+      const pointsEarned = Math.floor(selectedServiceData.value);
+      addPoints(pointsEarned, `Agendamento: ${selectedServiceData.name}`, appointment.id);
+    }
 
     toast({
       title: 'Agendamento confirmado!',
