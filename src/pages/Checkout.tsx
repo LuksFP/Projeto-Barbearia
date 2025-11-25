@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
+import { useLoyalty } from '@/contexts/LoyaltyContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { Loader2 } from 'lucide-react';
 
 const Checkout = () => {
   const { items, subtotal, clearCart } = useCart();
+  const { addPoints } = useLoyalty();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
@@ -91,6 +93,10 @@ const Checkout = () => {
     const existingOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
     existingOrders.push(order);
     localStorage.setItem('userOrders', JSON.stringify(existingOrders));
+
+    // Adicionar pontos de fidelidade (1 ponto por real gasto)
+    const pointsEarned = Math.floor(subtotal + shippingCost);
+    addPoints(pointsEarned, `Compra no valor de R$ ${(subtotal + shippingCost).toFixed(2)}`, order.id);
 
     clearCart();
     navigate('/confirmacao');

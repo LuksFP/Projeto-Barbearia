@@ -30,6 +30,7 @@ const Header = () => {
     { to: '/loja', label: 'Loja' },
     { to: '/depoimentos', label: 'Depoimentos' },
     { to: '/agendamento', label: 'Agendamento' },
+    { to: '/fidelidade', label: 'Fidelidade' },
   ];
 
   const scrollToTop = () => {
