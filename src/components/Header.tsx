@@ -28,6 +28,8 @@ const Header = () => {
     { to: '/cortes', label: 'Cortes Modernos' },
     { to: '/tipos-cabelo', label: 'Tipos de Cabelo' },
     { to: '/loja', label: 'Loja' },
+    { to: '/depoimentos', label: 'Depoimentos' },
+    { to: '/agendamento', label: 'Agendamento' },
   ];
 
   const scrollToTop = () => {

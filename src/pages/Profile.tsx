@@ -2,14 +2,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { User, Package, LogOut } from 'lucide-react';
+import { User, Package, LogOut, Calendar } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Order } from '@/types/product';
+import { Appointment } from '@/types/appointment';
+import AppointmentCard from '@/components/AppointmentCard';
 
 const Profile = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -21,6 +24,11 @@ const Profile = () => {
     const storedOrders = localStorage.getItem('userOrders');
     if (storedOrders) {
       setOrders(JSON.parse(storedOrders));
+    }
+
+    const storedAppointments = localStorage.getItem('userAppointments');
+    if (storedAppointments) {
+      setAppointments(JSON.parse(storedAppointments));
     }
   }, []);
 
@@ -76,6 +84,34 @@ const Profile = () => {
               <label className="text-sm text-muted-foreground font-body">Email</label>
               <p className="font-body">{user.email}</p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Agendamentos */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="font-heading text-2xl flex items-center gap-2">
+              <Calendar className="w-6 h-6 text-primary" />
+              Meus Agendamentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {appointments.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground font-body mb-4">
+                  Você ainda não tem agendamentos.
+                </p>
+                <Button onClick={() => navigate('/agendamento')}>
+                  Agendar Horário
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {appointments.map((appointment) => (
+                  <AppointmentCard key={appointment.id} appointment={appointment} />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
