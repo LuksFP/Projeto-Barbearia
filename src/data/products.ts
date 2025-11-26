@@ -1,4 +1,16 @@
 import { Product } from '@/types/product';
+import pomadaStrong from '@/assets/products/pomada-strong.jpg';
+import pomadaMatte from '@/assets/products/pomada-matte.jpg';
+import ceraCabelo from '@/assets/products/cera-cabelo.jpg';
+import clayCabelo from '@/assets/products/clay-cabelo.jpg';
+import gelCabelo from '@/assets/products/gel-cabelo.jpg';
+import oleoBarba from '@/assets/products/oleo-barba.jpg';
+import balmBarba from '@/assets/products/balm-barba.jpg';
+import shampooBarba from '@/assets/products/shampoo-barba.jpg';
+import serumBarba from '@/assets/products/serum-barba.jpg';
+import camisetaClassic from '@/assets/products/camiseta-classic.jpg';
+import camisetaPremium from '@/assets/products/camiseta-premium.jpg';
+import camisetaVintage from '@/assets/products/camiseta-vintage.jpg';
 
 export const products: Product[] = [
   {
@@ -7,7 +19,7 @@ export const products: Product[] = [
     description: 'Fixação forte para penteados que duram o dia todo',
     price: 49.90,
     category: 'pomada',
-    image: '/src/assets/products/pomada-strong.jpg',
+    image: pomadaStrong,
     inStock: true,
   },
   {
@@ -16,7 +28,7 @@ export const products: Product[] = [
     description: 'Acabamento fosco e natural, fixação média',
     price: 45.90,
     category: 'pomada',
-    image: '/src/assets/products/pomada-matte.jpg',
+    image: pomadaMatte,
     inStock: true,
   },
   {
@@ -25,7 +37,7 @@ export const products: Product[] = [
     description: 'Textura e definição para estilos modernos',
     price: 42.90,
     category: 'pomada',
-    image: '/src/assets/products/cera-cabelo.jpg',
+    image: ceraCabelo,
     inStock: true,
   },
   {
@@ -34,7 +46,7 @@ export const products: Product[] = [
     description: 'Argila modeladora com fixação extra forte',
     price: 52.90,
     category: 'pomada',
-    image: '/src/assets/products/clay-cabelo.jpg',
+    image: clayCabelo,
     inStock: true,
   },
   {
@@ -43,7 +55,7 @@ export const products: Product[] = [
     description: 'Gel profissional com brilho intenso',
     price: 38.90,
     category: 'pomada',
-    image: '/src/assets/products/gel-cabelo.jpg',
+    image: gelCabelo,
     inStock: true,
   },
   {
@@ -52,7 +64,7 @@ export const products: Product[] = [
     description: 'Hidratação e brilho natural para sua barba',
     price: 55.90,
     category: 'barba',
-    image: '/src/assets/products/oleo-barba.jpg',
+    image: oleoBarba,
     inStock: true,
   },
   {
@@ -61,7 +73,7 @@ export const products: Product[] = [
     description: 'Nutrição profunda e controle de frizz',
     price: 48.90,
     category: 'barba',
-    image: '/src/assets/products/balm-barba.jpg',
+    image: balmBarba,
     inStock: true,
   },
   {
@@ -70,7 +82,7 @@ export const products: Product[] = [
     description: 'Limpeza suave e hidratação intensa',
     price: 39.90,
     category: 'barba',
-    image: '/src/assets/products/shampoo-barba.jpg',
+    image: shampooBarba,
     inStock: true,
   },
   {
@@ -79,7 +91,7 @@ export const products: Product[] = [
     description: 'Estimula o crescimento e fortalece os fios',
     price: 89.90,
     category: 'barba',
-    image: '/src/assets/products/serum-barba.jpg',
+    image: serumBarba,
     inStock: true,
   },
   {
@@ -88,7 +100,7 @@ export const products: Product[] = [
     description: 'T-shirt preta com logo dourado bordado',
     price: 79.90,
     category: 'camiseta',
-    image: '/src/assets/products/camiseta-classic.jpg',
+    image: camisetaClassic,
     inStock: true,
   },
   {
@@ -97,7 +109,7 @@ export const products: Product[] = [
     description: 'Algodão premium com estampa exclusiva',
     price: 99.90,
     category: 'camiseta',
-    image: '/src/assets/products/camiseta-premium.jpg',
+    image: camisetaPremium,
     inStock: true,
   },
   {
@@ -106,7 +118,7 @@ export const products: Product[] = [
     description: 'Design retrô em algodão de alta qualidade',
     price: 89.90,
     category: 'camiseta',
-    image: '/src/assets/products/camiseta-vintage.jpg',
+    image: camisetaVintage,
     inStock: true,
   },
 ];

@@ -12,13 +12,21 @@ import {
 import { Button } from './ui/button';
 import { ShoppingCart, Minus, Plus, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const CartDrawer = () => {
   const { items, totalItems, subtotal, updateQuantity, removeItem } = useCart();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    document.addEventListener('openCartDrawer', handleOpen);
+    return () => document.removeEventListener('openCartDrawer', handleOpen);
+  }, []);
 
   return (
-    <Drawer>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
