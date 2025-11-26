@@ -6,7 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { motion, AnimatePresence } from 'framer-motion';
 import CartDrawer from './CartDrawer';
+import SearchBar from './SearchBar';
+import MegaMenu from './MegaMenu';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
@@ -75,31 +78,45 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={scrollToTop}
-                className={`px-4 py-2 font-body font-medium text-sm tracking-wide transition-all duration-300 rounded-lg relative group ${
-                  location.pathname === link.to
-                    ? 'text-primary'
-                    : 'text-foreground hover:text-primary'
-                }`}
-              >
-                {link.label}
-                <span
-                  className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
+            {navLinks.map((link) => {
+              // Use mega menu for Loja and Cortes
+              if (link.to === '/loja' || link.to === '/cortes') {
+                return (
+                  <MegaMenu
+                    key={link.to}
+                    label={link.label}
+                    to={link.to}
+                  />
+                );
+              }
+
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={scrollToTop}
+                  className={`px-4 py-2 font-body font-medium text-sm tracking-wide transition-all duration-300 rounded-lg relative group ${
                     location.pathname === link.to
-                      ? 'w-full'
-                      : 'w-0 group-hover:w-full'
+                      ? 'text-primary'
+                      : 'text-foreground hover:text-primary'
                   }`}
-                />
-              </Link>
-            ))}
+                >
+                  {link.label}
+                  <span
+                    className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
+                      location.pathname === link.to
+                        ? 'w-full'
+                        : 'w-0 group-hover:w-full'
+                    }`}
+                  />
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-2">
+            <SearchBar />
             <CartDrawer />
             
             <Button
@@ -147,79 +164,105 @@ const Header = () => {
                   </SheetTitle>
                 </SheetHeader>
                 
-                <nav className="flex flex-col gap-2 mt-8">
-                  {navLinks.map((link) => (
-                    <button
-                      key={link.to}
-                      onClick={() => handleNavClick(link.to)}
-                      className={`px-4 py-3 font-body font-medium rounded-lg text-left transition-colors ${
-                        location.pathname === link.to
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-foreground hover:bg-secondary'
-                      }`}
-                    >
-                      {link.label}
-                    </button>
-                  ))}
-                </nav>
+                <AnimatePresence>
+                  <motion.nav 
+                    className="flex flex-col gap-2 mt-8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    {navLinks.map((link, index) => (
+                      <motion.button
+                        key={link.to}
+                        onClick={() => handleNavClick(link.to)}
+                        className={`px-4 py-3 font-body font-medium rounded-lg text-left transition-colors ${
+                          location.pathname === link.to
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-foreground hover:bg-secondary'
+                        }`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {link.label}
+                      </motion.button>
+                    ))}
+                  </motion.nav>
+                </AnimatePresence>
 
-                <div className="mt-8 pt-8 border-t border-border space-y-3">
+                <motion.div 
+                  className="mt-8 pt-8 border-t border-border space-y-3"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
                   {/* Cart Button */}
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      // Trigger cart drawer open event
-                      document.dispatchEvent(new CustomEvent('openCartDrawer'));
-                    }}
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    <span>Carrinho</span>
-                    {cartItemsCount > 0 && (
-                      <span className="ml-auto bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                        {cartItemsCount}
-                      </span>
-                    )}
-                  </Button>
-
-                  {/* Theme Toggle */}
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    onClick={toggleTheme}
-                  >
-                    <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 ml-[12px]" />
-                    <span className="ml-2">{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
-                  </Button>
-
-                  {/* User Button */}
-                  {isAuthenticated ? (
+                  <motion.div whileTap={{ scale: 0.98 }}>
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-2"
                       onClick={() => {
-                        navigate('/perfil');
                         setIsMobileMenuOpen(false);
+                        document.dispatchEvent(new CustomEvent('openCartDrawer'));
                       }}
                     >
-                      <User className="h-5 w-5" />
-                      <span>{user?.name}</span>
+                      <ShoppingCart className="h-5 w-5" />
+                      <span>Carrinho</span>
+                      {cartItemsCount > 0 && (
+                        <motion.span 
+                          className="ml-auto bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        >
+                          {cartItemsCount}
+                        </motion.span>
+                      )}
                     </Button>
-                  ) : (
+                  </motion.div>
+
+                  {/* Theme Toggle */}
+                  <motion.div whileTap={{ scale: 0.98 }}>
                     <Button
-                      variant="default"
-                      className="w-full"
-                      onClick={() => {
-                        navigate('/login');
-                        setIsMobileMenuOpen(false);
-                      }}
+                      variant="outline"
+                      className="w-full justify-start gap-2"
+                      onClick={toggleTheme}
                     >
-                      Entrar
+                      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 ml-[12px]" />
+                      <span className="ml-2">{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
                     </Button>
-                  )}
-                </div>
+                  </motion.div>
+
+                  {/* User Button */}
+                  <motion.div whileTap={{ scale: 0.98 }}>
+                    {isAuthenticated ? (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={() => {
+                          navigate('/perfil');
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <User className="h-5 w-5" />
+                        <span>{user?.name}</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="default"
+                        className="w-full"
+                        onClick={() => {
+                          navigate('/login');
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        Entrar
+                      </Button>
+                    )}
+                  </motion.div>
+                </motion.div>
               </SheetContent>
             </Sheet>
           </div>
