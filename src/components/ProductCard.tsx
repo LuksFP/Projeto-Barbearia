@@ -28,13 +28,6 @@ const ProductCard = ({ product, onOpenModal }: ProductCardProps) => {
           <Eye className="w-4 h-4" />
         </Button>
       </div>
-      <div className="aspect-square overflow-hidden bg-background">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-        />
-      </div>
       <div className="p-4">
         <span className="text-xs font-body text-muted-foreground uppercase tracking-wider">
           {product.category}

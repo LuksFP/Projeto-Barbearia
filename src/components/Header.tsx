@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Scissors, Moon, Sun, Menu, X, User } from 'lucide-react';
+import { Scissors, Moon, Sun, Menu, X, User, ShoppingCart } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import CartDrawer from './CartDrawer';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
+  const { items } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,9 +40,17 @@ const Header = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleNavClick = (to: string) => {
+    navigate(to);
+    scrollToTop();
+    setIsMobileMenuOpen(false);
+  };
+
+  const cartItemsCount = items.reduce((acc, item) => acc + item.quantity, 0);
+
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? 'bg-background/95 backdrop-blur-md shadow-lg border-b border-border'
           : 'bg-transparent'
@@ -51,7 +62,7 @@ const Header = () => {
           <Link
             to="/"
             onClick={scrollToTop}
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-3 group z-50"
           >
             <div className="relative">
               <Scissors className="w-8 h-8 text-primary transition-transform duration-300 group-hover:rotate-180" />
@@ -63,7 +74,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
@@ -87,76 +98,132 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Theme Toggle, Cart, User & Mobile Menu */}
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-2">
-              <CartDrawer />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className="relative group"
-              >
-                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-foreground group-hover:text-primary" />
-                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-foreground group-hover:text-primary" />
-              </Button>
-
-              {isAuthenticated ? (
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/perfil')}
-                  className="gap-2"
-                >
-                  <User className="h-5 w-5" />
-                  <span>{user?.name}</span>
-                </Button>
-              ) : (
-                <Button variant="outline" onClick={() => navigate('/login')}>
-                  Entrar
-                </Button>
-              )}
-            </div>
-
-            {/* Mobile Menu Button */}
+          {/* Desktop Actions */}
+          <div className="hidden lg:flex items-center gap-2">
+            <CartDrawer />
+            
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden"
+              onClick={toggleTheme}
+              className="relative group"
             >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-foreground group-hover:text-primary" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-foreground group-hover:text-primary" />
             </Button>
+
+            {isAuthenticated ? (
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/perfil')}
+                className="gap-2"
+              >
+                <User className="h-5 w-5" />
+                <span>{user?.name}</span>
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => navigate('/login')}>
+                Entrar
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile Menu */}
+          <div className="flex lg:hidden items-center gap-2">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  {isMobileMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="text-left font-heading text-2xl">
+                    Menu
+                  </SheetTitle>
+                </SheetHeader>
+                
+                <nav className="flex flex-col gap-2 mt-8">
+                  {navLinks.map((link) => (
+                    <button
+                      key={link.to}
+                      onClick={() => handleNavClick(link.to)}
+                      className={`px-4 py-3 font-body font-medium rounded-lg text-left transition-colors ${
+                        location.pathname === link.to
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      {link.label}
+                    </button>
+                  ))}
+                </nav>
+
+                <div className="mt-8 pt-8 border-t border-border space-y-3">
+                  {/* Cart Button */}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      // Trigger cart drawer open event
+                      document.dispatchEvent(new CustomEvent('openCartDrawer'));
+                    }}
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    <span>Carrinho</span>
+                    {cartItemsCount > 0 && (
+                      <span className="ml-auto bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                        {cartItemsCount}
+                      </span>
+                    )}
+                  </Button>
+
+                  {/* Theme Toggle */}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={toggleTheme}
+                  >
+                    <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 ml-[12px]" />
+                    <span className="ml-2">{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
+                  </Button>
+
+                  {/* User Button */}
+                  {isAuthenticated ? (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2"
+                      onClick={() => {
+                        navigate('/perfil');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <User className="h-5 w-5" />
+                      <span>{user?.name}</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => {
+                        navigate('/login');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Entrar
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <nav className="md:hidden py-4 border-t border-border animate-in slide-in-from-top-2 duration-200">
-            <div className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => {
-                    scrollToTop();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`px-4 py-3 font-body font-medium rounded-lg transition-colors ${
-                    location.pathname === link.to
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </nav>
-        )}
       </div>
     </header>
   );
