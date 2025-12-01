@@ -147,6 +147,16 @@ const Header = () => {
 
           {/* Mobile Menu */}
           <div className="flex lg:hidden items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="relative group"
+            >
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-foreground group-hover:text-primary" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-foreground group-hover:text-primary" />
+            </Button>
+            
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -219,21 +229,6 @@ const Header = () => {
                           {cartItemsCount}
                         </motion.span>
                       )}
-                    </Button>
-                  </motion.div>
-
-                  {/* Theme Toggle */}
-                  <motion.div whileTap={{ scale: 0.98 }}>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start gap-2"
-                      onClick={toggleTheme}
-                    >
-                      <div className="relative w-5 h-5">
-                        <Sun className="absolute inset-0 h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute inset-0 h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
-                      </div>
-                      <span>{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
                     </Button>
                   </motion.div>
 
