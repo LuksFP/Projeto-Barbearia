@@ -229,9 +229,11 @@ const Header = () => {
                       className="w-full justify-start gap-2"
                       onClick={toggleTheme}
                     >
-                      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 ml-[12px]" />
-                      <span className="ml-2">{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
+                      <div className="relative w-5 h-5">
+                        <Sun className="absolute inset-0 h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute inset-0 h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
+                      </div>
+                      <span>{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
                     </Button>
                   </motion.div>
 
