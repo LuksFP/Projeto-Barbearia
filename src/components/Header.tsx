@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Scissors, Moon, Sun, Menu, X, User, ShoppingCart } from 'lucide-react';
+import { Scissors, Moon, Sun, Menu, X, User, ShoppingCart, Shield } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CartDrawer from './CartDrawer';
 import SearchBar from './SearchBar';
 import MegaMenu from './MegaMenu';
+import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
@@ -119,6 +120,8 @@ const Header = () => {
             <SearchBar />
             <CartDrawer />
             
+            {isAuthenticated && <NotificationDropdown />}
+            
             <motion.div whileTap={{ scale: 0.9 }}>
               <Button
                 variant="ghost"
@@ -132,14 +135,26 @@ const Header = () => {
             </motion.div>
 
             {isAuthenticated ? (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/perfil')}
-                className="gap-2"
-              >
-                <User className="h-5 w-5" />
-                <span>{user?.name}</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                {user?.role === 'admin' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate('/admin')}
+                    className="text-primary"
+                  >
+                    <Shield className="h-5 w-5" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/perfil')}
+                  className="gap-2"
+                >
+                  <User className="h-5 w-5" />
+                  <span>{user?.name}</span>
+                </Button>
+              </div>
             ) : (
               <Button variant="outline" onClick={() => navigate('/login')}>
                 Entrar

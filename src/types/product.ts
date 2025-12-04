@@ -35,4 +35,5 @@ export interface Order {
   paymentMethod: string;
   date: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered';
+  deliveryMethod?: 'delivery' | 'pickup';
 }

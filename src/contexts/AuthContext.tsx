@@ -2,10 +2,13 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
+export type UserRole = 'client' | 'admin';
+
 interface User {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
 }
 
 interface AuthContextType {
@@ -49,7 +52,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     );
 
     if (foundUser) {
-      const userData = { id: foundUser.id, name: foundUser.name, email: foundUser.email };
+      const userData = { 
+        id: foundUser.id, 
+        name: foundUser.name, 
+        email: foundUser.email,
+        role: foundUser.role || 'client' as UserRole
+      };
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
       toast({
@@ -79,18 +87,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return false;
     }
 
+    // First user is admin, rest are clients
+    const isFirstUser = users.length === 0;
     const newUser = {
       id: Date.now().toString(),
       name,
       email,
       password,
+      role: isFirstUser ? 'admin' : 'client' as UserRole,
       createdAt: new Date().toISOString(),
     };
 
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
 
-    const userData = { id: newUser.id, name: newUser.name, email: newUser.email };
+    const userData = { 
+      id: newUser.id, 
+      name: newUser.name, 
+      email: newUser.email,
+      role: newUser.role as UserRole
+    };
     setUser(userData);
     localStorage.setItem('currentUser', JSON.stringify(userData));
 
