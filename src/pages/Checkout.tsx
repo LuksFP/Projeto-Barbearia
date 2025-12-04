@@ -121,19 +121,19 @@ const Checkout = () => {
   return (
     <div className="min-h-screen pt-20 pb-16">
       <div className="container mx-auto px-4">
-        <h1 className="font-heading text-5xl text-center mb-12">
+        <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl text-center mb-6 sm:mb-8 md:mb-12">
           <span className="text-primary">FINALIZAR</span> COMPRA
         </h1>
 
-        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="font-heading">Dados Pessoais</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="font-heading text-lg sm:text-xl">Dados Pessoais</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
                 <div>
-                  <Label htmlFor="name">Nome Completo *</Label>
+                  <Label htmlFor="name" className="text-sm">Nome Completo *</Label>
                   <Input
                     id="name"
                     required
@@ -141,9 +141,10 @@ const Checkout = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    className="mt-1"
                   />
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <Label htmlFor="email">Email *</Label>
                     <Input
@@ -172,13 +173,13 @@ const Checkout = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="font-heading">Endereço de Entrega</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="font-heading text-lg sm:text-xl">Endereço de Entrega</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
+              <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1">
-                    <Label htmlFor="cep">CEP *</Label>
+                    <Label htmlFor="cep" className="text-sm">CEP *</Label>
                     <Input
                       id="cep"
                       required
@@ -187,13 +188,14 @@ const Checkout = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, cep: e.target.value })
                       }
+                      className="mt-1"
                     />
                   </div>
                   <Button
                     type="button"
                     onClick={calculateShipping}
                     disabled={loading}
-                    className="mt-8"
+                    className="sm:mt-6 w-full sm:w-auto"
                   >
                     {loading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -213,9 +215,9 @@ const Checkout = () => {
                     }
                   />
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <Label htmlFor="number">Número *</Label>
+                    <Label htmlFor="number" className="text-sm">Número *</Label>
                     <Input
                       id="number"
                       required
@@ -223,22 +225,24 @@ const Checkout = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, number: e.target.value })
                       }
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="complement">Complemento</Label>
+                    <Label htmlFor="complement" className="text-sm">Complemento</Label>
                     <Input
                       id="complement"
                       value={formData.complement}
                       onChange={(e) =>
                         setFormData({ ...formData, complement: e.target.value })
                       }
+                      className="mt-1"
                     />
                   </div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <Label htmlFor="city">Cidade *</Label>
+                    <Label htmlFor="city" className="text-sm">Cidade *</Label>
                     <Input
                       id="city"
                       required
@@ -246,10 +250,11 @@ const Checkout = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, city: e.target.value })
                       }
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="state">Estado *</Label>
+                    <Label htmlFor="state" className="text-sm">Estado *</Label>
                     <Input
                       id="state"
                       required
@@ -257,6 +262,7 @@ const Checkout = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, state: e.target.value })
                       }
+                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -264,10 +270,10 @@ const Checkout = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="font-heading">Forma de Pagamento</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="font-heading text-lg sm:text-xl">Forma de Pagamento</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a forma de pagamento" />
@@ -285,10 +291,10 @@ const Checkout = () => {
 
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
-              <CardHeader>
-                <CardTitle className="font-heading">Resumo do Pedido</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="font-heading text-lg sm:text-xl">Resumo do Pedido</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
                 <div className="space-y-2">
                   {items.map((item) => (
                     <div

@@ -22,33 +22,35 @@ const ProductCard = ({ product, onOpenModal }: ProductCardProps) => {
         <Button
           variant="secondary"
           size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
           onClick={() => onOpenModal(product)}
         >
           <Eye className="w-4 h-4" />
         </Button>
       </div>
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <span className="text-xs font-body text-muted-foreground uppercase tracking-wider">
           {product.category}
         </span>
-        <h3 className="font-heading text-xl mt-1 text-foreground">
+        <h3 className="font-heading text-lg sm:text-xl mt-1 text-foreground line-clamp-1">
           {product.name}
         </h3>
-        <p className="text-sm text-muted-foreground mt-2 font-body">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2 font-body line-clamp-2">
           {product.description}
         </p>
-        <div className="flex items-center justify-between mt-4">
-          <span className="text-2xl font-heading text-primary">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 sm:mt-4 gap-2 sm:gap-0">
+          <span className="text-xl sm:text-2xl font-heading text-primary">
             R$ {product.price.toFixed(2)}
           </span>
           <Button
             onClick={() => addItem(product)}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
+            size="sm"
             disabled={!product.inStock}
           >
             <ShoppingCart className="w-4 h-4" />
-            Adicionar
+            <span className="sm:hidden">Adicionar</span>
+            <span className="hidden sm:inline">Adicionar</span>
           </Button>
         </div>
       </div>
