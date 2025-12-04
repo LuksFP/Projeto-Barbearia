@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LoyaltyProvider } from "@/contexts/LoyaltyContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Index from "./pages/Index";
@@ -19,6 +20,7 @@ import CabeloCrespo from "./pages/CabeloCrespo";
 import Loja from "./pages/Loja";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Rastreamento from "./pages/Rastreamento";
@@ -37,8 +39,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <LoyaltyProvider>
-              <CartProvider>
+            <NotificationProvider>
+              <LoyaltyProvider>
+                <CartProvider>
                 <div className="flex flex-col min-h-screen">
                   <Header />
                   <main className="flex-1">
@@ -53,6 +56,7 @@ const App = () => (
                     <Route path="/loja" element={<Loja />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/perfil" element={<Profile />} />
+                    <Route path="/admin" element={<Admin />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/confirmacao" element={<OrderConfirmation />} />
                     <Route path="/rastreamento" element={<Rastreamento />} />
@@ -64,8 +68,9 @@ const App = () => (
                 </main>
                 <Footer />
               </div>
-            </CartProvider>
-          </LoyaltyProvider>
+              </CartProvider>
+            </LoyaltyProvider>
+          </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
       </TooltipProvider>

@@ -2,11 +2,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { User, Package, LogOut, Calendar } from 'lucide-react';
+import { User, Package, LogOut, Calendar, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Order } from '@/types/product';
 import { Appointment } from '@/types/appointment';
 import AppointmentCard from '@/components/AppointmentCard';
+import { Badge } from '@/components/ui/badge';
 
 const Profile = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -76,13 +77,25 @@ const Profile = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm text-muted-foreground font-body">Nome</label>
-              <p className="font-heading text-xl">{user.name}</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <label className="text-sm text-muted-foreground font-body">Nome</label>
+                <p className="font-heading text-xl">{user.name}</p>
+              </div>
+              {user.role === 'admin' && (
+                <Badge className="bg-primary/20 text-primary hover:bg-primary/30">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Admin
+                </Badge>
+              )}
             </div>
             <div>
               <label className="text-sm text-muted-foreground font-body">Email</label>
               <p className="font-body">{user.email}</p>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground font-body">Tipo de Conta</label>
+              <p className="font-body capitalize">{user.role === 'admin' ? 'Administrador' : 'Cliente'}</p>
             </div>
           </CardContent>
         </Card>

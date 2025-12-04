@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLoyalty } from '@/contexts/LoyaltyContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { ptBR } from 'date-fns/locale';
 const Agendamento = () => {
   const { user, isAuthenticated } = useAuth();
   const { addPoints } = useLoyalty();
+  const { addNotification } = useNotifications();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [date, setDate] = useState<Date>();
@@ -108,6 +110,13 @@ const Agendamento = () => {
       const pointsEarned = Math.floor(selectedServiceData.value);
       addPoints(pointsEarned, `Agendamento: ${selectedServiceData.name}`, appointment.id);
     }
+
+    // Adicionar notificação
+    addNotification({
+      type: 'appointment',
+      title: 'Agendamento Confirmado!',
+      message: `${selectedServiceData?.name} em ${format(date, "d 'de' MMMM", { locale: ptBR })} às ${selectedTime}`,
+    });
 
     toast({
       title: 'Agendamento confirmado!',

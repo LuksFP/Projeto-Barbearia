@@ -23,6 +23,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
+  const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery');
   const [formData, setFormData] = useState<ShippingInfo>({
     name: '',
     email: '',
@@ -65,7 +66,9 @@ const Checkout = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!paymentMethod || shippingCost === null) {
+    const finalShippingCost = deliveryMethod === 'pickup' ? 0 : shippingCost;
+
+    if (!paymentMethod || (deliveryMethod === 'delivery' && shippingCost === null)) {
       toast({
         title: 'Dados incompletos',
         description: 'Preencha todos os campos obrigatórios',
@@ -79,11 +82,12 @@ const Checkout = () => {
       items,
       shipping: formData,
       subtotal,
-      shippingCost,
-      total: subtotal + shippingCost,
+      shippingCost: finalShippingCost ?? 0,
+      total: subtotal + (finalShippingCost ?? 0),
       paymentMethod,
       date: new Date().toISOString(),
       status: 'pending',
+      deliveryMethod,
     };
 
     // Salvar no localStorage geral
@@ -172,11 +176,57 @@ const Checkout = () => {
               </CardContent>
             </Card>
 
+            {/* Método de Entrega */}
             <Card>
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="font-heading text-lg sm:text-xl">Endereço de Entrega</CardTitle>
+                <CardTitle className="font-heading text-lg sm:text-xl">Método de Entrega</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryMethod('delivery');
+                      setShippingCost(null);
+                    }}
+                    className={`p-4 border rounded-lg text-left transition-all ${
+                      deliveryMethod === 'delivery'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <p className="font-heading text-lg">Entrega em casa</p>
+                    <p className="text-sm text-muted-foreground font-body">
+                      Receba no endereço de sua escolha
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryMethod('pickup');
+                      setShippingCost(0);
+                    }}
+                    className={`p-4 border rounded-lg text-left transition-all ${
+                      deliveryMethod === 'pickup'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <p className="font-heading text-lg">Retirar na loja</p>
+                    <p className="text-sm text-muted-foreground font-body">
+                      Grátis - Retire em nossa barbearia
+                    </p>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {deliveryMethod === 'delivery' && (
+              <Card>
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="font-heading text-lg sm:text-xl">Endereço de Entrega</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1">
                     <Label htmlFor="cep" className="text-sm">CEP *</Label>
@@ -266,8 +316,27 @@ const Checkout = () => {
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {deliveryMethod === 'pickup' && (
+              <Card>
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="font-heading text-lg sm:text-xl">Local de Retirada</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <p className="font-heading text-lg">Barber Pro</p>
+                    <p className="text-muted-foreground font-body">Rua das Tesouras, 123</p>
+                    <p className="text-muted-foreground font-body">Centro - São Paulo/SP</p>
+                    <p className="text-sm text-primary font-body mt-2">
+                      Horário: Ter-Sáb 9h às 19h
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader className="p-4 sm:p-6">
@@ -318,9 +387,11 @@ const Checkout = () => {
                   <div className="flex justify-between font-body">
                     <span>Frete:</span>
                     <span>
-                      {shippingCost !== null
-                        ? `R$ ${shippingCost.toFixed(2)}`
-                        : 'Calcular'}
+                      {deliveryMethod === 'pickup' 
+                        ? 'Grátis (Retirada)'
+                        : shippingCost !== null
+                          ? `R$ ${shippingCost.toFixed(2)}`
+                          : 'Calcular'}
                     </span>
                   </div>
                 </div>
@@ -328,9 +399,11 @@ const Checkout = () => {
                   <span className="font-heading">Total:</span>
                   <span className="font-heading text-primary">
                     R${' '}
-                    {shippingCost !== null
-                      ? (subtotal + shippingCost).toFixed(2)
-                      : subtotal.toFixed(2)}
+                    {deliveryMethod === 'pickup'
+                      ? subtotal.toFixed(2)
+                      : shippingCost !== null
+                        ? (subtotal + shippingCost).toFixed(2)
+                        : subtotal.toFixed(2)}
                   </span>
                 </div>
                 <Button type="submit" className="w-full" size="lg">
