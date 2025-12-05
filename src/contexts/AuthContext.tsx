@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
-export type UserRole = 'client' | 'admin';
+export type UserRole = 'client' | 'admin' | 'subscription';
 
 interface User {
   id: string;
@@ -14,7 +14,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string, role?: UserRole) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return false;
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
+  const signup = async (name: string, email: string, password: string, role: UserRole = 'client'): Promise<boolean> => {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     
     if (users.find((u: any) => u.email === email)) {
@@ -87,14 +87,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return false;
     }
 
-    // First user is admin, rest are clients
+    // First user is admin, rest use the selected role
     const isFirstUser = users.length === 0;
     const newUser = {
       id: Date.now().toString(),
       name,
       email,
       password,
-      role: isFirstUser ? 'admin' : 'client' as UserRole,
+      role: isFirstUser ? 'admin' : role,
       createdAt: new Date().toISOString(),
     };
 

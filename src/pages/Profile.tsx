@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { User, Package, LogOut, Calendar, Shield } from 'lucide-react';
+import { User, Package, LogOut, Calendar, Shield, Crown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Order } from '@/types/product';
 import { Appointment } from '@/types/appointment';
@@ -88,6 +88,12 @@ const Profile = () => {
                   Admin
                 </Badge>
               )}
+              {user.role === 'subscription' && (
+                <Badge className="bg-amber-500/20 text-amber-600 hover:bg-amber-500/30">
+                  <Crown className="w-3 h-3 mr-1" />
+                  VIP
+                </Badge>
+              )}
             </div>
             <div>
               <label className="text-sm text-muted-foreground font-body">Email</label>
@@ -95,7 +101,9 @@ const Profile = () => {
             </div>
             <div>
               <label className="text-sm text-muted-foreground font-body">Tipo de Conta</label>
-              <p className="font-body capitalize">{user.role === 'admin' ? 'Administrador' : 'Cliente'}</p>
+              <p className="font-body capitalize">
+                {user.role === 'admin' ? 'Administrador' : user.role === 'subscription' ? 'Cliente Assinatura' : 'Cliente'}
+              </p>
             </div>
           </CardContent>
         </Card>

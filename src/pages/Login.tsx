@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Crown, User } from 'lucide-react';
 
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState('');
@@ -13,6 +15,7 @@ const Login = () => {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  const [signupRole, setSignupRole] = useState<UserRole>('client');
   const { login, signup, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +35,7 @@ const Login = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await signup(signupName, signupEmail, signupPassword);
+    const success = await signup(signupName, signupEmail, signupPassword, signupRole);
     if (success) {
       navigate('/perfil');
     }
@@ -130,6 +133,37 @@ const Login = () => {
                         required
                       />
                     </div>
+                    
+                    <div className="space-y-3">
+                      <Label>Tipo de Conta</Label>
+                      <RadioGroup
+                        value={signupRole}
+                        onValueChange={(value) => setSignupRole(value as UserRole)}
+                        className="space-y-3"
+                      >
+                        <div className="flex items-center space-x-3 border border-border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer">
+                          <RadioGroupItem value="client" id="client" />
+                          <Label htmlFor="client" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <User className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="font-heading">Cliente</p>
+                              <p className="text-sm text-muted-foreground font-body">Acesso básico à loja e agendamentos</p>
+                            </div>
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-3 border border-primary/50 rounded-lg p-4 hover:border-primary bg-primary/5 transition-colors cursor-pointer">
+                          <RadioGroupItem value="subscription" id="subscription" />
+                          <Label htmlFor="subscription" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <Crown className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="font-heading text-primary">Cliente Assinatura</p>
+                              <p className="text-sm text-muted-foreground font-body">Descontos exclusivos e benefícios VIP</p>
+                            </div>
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
                     <Button type="submit" className="w-full">
                       Criar Conta
                     </Button>
