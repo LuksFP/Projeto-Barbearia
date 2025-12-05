@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LoyaltyProvider } from "@/contexts/LoyaltyContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Index from "./pages/Index";
@@ -27,6 +28,7 @@ import Rastreamento from "./pages/Rastreamento";
 import Agendamento from "./pages/Agendamento";
 import Depoimentos from "./pages/Depoimentos";
 import Fidelidade from "./pages/Fidelidade";
+import Assinatura from "./pages/Assinatura";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,39 +42,42 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <NotificationProvider>
-              <LoyaltyProvider>
-                <CartProvider>
-                <div className="flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-1">
-                    <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/sobre" element={<Sobre />} />
-                    <Route path="/cortes" element={<Cortes />} />
-                    <Route path="/tipos-cabelo" element={<TiposCabelo />} />
-                    <Route path="/tipos-cabelo/liso" element={<CabeloLiso />} />
-                    <Route path="/tipos-cabelo/ondulado" element={<CabeloOndulado />} />
-                    <Route path="/tipos-cabelo/crespo" element={<CabeloCrespo />} />
-                    <Route path="/loja" element={<Loja />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/perfil" element={<Profile />} />
-                    <Route path="/admin" element={<Admin />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/confirmacao" element={<OrderConfirmation />} />
-                    <Route path="/rastreamento" element={<Rastreamento />} />
-                    <Route path="/agendamento" element={<Agendamento />} />
-                    <Route path="/depoimentos" element={<Depoimentos />} />
-                    <Route path="/fidelidade" element={<Fidelidade />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </div>
-              </CartProvider>
-            </LoyaltyProvider>
-          </NotificationProvider>
-        </AuthProvider>
-      </BrowserRouter>
+              <SubscriptionProvider>
+                <LoyaltyProvider>
+                  <CartProvider>
+                    <div className="flex flex-col min-h-screen">
+                      <Header />
+                      <main className="flex-1">
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/sobre" element={<Sobre />} />
+                          <Route path="/cortes" element={<Cortes />} />
+                          <Route path="/tipos-cabelo" element={<TiposCabelo />} />
+                          <Route path="/tipos-cabelo/liso" element={<CabeloLiso />} />
+                          <Route path="/tipos-cabelo/ondulado" element={<CabeloOndulado />} />
+                          <Route path="/tipos-cabelo/crespo" element={<CabeloCrespo />} />
+                          <Route path="/loja" element={<Loja />} />
+                          <Route path="/login" element={<Login />} />
+                          <Route path="/perfil" element={<Profile />} />
+                          <Route path="/admin" element={<Admin />} />
+                          <Route path="/checkout" element={<Checkout />} />
+                          <Route path="/confirmacao" element={<OrderConfirmation />} />
+                          <Route path="/rastreamento" element={<Rastreamento />} />
+                          <Route path="/agendamento" element={<Agendamento />} />
+                          <Route path="/depoimentos" element={<Depoimentos />} />
+                          <Route path="/fidelidade" element={<Fidelidade />} />
+                          <Route path="/assinatura" element={<Assinatura />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </main>
+                      <Footer />
+                    </div>
+                  </CartProvider>
+                </LoyaltyProvider>
+              </SubscriptionProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

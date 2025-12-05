@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLoyalty } from '@/contexts/LoyaltyContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +10,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Appointment, ServiceType, TimeSlot } from '@/types/appointment';
-import { Scissors, Clock, CheckCircle } from 'lucide-react';
+import { Scissors, Clock, CheckCircle, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -19,6 +21,7 @@ const Agendamento = () => {
   const { user, isAuthenticated } = useAuth();
   const { addPoints } = useLoyalty();
   const { addNotification } = useNotifications();
+  const { isSubscribed } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [date, setDate] = useState<Date>();
@@ -56,11 +59,12 @@ const Agendamento = () => {
     for (let hour = startHour; hour < endHour; hour++) {
       ['00', '30'].forEach((minute) => {
         const time = `${hour.toString().padStart(2, '0')}:${minute}`;
-        // Simular alguns horários ocupados
+        // Simular alguns horários ocupados (assinantes veem mais horários disponíveis)
         const random = Math.random();
+        const threshold = isSubscribed ? 0.15 : 0.3; // VIP tem mais horários disponíveis
         slots.push({
           time,
-          available: random > 0.3,
+          available: random > threshold,
         });
       });
     }
@@ -134,11 +138,21 @@ const Agendamento = () => {
     <div className="min-h-screen pt-20 pb-16">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         <div className="mb-8">
-          <h1 className="font-heading text-5xl mb-4">
-            <span className="text-primary">AGENDE</span> SEU HORÁRIO
-          </h1>
+          <div className="flex items-center gap-3 mb-4">
+            <h1 className="font-heading text-5xl">
+              <span className="text-primary">AGENDE</span> SEU HORÁRIO
+            </h1>
+            {isSubscribed && (
+              <Badge className="bg-amber-500/20 text-amber-600 gap-1">
+                <Crown className="w-4 h-4" />
+                Prioridade VIP
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground font-body text-lg">
-            Escolha o melhor dia e horário para seu atendimento
+            {isSubscribed 
+              ? 'Como assinante VIP, você tem acesso prioritário aos melhores horários!'
+              : 'Escolha o melhor dia e horário para seu atendimento'}
           </p>
         </div>
 

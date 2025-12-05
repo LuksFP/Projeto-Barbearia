@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 
 const Profile = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { isSubscribed, discountPercentage } = useSubscription();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -105,6 +107,34 @@ const Profile = () => {
                 {user.role === 'admin' ? 'Administrador' : user.role === 'subscription' ? 'Cliente Assinatura' : 'Cliente'}
               </p>
             </div>
+            
+            {/* Subscription Card */}
+            {user.role !== 'admin' && (
+              <div className="pt-4 border-t border-border">
+                {isSubscribed ? (
+                  <div className="flex items-center justify-between bg-amber-500/10 rounded-lg p-4">
+                    <div>
+                      <p className="font-heading text-amber-600">Você é VIP!</p>
+                      <p className="text-sm text-muted-foreground">{discountPercentage}% de desconto em todos os produtos</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/assinatura')}>
+                      Gerenciar
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-heading">Torne-se VIP</p>
+                      <p className="text-sm text-muted-foreground">15% de desconto + benefícios exclusivos</p>
+                    </div>
+                    <Button onClick={() => navigate('/assinatura')} className="gap-2">
+                      <Crown className="w-4 h-4" />
+                      Assinar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Product } from '@/types/product';
 import { toast } from '@/hooks/use-toast';
+import { useSubscription } from './SubscriptionContext';
 
 interface CartContextType {
   items: CartItem[];
@@ -10,6 +11,8 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
+  discountedSubtotal: number;
+  discountAmount: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -19,6 +22,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const saved = localStorage.getItem('cart');
     return saved ? JSON.parse(saved) : [];
   });
+  const { isSubscribed, discountPercentage, getDiscountedPrice } = useSubscription();
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(items));
@@ -40,7 +44,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       toast({
         title: 'Produto adicionado',
-        description: `${product.name} foi adicionado ao carrinho`,
+        description: `${product.name} foi adicionado ao carrinho${isSubscribed ? ' com desconto VIP!' : ''}`,
       });
       return [...prev, { product, quantity: 1 }];
     });
@@ -76,6 +80,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
+  const discountedSubtotal = items.reduce(
+    (sum, item) => sum + getDiscountedPrice(item.product.price) * item.quantity,
+    0
+  );
+  const discountAmount = subtotal - discountedSubtotal;
 
   return (
     <CartContext.Provider
@@ -87,6 +96,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearCart,
         totalItems,
         subtotal,
+        discountedSubtotal,
+        discountAmount,
       }}
     >
       {children}
