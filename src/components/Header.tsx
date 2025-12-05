@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Scissors, Moon, Sun, Menu, X, User, ShoppingCart, Shield } from 'lucide-react';
+import { Scissors, Moon, Sun, Menu, X, User, ShoppingCart, Shield, Crown } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -146,6 +146,16 @@ const Header = () => {
                     <Shield className="h-5 w-5" />
                   </Button>
                 )}
+                {user?.role === 'subscription' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate('/assinatura')}
+                    className="text-amber-500"
+                  >
+                    <Crown className="h-5 w-5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   onClick={() => navigate('/perfil')}
@@ -254,17 +264,45 @@ const Header = () => {
                   {/* User Button */}
                   <motion.div whileTap={{ scale: 0.98 }}>
                     {isAuthenticated ? (
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start gap-2"
-                        onClick={() => {
-                          navigate('/perfil');
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <User className="h-5 w-5" />
-                        <span>{user?.name}</span>
-                      </Button>
+                      <div className="space-y-2">
+                        {user?.role === 'admin' && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start gap-2 text-primary"
+                            onClick={() => {
+                              navigate('/admin');
+                              setIsMobileMenuOpen(false);
+                            }}
+                          >
+                            <Shield className="h-5 w-5" />
+                            <span>Painel Admin</span>
+                          </Button>
+                        )}
+                        {user?.role === 'subscription' && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start gap-2 text-amber-500"
+                            onClick={() => {
+                              navigate('/assinatura');
+                              setIsMobileMenuOpen(false);
+                            }}
+                          >
+                            <Crown className="h-5 w-5" />
+                            <span>Minha Assinatura</span>
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start gap-2"
+                          onClick={() => {
+                            navigate('/perfil');
+                            setIsMobileMenuOpen(false);
+                          }}
+                        >
+                          <User className="h-5 w-5" />
+                          <span>{user?.name}</span>
+                        </Button>
+                      </div>
                     ) : (
                       <Button
                         variant="default"

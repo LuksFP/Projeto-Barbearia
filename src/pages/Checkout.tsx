@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useLoyalty } from '@/contexts/LoyaltyContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,13 +14,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ShippingInfo, Order } from '@/types/product';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Crown } from 'lucide-react';
 
 const Checkout = () => {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, discountedSubtotal, discountAmount, clearCart } = useCart();
   const { addPoints } = useLoyalty();
+  const { isSubscribed, discountPercentage } = useSubscription();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
@@ -81,9 +84,9 @@ const Checkout = () => {
       id: `PED-${Date.now()}`,
       items,
       shipping: formData,
-      subtotal,
+      subtotal: discountedSubtotal,
       shippingCost: finalShippingCost ?? 0,
-      total: subtotal + (finalShippingCost ?? 0),
+      total: discountedSubtotal + (finalShippingCost ?? 0),
       paymentMethod,
       date: new Date().toISOString(),
       status: 'pending',
@@ -99,8 +102,8 @@ const Checkout = () => {
     localStorage.setItem('userOrders', JSON.stringify(existingOrders));
 
     // Adicionar pontos de fidelidade (1 ponto por real gasto)
-    const pointsEarned = Math.floor(subtotal + shippingCost);
-    addPoints(pointsEarned, `Compra no valor de R$ ${(subtotal + shippingCost).toFixed(2)}`, order.id);
+    const pointsEarned = Math.floor(discountedSubtotal + (finalShippingCost ?? 0));
+    addPoints(pointsEarned, `Compra no valor de R$ ${(discountedSubtotal + (finalShippingCost ?? 0)).toFixed(2)}`, order.id);
 
     clearCart();
     navigate('/confirmacao');
@@ -361,7 +364,15 @@ const Checkout = () => {
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="font-heading text-lg sm:text-xl">Resumo do Pedido</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg sm:text-xl">Resumo do Pedido</CardTitle>
+                  {isSubscribed && (
+                    <Badge className="bg-amber-500/20 text-amber-600 gap-1">
+                      <Crown className="w-3 h-3" />
+                      VIP
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
                 <div className="space-y-2">
@@ -384,6 +395,12 @@ const Checkout = () => {
                     <span>Subtotal:</span>
                     <span>R$ {subtotal.toFixed(2)}</span>
                   </div>
+                  {isSubscribed && discountAmount > 0 && (
+                    <div className="flex justify-between font-body text-amber-600">
+                      <span>Desconto VIP ({discountPercentage}%):</span>
+                      <span>- R$ {discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-body">
                     <span>Frete:</span>
                     <span>
@@ -400,10 +417,10 @@ const Checkout = () => {
                   <span className="font-heading text-primary">
                     R${' '}
                     {deliveryMethod === 'pickup'
-                      ? subtotal.toFixed(2)
+                      ? discountedSubtotal.toFixed(2)
                       : shippingCost !== null
-                        ? (subtotal + shippingCost).toFixed(2)
-                        : subtotal.toFixed(2)}
+                        ? (discountedSubtotal + shippingCost).toFixed(2)
+                        : discountedSubtotal.toFixed(2)}
                   </span>
                 </div>
                 <Button type="submit" className="w-full" size="lg">
