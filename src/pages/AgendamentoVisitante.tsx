@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
@@ -8,9 +8,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ServiceType, TimeSlot } from '@/types/appointment';
-import { Scissors, Clock, CheckCircle, UserCircle } from 'lucide-react';
+import { Scissors, Clock, CheckCircle, UserCircle, Mail, Phone, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AgendamentoVisitante = () => {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ const AgendamentoVisitante = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState('');
 
   const services = [
     { id: 'corte' as ServiceType, name: 'Corte de Cabelo', price: 'R$ 50,00', value: 50 },
@@ -40,7 +43,7 @@ const AgendamentoVisitante = () => {
         const random = Math.random();
         slots.push({
           time,
-          available: random > 0.35, // Visitantes têm menos horários disponíveis
+          available: random > 0.35,
         });
       });
     }
@@ -62,8 +65,11 @@ const AgendamentoVisitante = () => {
       return;
     }
 
+    const code = `APT-${Date.now().toString(36).toUpperCase()}`;
+
     const appointment = {
       id: Date.now().toString(),
+      confirmationCode: code,
       userId: 'guest',
       service: selectedService,
       date: date.toISOString(),
@@ -76,24 +82,73 @@ const AgendamentoVisitante = () => {
       isGuest: true,
     };
 
-    // Salvar no localStorage
     const existingAppointments = JSON.parse(
       localStorage.getItem('userAppointments') || '[]'
     );
     existingAppointments.push(appointment);
     localStorage.setItem('userAppointments', JSON.stringify(existingAppointments));
 
-    const selectedServiceData = services.find(s => s.id === selectedService);
-
     toast({
-      title: 'Agendamento confirmado!',
-      description: `Seu horário foi reservado para ${format(date, "d 'de' MMMM", {
-        locale: ptBR,
-      })} às ${selectedTime}.`,
+      title: 'Confirmação enviada!',
+      description: `Enviamos um email para ${email} e SMS para ${phone} com os detalhes do agendamento.`,
     });
 
-    navigate('/');
+    setConfirmationCode(code);
+    setConfirmed(true);
   };
+
+  if (confirmed) {
+    return (
+      <div className="min-h-screen pt-20 pb-16">
+        <div className="container mx-auto px-4 py-12 max-w-2xl">
+          <Card className="text-center">
+            <CardContent className="p-8 space-y-6">
+              <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+              <div>
+                <h1 className="font-heading text-3xl mb-2">Agendamento Confirmado!</h1>
+                <p className="text-muted-foreground">
+                  Seu horário foi reservado com sucesso.
+                </p>
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Código de confirmação</p>
+                <p className="font-heading text-2xl text-primary">{confirmationCode}</p>
+              </div>
+
+              <Alert>
+                <Mail className="h-4 w-4" />
+                <AlertDescription>
+                  Enviamos um email para <strong>{email}</strong> com todos os detalhes.
+                </AlertDescription>
+              </Alert>
+
+              <Alert>
+                <Phone className="h-4 w-4" />
+                <AlertDescription>
+                  Enviamos um SMS para <strong>{phone}</strong> com a confirmação.
+                </AlertDescription>
+              </Alert>
+
+              <div className="pt-4 space-y-3">
+                <Link to="/consulta-agendamento" className="block">
+                  <Button variant="outline" className="w-full gap-2">
+                    <ExternalLink className="w-4 h-4" />
+                    Acompanhar Agendamento
+                  </Button>
+                </Link>
+                <Button onClick={() => navigate('/')} className="w-full">
+                  Voltar ao Início
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-16">
@@ -117,7 +172,6 @@ const AgendamentoVisitante = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Dados do Visitante */}
             <Card>
               <CardHeader>
                 <CardTitle className="font-heading text-2xl flex items-center gap-2">
@@ -169,7 +223,6 @@ const AgendamentoVisitante = () => {
               </CardContent>
             </Card>
 
-            {/* Seleção de Serviço */}
             <Card>
               <CardHeader>
                 <CardTitle className="font-heading text-2xl flex items-center gap-2">
@@ -206,7 +259,6 @@ const AgendamentoVisitante = () => {
             </Card>
           </div>
 
-          {/* Seleção de Data */}
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="font-heading text-2xl flex items-center gap-2">
@@ -228,7 +280,6 @@ const AgendamentoVisitante = () => {
             </CardContent>
           </Card>
 
-          {/* Seleção de Horário */}
           {date && (
             <Card className="mt-8">
               <CardHeader>
@@ -256,7 +307,6 @@ const AgendamentoVisitante = () => {
             </Card>
           )}
 
-          {/* Botão de Confirmação */}
           {selectedTime && (
             <div className="mt-8">
               <Button type="submit" className="w-full font-heading text-lg py-6">

@@ -29,6 +29,7 @@ const Footer = () => {
                 { to: '/cortes', label: 'Cortes' },
                 { to: '/tipos-cabelo', label: 'Tipos de Cabelo' },
                 { to: '/loja', label: 'Loja' },
+                { to: '/consulta-agendamento', label: 'Consultar Agendamento' },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
