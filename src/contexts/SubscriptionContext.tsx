@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from './NotificationContext';
 
 export interface Subscription {
   id: string;
@@ -38,10 +39,35 @@ interface SubscriptionProviderProps {
 export const SubscriptionProvider = ({ children }: SubscriptionProviderProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
 
   const isSubscribed = user?.role === 'subscription' && subscription?.status === 'active';
   const discountPercentage = isSubscribed ? 15 : 0;
+
+  // Check for renewal reminder
+  useEffect(() => {
+    if (subscription?.status === 'active') {
+      const renewalDate = new Date(subscription.renewalDate);
+      const today = new Date();
+      const daysUntilRenewal = Math.ceil((renewalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Check if we should show the reminder (7 days before)
+      if (daysUntilRenewal <= 7 && daysUntilRenewal > 0) {
+        const reminderKey = `renewal_reminder_${subscription.id}_${daysUntilRenewal}`;
+        const hasShownReminder = localStorage.getItem(reminderKey);
+        
+        if (!hasShownReminder) {
+          addNotification({
+            type: 'info',
+            title: 'Renovação da Assinatura',
+            message: `Sua assinatura será renovada em ${daysUntilRenewal} dia${daysUntilRenewal > 1 ? 's' : ''}. Valor: R$ ${subscription.price.toFixed(2).replace('.', ',')}`,
+          });
+          localStorage.setItem(reminderKey, 'true');
+        }
+      }
+    }
+  }, [subscription, addNotification]);
 
   useEffect(() => {
     if (user) {

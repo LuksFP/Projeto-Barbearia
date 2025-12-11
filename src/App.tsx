@@ -26,6 +26,7 @@ import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Rastreamento from "./pages/Rastreamento";
 import Agendamento from "./pages/Agendamento";
+import AgendamentoVisitante from "./pages/AgendamentoVisitante";
 import Depoimentos from "./pages/Depoimentos";
 import Fidelidade from "./pages/Fidelidade";
 import Assinatura from "./pages/Assinatura";
@@ -64,6 +65,7 @@ const App = () => (
                           <Route path="/confirmacao" element={<OrderConfirmation />} />
                           <Route path="/rastreamento" element={<Rastreamento />} />
                           <Route path="/agendamento" element={<Agendamento />} />
+                          <Route path="/agendamento-visitante" element={<AgendamentoVisitante />} />
                           <Route path="/depoimentos" element={<Depoimentos />} />
                           <Route path="/fidelidade" element={<Fidelidade />} />
                           <Route path="/assinatura" element={<Assinatura />} />

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Scissors, Award, Clock } from 'lucide-react';
 import SectionTitle from '@/components/SectionTitle';
 import HaircutCard from '@/components/HaircutCard';
@@ -10,8 +10,20 @@ import corteJaca from '@/assets/corte-jaca.jpg';
 import cabeloLiso from '@/assets/cabelo-liso.jpg';
 import cabeloOndulado from '@/assets/cabelo-ondulado.jpg';
 import cabeloCrespo from '@/assets/cabelo-crespo.jpg';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleAgendar = () => {
+    if (isAuthenticated) {
+      navigate('/agendamento');
+    } else {
+      navigate('/agendamento-visitante');
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -33,8 +45,12 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-              <Button size="lg" className="font-body font-semibold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto">
-                Agendar Horário
+              <Button 
+                size="lg" 
+                onClick={handleAgendar}
+                className="font-body font-semibold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto animate-pulse-glow"
+              >
+                Agendar Corte
               </Button>
               <Link to="/cortes" className="w-full sm:w-auto">
                 <Button size="lg" variant="outline" className="font-body font-semibold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full">
@@ -169,7 +185,11 @@ const Index = () => {
           <p className="font-body text-base sm:text-lg text-muted-foreground mb-6 md:mb-8">
             Agende seu horário e experimente o melhor da barbearia moderna.
           </p>
-          <Button size="lg" className="font-body font-semibold text-base sm:text-lg px-8 sm:px-12 py-5 sm:py-6 w-full sm:w-auto">
+          <Button 
+            size="lg" 
+            onClick={handleAgendar}
+            className="font-body font-semibold text-base sm:text-lg px-8 sm:px-12 py-5 sm:py-6 w-full sm:w-auto animate-pulse-glow"
+          >
             Agendar Agora
           </Button>
         </div>

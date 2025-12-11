@@ -146,8 +146,8 @@ const Login = () => {
                           <Label htmlFor="client" className="flex items-center gap-2 cursor-pointer flex-1">
                             <User className="w-5 h-5 text-muted-foreground" />
                             <div>
-                              <p className="font-heading">Cliente</p>
-                              <p className="text-sm text-muted-foreground font-body">Acesso básico à loja e agendamentos</p>
+                              <p className="font-heading">Cliente VIP</p>
+                              <p className="text-sm text-muted-foreground font-body">Acesso à loja e agendamentos</p>
                             </div>
                           </Label>
                         </div>
