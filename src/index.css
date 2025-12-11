@@ -89,3 +89,18 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px hsl(45 100% 50% / 0.5), 0 0 20px hsl(45 100% 50% / 0.3);
+    background-color: hsl(45 100% 50%);
+  }
+  50% {
+    box-shadow: 0 0 15px hsl(45 100% 50% / 0.8), 0 0 40px hsl(45 100% 50% / 0.5);
+    background-color: hsl(45 90% 55%);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
