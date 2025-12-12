@@ -27,6 +27,7 @@ export interface ShippingInfo {
 
 export interface Order {
   id: string;
+  userId?: string;
   items: CartItem[];
   shipping: ShippingInfo;
   subtotal: number;

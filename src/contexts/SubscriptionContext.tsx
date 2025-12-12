@@ -1,24 +1,17 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from './NotificationContext';
+import { useToast } from '@/hooks/use-toast';
+import { subscriptionService, Subscription } from '@/services/subscriptionService';
 
-export interface Subscription {
-  id: string;
-  userId: string;
-  plan: 'monthly' | 'yearly';
-  status: 'active' | 'cancelled' | 'expired';
-  startDate: string;
-  renewalDate: string;
-  price: number;
-}
+export type { Subscription } from '@/services/subscriptionService';
 
 interface SubscriptionContextType {
   subscription: Subscription | null;
   isSubscribed: boolean;
   discountPercentage: number;
-  subscribe: (plan: 'monthly' | 'yearly') => void;
-  cancelSubscription: () => void;
+  subscribe: (plan: 'monthly' | 'yearly') => Promise<void>;
+  cancelSubscription: () => Promise<void>;
   getDiscountedPrice: (price: number) => number;
 }
 
@@ -38,116 +31,99 @@ interface SubscriptionProviderProps {
 
 export const SubscriptionProvider = ({ children }: SubscriptionProviderProps) => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const { addNotification } = useNotifications();
+  const { toast } = useToast();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [reminderShown, setReminderShown] = useState<Record<string, boolean>>({});
 
-  const isSubscribed = user?.role === 'subscription' && subscription?.status === 'active';
-  const discountPercentage = isSubscribed ? 15 : 0;
+  const isSubscribed = subscription?.status === 'active';
+  const discountPercentage = subscriptionService.getDiscountPercentage(subscription);
 
   // Check for renewal reminder
   useEffect(() => {
-    if (subscription?.status === 'active') {
-      const renewalDate = new Date(subscription.renewalDate);
-      const today = new Date();
-      const daysUntilRenewal = Math.ceil((renewalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (subscription && isSubscribed) {
+      const reminder = subscriptionService.shouldShowRenewalReminder(subscription);
+      const reminderKey = `${subscription.id}_${reminder.daysUntil}`;
       
-      // Check if we should show the reminder (7 days before)
-      if (daysUntilRenewal <= 7 && daysUntilRenewal > 0) {
-        const reminderKey = `renewal_reminder_${subscription.id}_${daysUntilRenewal}`;
-        const hasShownReminder = localStorage.getItem(reminderKey);
-        
-        if (!hasShownReminder) {
-          addNotification({
-            type: 'info',
-            title: 'Renovação da Assinatura',
-            message: `Sua assinatura será renovada em ${daysUntilRenewal} dia${daysUntilRenewal > 1 ? 's' : ''}. Valor: R$ ${subscription.price.toFixed(2).replace('.', ',')}`,
-          });
-          localStorage.setItem(reminderKey, 'true');
-        }
+      if (reminder.show && !reminderShown[reminderKey]) {
+        addNotification({
+          type: 'info',
+          title: 'Renovação próxima',
+          message: `Sua assinatura será renovada em ${reminder.daysUntil} dia${reminder.daysUntil > 1 ? 's' : ''}. Valor: R$ ${subscription.price.toFixed(2).replace('.', ',')}`,
+        });
+        setReminderShown(prev => ({ ...prev, [reminderKey]: true }));
       }
     }
-  }, [subscription, addNotification]);
+  }, [subscription, isSubscribed, reminderShown, addNotification]);
 
+  // Load subscription on user change
   useEffect(() => {
-    if (user) {
-      const subscriptions = JSON.parse(localStorage.getItem('subscriptions') || '[]');
-      const userSub = subscriptions.find((s: Subscription) => s.userId === user.id && s.status === 'active');
-      setSubscription(userSub || null);
-      
-      // Auto-create subscription for subscription role users without one
-      if (user.role === 'subscription' && !userSub) {
-        const newSub: Subscription = {
-          id: Date.now().toString(),
-          userId: user.id,
-          plan: 'monthly',
-          status: 'active',
-          startDate: new Date().toISOString(),
-          renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          price: 49.90,
-        };
-        subscriptions.push(newSub);
-        localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
-        setSubscription(newSub);
+    const loadSubscription = async () => {
+      if (user) {
+        try {
+          const userSubscription = await subscriptionService.getByUserId(user.id);
+          setSubscription(userSubscription);
+
+          // Auto-create subscription for users with 'subscription' role
+          if (!userSubscription && user.role === 'subscription') {
+            const newSubscription = await subscriptionService.create(user.id, 'monthly');
+            setSubscription(newSubscription);
+          }
+        } catch (error) {
+          console.error('Failed to load subscription:', error);
+        }
+      } else {
+        setSubscription(null);
       }
-    } else {
-      setSubscription(null);
-    }
+    };
+    loadSubscription();
   }, [user]);
 
-  const subscribe = (plan: 'monthly' | 'yearly') => {
+  const subscribe = async (plan: 'monthly' | 'yearly') => {
     if (!user) return;
 
-    const price = plan === 'monthly' ? 49.90 : 479.90;
-    const renewalDays = plan === 'monthly' ? 30 : 365;
+    try {
+      const newSubscription = await subscriptionService.create(user.id, plan);
+      setSubscription(newSubscription);
 
-    const newSub: Subscription = {
-      id: Date.now().toString(),
-      userId: user.id,
-      plan,
-      status: 'active',
-      startDate: new Date().toISOString(),
-      renewalDate: new Date(Date.now() + renewalDays * 24 * 60 * 60 * 1000).toISOString(),
-      price,
-    };
-
-    const subscriptions = JSON.parse(localStorage.getItem('subscriptions') || '[]');
-    subscriptions.push(newSub);
-    localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
-    setSubscription(newSub);
-
-    // Update user role
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const updatedUsers = users.map((u: any) => 
-      u.id === user.id ? { ...u, role: 'subscription' } : u
-    );
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-
-    toast({
-      title: 'Assinatura ativada!',
-      description: `Você agora é um cliente VIP com ${discountPercentage}% de desconto!`,
-    });
+      toast({
+        title: 'Assinatura ativada! 🎉',
+        description: `Você agora é um cliente VIP com ${discountPercentage}% de desconto!`,
+      });
+    } catch (error) {
+      console.error('Failed to subscribe:', error);
+      toast({
+        title: 'Erro ao assinar',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const cancelSubscription = () => {
+  const cancelSubscription = async () => {
     if (!subscription) return;
 
-    const subscriptions = JSON.parse(localStorage.getItem('subscriptions') || '[]');
-    const updatedSubs = subscriptions.map((s: Subscription) =>
-      s.id === subscription.id ? { ...s, status: 'cancelled' } : s
-    );
-    localStorage.setItem('subscriptions', JSON.stringify(updatedSubs));
-    setSubscription({ ...subscription, status: 'cancelled' });
-
-    toast({
-      title: 'Assinatura cancelada',
-      description: 'Sua assinatura foi cancelada. Os benefícios continuam até a data de renovação.',
-    });
+    try {
+      const cancelled = await subscriptionService.cancel(subscription.id);
+      if (cancelled) {
+        setSubscription(cancelled);
+        toast({
+          title: 'Assinatura cancelada',
+          description: 'Sua assinatura foi cancelada com sucesso.',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to cancel subscription:', error);
+      toast({
+        title: 'Erro ao cancelar',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getDiscountedPrice = (price: number) => {
-    if (!isSubscribed) return price;
-    return price * (1 - discountPercentage / 100);
+    return subscriptionService.getDiscountedPrice(price, subscription);
   };
 
   return (

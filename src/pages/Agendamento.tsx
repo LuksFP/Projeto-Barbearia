@@ -12,10 +12,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Appointment, ServiceType, TimeSlot } from '@/types/appointment';
+import { ServiceType, TimeSlot } from '@/types/appointment';
 import { Scissors, Clock, CheckCircle, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { appointmentService } from '@/services/appointmentService';
 
 const Agendamento = () => {
   const { user, isAuthenticated } = useAuth();
@@ -74,7 +75,7 @@ const Agendamento = () => {
 
   const [timeSlots] = useState<TimeSlot[]>(generateTimeSlots());
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!date || !selectedTime || !name || !email || !phone) {
@@ -88,48 +89,48 @@ const Agendamento = () => {
 
     if (!user) return;
 
-    const appointment: Appointment = {
-      id: Date.now().toString(),
-      userId: user.id,
-      service: selectedService,
-      date: date.toISOString(),
-      time: selectedTime,
-      status: 'scheduled',
-      createdAt: new Date().toISOString(),
-      customerName: name,
-      customerEmail: email,
-      customerPhone: phone,
-    };
+    try {
+      const appointment = await appointmentService.create({
+        userId: user.id,
+        service: selectedService,
+        date: date.toISOString(),
+        time: selectedTime,
+        status: 'scheduled',
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone,
+      });
 
-    // Salvar no localStorage
-    const existingAppointments = JSON.parse(
-      localStorage.getItem('userAppointments') || '[]'
-    );
-    existingAppointments.push(appointment);
-    localStorage.setItem('userAppointments', JSON.stringify(existingAppointments));
+      // Adicionar pontos de fidelidade pelo serviço agendado
+      const selectedServiceData = services.find(s => s.id === selectedService);
+      if (selectedServiceData) {
+        const pointsEarned = Math.floor(selectedServiceData.value);
+        addPoints(pointsEarned, `Agendamento: ${selectedServiceData.name}`, appointment.id);
+      }
 
-    // Adicionar pontos de fidelidade pelo serviço agendado
-    const selectedServiceData = services.find(s => s.id === selectedService);
-    if (selectedServiceData) {
-      const pointsEarned = Math.floor(selectedServiceData.value);
-      addPoints(pointsEarned, `Agendamento: ${selectedServiceData.name}`, appointment.id);
+      // Adicionar notificação
+      addNotification({
+        type: 'appointment',
+        title: 'Agendamento Confirmado!',
+        message: `${selectedServiceData?.name} em ${format(date, "d 'de' MMMM", { locale: ptBR })} às ${selectedTime}`,
+      });
+
+      toast({
+        title: 'Agendamento confirmado!',
+        description: `Seu horário foi reservado para ${format(date, "d 'de' MMMM", {
+          locale: ptBR,
+        })} às ${selectedTime}.`,
+      });
+
+      navigate('/perfil');
+    } catch (error) {
+      console.error('Failed to create appointment:', error);
+      toast({
+        title: 'Erro ao agendar',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
     }
-
-    // Adicionar notificação
-    addNotification({
-      type: 'appointment',
-      title: 'Agendamento Confirmado!',
-      message: `${selectedServiceData?.name} em ${format(date, "d 'de' MMMM", { locale: ptBR })} às ${selectedTime}`,
-    });
-
-    toast({
-      title: 'Agendamento confirmado!',
-      description: `Seu horário foi reservado para ${format(date, "d 'de' MMMM", {
-        locale: ptBR,
-      })} às ${selectedTime}.`,
-    });
-
-    navigate('/perfil');
   };
 
   if (!user) return null;

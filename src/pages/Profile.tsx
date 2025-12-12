@@ -9,6 +9,8 @@ import { Order } from '@/types/product';
 import { Appointment } from '@/types/appointment';
 import AppointmentCard from '@/components/AppointmentCard';
 import { Badge } from '@/components/ui/badge';
+import { orderService } from '@/services/orderService';
+import { appointmentService } from '@/services/appointmentService';
 
 const Profile = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -24,16 +26,22 @@ const Profile = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    const storedOrders = localStorage.getItem('userOrders');
-    if (storedOrders) {
-      setOrders(JSON.parse(storedOrders));
-    }
-
-    const storedAppointments = localStorage.getItem('userAppointments');
-    if (storedAppointments) {
-      setAppointments(JSON.parse(storedAppointments));
-    }
-  }, []);
+    const loadData = async () => {
+      if (user) {
+        try {
+          const [ordersData, appointmentsData] = await Promise.all([
+            orderService.getByUserId(user.id),
+            appointmentService.getByUserId(user.id),
+          ]);
+          setOrders(ordersData);
+          setAppointments(appointmentsData);
+        } catch (error) {
+          console.error('Failed to load profile data:', error);
+        }
+      }
+    };
+    loadData();
+  }, [user]);
 
   if (!user) return null;
 
