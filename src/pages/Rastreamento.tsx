@@ -4,28 +4,42 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, CheckCircle2 } from 'lucide-react';
+import { orderService } from '@/services/orderService';
 
 const Rastreamento = () => {
   const [trackingCode, setTrackingCode] = useState('');
   const [tracking, setTracking] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!trackingCode.trim()) return;
 
-    // Simulated tracking data
-    setTracking({
-      code: trackingCode,
-      status: 'shipped',
-      steps: [
-        { status: 'Pedido recebido', date: '10/11/2024', completed: true },
-        { status: 'Em separação', date: '11/11/2024', completed: true },
-        { status: 'A caminho', date: '12/11/2024', completed: true },
-        { status: 'Saiu para entrega', date: '13/11/2024', completed: false },
-        { status: 'Entregue', date: '-', completed: false },
-      ],
-    });
+    setLoading(true);
+    try {
+      const trackingData = await orderService.track(trackingCode);
+      if (trackingData) {
+        setTracking(trackingData);
+      } else {
+        // Fallback to simulated data if not found
+        setTracking({
+          code: trackingCode,
+          status: 'shipped',
+          steps: [
+            { status: 'Pedido recebido', date: '10/11/2024', completed: true },
+            { status: 'Em separação', date: '11/11/2024', completed: true },
+            { status: 'A caminho', date: '12/11/2024', completed: true },
+            { status: 'Saiu para entrega', date: '13/11/2024', completed: false },
+            { status: 'Entregue', date: '-', completed: false },
+          ],
+        });
+      }
+    } catch (error) {
+      console.error('Failed to track order:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,7 +72,9 @@ const Rastreamento = () => {
                   onChange={(e) => setTrackingCode(e.target.value)}
                 />
               </div>
-              <Button type="submit">Rastrear</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Buscando...' : 'Rastrear'}
+              </Button>
             </form>
           </CardContent>
         </Card>

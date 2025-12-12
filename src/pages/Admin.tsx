@@ -25,21 +25,15 @@ import { Shield, Calendar, Users, Clock, CheckCircle, XCircle, Crown, User } fro
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-
-interface StoredUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  createdAt: string;
-}
+import { appointmentService } from '@/services/appointmentService';
+import { userService, User as UserType } from '@/services/userService';
 
 const Admin = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [users, setUsers] = useState<StoredUser[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -58,15 +52,19 @@ const Admin = () => {
   }, [isAuthenticated, user, navigate, toast]);
 
   useEffect(() => {
-    const storedAppointments = localStorage.getItem('userAppointments');
-    if (storedAppointments) {
-      setAppointments(JSON.parse(storedAppointments));
-    }
-
-    const storedUsers = localStorage.getItem('users');
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    }
+    const loadData = async () => {
+      try {
+        const [appointmentsData, usersData] = await Promise.all([
+          appointmentService.getAll(),
+          userService.getAll(),
+        ]);
+        setAppointments(appointmentsData);
+        setUsers(usersData);
+      } catch (error) {
+        console.error('Failed to load admin data:', error);
+      }
+    };
+    loadData();
   }, []);
 
   const serviceLabels: Record<string, string> = {
@@ -106,35 +104,44 @@ const Admin = () => {
     subscription: 'bg-amber-500/20 text-amber-600',
   };
 
-  const updateAppointmentStatus = (id: string, status: Appointment['status']) => {
-    const updated = appointments.map(app => 
-      app.id === id ? { ...app, status } : app
-    );
-    setAppointments(updated);
-    localStorage.setItem('userAppointments', JSON.stringify(updated));
-    toast({
-      title: 'Status atualizado',
-      description: `Agendamento marcado como ${statusLabels[status].toLowerCase()}`,
-    });
+  const updateAppointmentStatus = async (id: string, status: Appointment['status']) => {
+    try {
+      await appointmentService.updateStatus(id, status);
+      setAppointments(prev => 
+        prev.map(app => app.id === id ? { ...app, status } : app)
+      );
+      toast({
+        title: 'Status atualizado',
+        description: `Agendamento marcado como ${statusLabels[status].toLowerCase()}`,
+      });
+    } catch (error) {
+      console.error('Failed to update appointment status:', error);
+      toast({
+        title: 'Erro ao atualizar',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const updateUserRole = (userId: string, newRole: UserRole) => {
-    const updatedUsers = users.map(u =>
-      u.id === userId ? { ...u, role: newRole } : u
-    );
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-
-    // Update currentUser if it's the same user
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    if (currentUser.id === userId) {
-      localStorage.setItem('currentUser', JSON.stringify({ ...currentUser, role: newRole }));
+  const updateUserRole = async (userId: string, newRole: UserRole) => {
+    try {
+      await userService.updateRole(userId, newRole);
+      setUsers(prev =>
+        prev.map(u => u.id === userId ? { ...u, role: newRole } : u)
+      );
+      toast({
+        title: 'Permissão atualizada',
+        description: `Usuário atualizado para ${roleLabels[newRole]}`,
+      });
+    } catch (error) {
+      console.error('Failed to update user role:', error);
+      toast({
+        title: 'Erro ao atualizar',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
     }
-
-    toast({
-      title: 'Permissão atualizada',
-      description: `Usuário atualizado para ${roleLabels[newRole]}`,
-    });
   };
 
   const stats = {
@@ -371,7 +378,7 @@ const Admin = () => {
                               {u.email}
                             </TableCell>
                             <TableCell>
-                              {format(new Date(u.createdAt), "d/MM/yyyy", { locale: ptBR })}
+                              {u.createdAt ? format(new Date(u.createdAt), "d/MM/yyyy", { locale: ptBR }) : '-'}
                             </TableCell>
                             <TableCell>
                               <Badge className={`${roleBadgeColors[u.role]} gap-1`}>

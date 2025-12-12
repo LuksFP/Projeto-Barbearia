@@ -4,18 +4,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Order } from '@/types/product';
 import { CheckCircle2, Package } from 'lucide-react';
+import { orderService } from '@/services/orderService';
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('lastOrder');
-    if (saved) {
-      setOrder(JSON.parse(saved));
-    } else {
-      navigate('/loja');
-    }
+    const loadOrder = async () => {
+      try {
+        const lastOrder = await orderService.getLastOrder();
+        if (lastOrder) {
+          setOrder(lastOrder);
+        } else {
+          navigate('/loja');
+        }
+      } catch (error) {
+        console.error('Failed to load order:', error);
+        navigate('/loja');
+      }
+    };
+    loadOrder();
   }, [navigate]);
 
   if (!order) return null;

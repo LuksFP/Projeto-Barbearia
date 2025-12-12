@@ -1,13 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { notificationService, Notification } from '@/services/notificationService';
 
-export interface Notification {
-  id: string;
-  type: 'appointment' | 'order' | 'info';
-  title: string;
-  message: string;
-  createdAt: string;
-  read: boolean;
-}
+export type { Notification } from '@/services/notificationService';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -32,40 +26,56 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('notifications');
-    if (stored) {
-      setNotifications(JSON.parse(stored));
-    }
+    // Load notifications on mount
+    const loadNotifications = async () => {
+      try {
+        const data = await notificationService.getAll();
+        setNotifications(data);
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      }
+    };
+    loadNotifications();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
-  }, [notifications]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      read: false,
-    };
-    setNotifications(prev => [newNotification, ...prev]);
+  const addNotification = async (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
+    try {
+      const newNotification = await notificationService.add(notification);
+      setNotifications(prev => [newNotification, ...prev]);
+    } catch (error) {
+      console.error('Failed to add notification:', error);
+    }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev =>
+        prev.map(n => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+    }
   };
 
-  const clearNotifications = () => {
-    setNotifications([]);
+  const clearNotifications = async () => {
+    try {
+      await notificationService.clear();
+      setNotifications([]);
+    } catch (error) {
+      console.error('Failed to clear notifications:', error);
+    }
   };
 
   return (

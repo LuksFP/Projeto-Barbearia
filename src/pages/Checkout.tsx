@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useLoyalty } from '@/contexts/LoyaltyContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,14 +16,16 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShippingInfo, Order } from '@/types/product';
+import { ShippingInfo } from '@/types/product';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Crown } from 'lucide-react';
+import { orderService } from '@/services/orderService';
 
 const Checkout = () => {
   const { items, subtotal, discountedSubtotal, discountAmount, clearCart } = useCart();
   const { addPoints } = useLoyalty();
   const { isSubscribed, discountPercentage } = useSubscription();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
@@ -66,7 +69,7 @@ const Checkout = () => {
     setLoading(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const finalShippingCost = deliveryMethod === 'pickup' ? 0 : shippingCost;
@@ -80,33 +83,32 @@ const Checkout = () => {
       return;
     }
 
-    const order: Order = {
-      id: `PED-${Date.now()}`,
-      items,
-      shipping: formData,
-      subtotal: discountedSubtotal,
-      shippingCost: finalShippingCost ?? 0,
-      total: discountedSubtotal + (finalShippingCost ?? 0),
-      paymentMethod,
-      date: new Date().toISOString(),
-      status: 'pending',
-      deliveryMethod,
-    };
+    try {
+      const order = await orderService.create({
+        userId: user?.id,
+        items,
+        shipping: formData,
+        subtotal: discountedSubtotal,
+        shippingCost: finalShippingCost ?? 0,
+        total: discountedSubtotal + (finalShippingCost ?? 0),
+        paymentMethod,
+        deliveryMethod,
+      });
 
-    // Salvar no localStorage geral
-    localStorage.setItem('lastOrder', JSON.stringify(order));
+      // Adicionar pontos de fidelidade (1 ponto por real gasto)
+      const pointsEarned = Math.floor(discountedSubtotal + (finalShippingCost ?? 0));
+      addPoints(pointsEarned, `Compra no valor de R$ ${(discountedSubtotal + (finalShippingCost ?? 0)).toFixed(2)}`, order.id);
 
-    // Salvar no histórico do usuário
-    const existingOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-    existingOrders.push(order);
-    localStorage.setItem('userOrders', JSON.stringify(existingOrders));
-
-    // Adicionar pontos de fidelidade (1 ponto por real gasto)
-    const pointsEarned = Math.floor(discountedSubtotal + (finalShippingCost ?? 0));
-    addPoints(pointsEarned, `Compra no valor de R$ ${(discountedSubtotal + (finalShippingCost ?? 0)).toFixed(2)}`, order.id);
-
-    clearCart();
-    navigate('/confirmacao');
+      clearCart();
+      navigate('/confirmacao');
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      toast({
+        title: 'Erro ao finalizar pedido',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (items.length === 0) {

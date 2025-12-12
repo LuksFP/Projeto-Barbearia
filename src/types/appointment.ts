@@ -16,6 +16,12 @@ export interface Appointment {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  // Guest appointment fields
+  isGuest?: boolean;
+  confirmationCode?: string;
+  // Rating fields
+  rating?: number;
+  review?: string;
 }
 
 export interface Testimonial {

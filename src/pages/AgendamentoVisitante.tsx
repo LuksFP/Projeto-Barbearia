@@ -12,6 +12,8 @@ import { Scissors, Clock, CheckCircle, UserCircle, Mail, Phone, ExternalLink } f
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { appointmentService } from '@/services/appointmentService';
+import { notificationService } from '@/services/notificationService';
 
 const AgendamentoVisitante = () => {
   const navigate = useNavigate();
@@ -53,7 +55,7 @@ const AgendamentoVisitante = () => {
 
   const [timeSlots] = useState<TimeSlot[]>(generateTimeSlots());
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!date || !selectedTime || !name || !email || !phone) {
@@ -65,36 +67,49 @@ const AgendamentoVisitante = () => {
       return;
     }
 
-    const code = `APT-${Date.now().toString(36).toUpperCase()}`;
+    try {
+      const code = `APT-${Date.now().toString(36).toUpperCase()}`;
 
-    const appointment = {
-      id: Date.now().toString(),
-      confirmationCode: code,
-      userId: 'guest',
-      service: selectedService,
-      date: date.toISOString(),
-      time: selectedTime,
-      status: 'scheduled',
-      createdAt: new Date().toISOString(),
-      customerName: name,
-      customerEmail: email,
-      customerPhone: phone,
-      isGuest: true,
-    };
+      await appointmentService.create({
+        userId: 'guest',
+        service: selectedService,
+        date: date.toISOString(),
+        time: selectedTime,
+        status: 'scheduled',
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone,
+        isGuest: true,
+        confirmationCode: code,
+      });
 
-    const existingAppointments = JSON.parse(
-      localStorage.getItem('userAppointments') || '[]'
-    );
-    existingAppointments.push(appointment);
-    localStorage.setItem('userAppointments', JSON.stringify(existingAppointments));
+      // Send email/SMS notifications (simulated)
+      const selectedServiceData = services.find(s => s.id === selectedService);
+      await notificationService.sendEmail(
+        email,
+        'Confirmação de Agendamento',
+        `Seu agendamento para ${selectedServiceData?.name} foi confirmado para ${format(date, "d 'de' MMMM", { locale: ptBR })} às ${selectedTime}. Código: ${code}`
+      );
+      await notificationService.sendSMS(
+        phone,
+        `Agendamento confirmado! ${selectedServiceData?.name} em ${format(date, "d/MM", { locale: ptBR })} às ${selectedTime}. Código: ${code}`
+      );
 
-    toast({
-      title: 'Confirmação enviada!',
-      description: `Enviamos um email para ${email} e SMS para ${phone} com os detalhes do agendamento.`,
-    });
+      toast({
+        title: 'Confirmação enviada!',
+        description: `Enviamos um email para ${email} e SMS para ${phone} com os detalhes do agendamento.`,
+      });
 
-    setConfirmationCode(code);
-    setConfirmed(true);
+      setConfirmationCode(code);
+      setConfirmed(true);
+    } catch (error) {
+      console.error('Failed to create appointment:', error);
+      toast({
+        title: 'Erro ao agendar',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (confirmed) {

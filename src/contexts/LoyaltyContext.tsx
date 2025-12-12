@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { LoyaltyProfile, LoyaltyTier, PointsTransaction, Reward, RedeemedReward } from '@/types/loyalty';
-import { tierBenefits } from '@/data/rewards';
+import { LoyaltyProfile, LoyaltyTier, Reward } from '@/types/loyalty';
 import { useToast } from '@/hooks/use-toast';
+import { loyaltyService } from '@/services/loyaltyService';
 
 interface LoyaltyContextType {
   loyaltyProfile: LoyaltyProfile | null;
@@ -33,80 +33,39 @@ export const LoyaltyProvider = ({ children }: LoyaltyProviderProps) => {
   const [loyaltyProfile, setLoyaltyProfile] = useState<LoyaltyProfile | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      const storedProfiles = JSON.parse(localStorage.getItem('loyaltyProfiles') || '{}');
-      
-      if (storedProfiles[user.id]) {
-        setLoyaltyProfile(storedProfiles[user.id]);
+    const loadProfile = async () => {
+      if (isAuthenticated && user) {
+        try {
+          let profile = await loyaltyService.getByUserId(user.id);
+          if (!profile) {
+            profile = await loyaltyService.create(user.id);
+          }
+          setLoyaltyProfile(profile);
+        } catch (error) {
+          console.error('Failed to load loyalty profile:', error);
+        }
       } else {
-        const newProfile: LoyaltyProfile = {
-          userId: user.id,
-          points: {
-            total: 0,
-            available: 0,
-            spent: 0,
-            tier: 'bronze',
-          },
-          transactions: [],
-          redeemedRewards: [],
-          joinedAt: new Date().toISOString(),
-        };
-        storedProfiles[user.id] = newProfile;
-        localStorage.setItem('loyaltyProfiles', JSON.stringify(storedProfiles));
-        setLoyaltyProfile(newProfile);
+        setLoyaltyProfile(null);
       }
-    } else {
-      setLoyaltyProfile(null);
-    }
+    };
+    loadProfile();
   }, [isAuthenticated, user]);
 
-  const calculateTier = (totalPoints: number): LoyaltyTier => {
-    if (totalPoints >= tierBenefits.platinum.minPoints) return 'platinum';
-    if (totalPoints >= tierBenefits.gold.minPoints) return 'gold';
-    if (totalPoints >= tierBenefits.silver.minPoints) return 'silver';
-    return 'bronze';
-  };
-
-  const updateProfile = (updatedProfile: LoyaltyProfile) => {
-    const storedProfiles = JSON.parse(localStorage.getItem('loyaltyProfiles') || '{}');
-    storedProfiles[updatedProfile.userId] = updatedProfile;
-    localStorage.setItem('loyaltyProfiles', JSON.stringify(storedProfiles));
-    setLoyaltyProfile(updatedProfile);
-  };
-
-  const addPoints = (points: number, description: string, relatedId?: string) => {
+  const addPoints = async (points: number, description: string, relatedId?: string) => {
     if (!loyaltyProfile || !user) return;
 
-    const transaction: PointsTransaction = {
-      id: Date.now().toString(),
-      type: 'earn',
-      points,
-      description,
-      date: new Date().toISOString(),
-      relatedId,
-    };
-
-    const newTotal = loyaltyProfile.points.total + points;
-    const newAvailable = loyaltyProfile.points.available + points;
-    const newTier = calculateTier(newTotal);
-
-    const updatedProfile: LoyaltyProfile = {
-      ...loyaltyProfile,
-      points: {
-        ...loyaltyProfile.points,
-        total: newTotal,
-        available: newAvailable,
-        tier: newTier,
-      },
-      transactions: [transaction, ...loyaltyProfile.transactions],
-    };
-
-    updateProfile(updatedProfile);
-
-    toast({
-      title: `+${points} pontos! 🎉`,
-      description: description,
-    });
+    try {
+      const updatedProfile = await loyaltyService.addPoints(user.id, points, description, relatedId);
+      if (updatedProfile) {
+        setLoyaltyProfile(updatedProfile);
+        toast({
+          title: `+${points} pontos! 🎉`,
+          description: description,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to add points:', error);
+    }
   };
 
   const spendPoints = (points: number, description: string, relatedId?: string): boolean => {
@@ -121,56 +80,38 @@ export const LoyaltyProvider = ({ children }: LoyaltyProviderProps) => {
       return false;
     }
 
-    const transaction: PointsTransaction = {
-      id: Date.now().toString(),
-      type: 'spend',
-      points,
-      description,
-      date: new Date().toISOString(),
-      relatedId,
-    };
+    // Async operation but we return sync for compatibility
+    loyaltyService.spendPoints(user.id, points, description, relatedId).then(result => {
+      if (result.success && result.profile) {
+        setLoyaltyProfile(result.profile);
+      }
+    });
 
-    const updatedProfile: LoyaltyProfile = {
-      ...loyaltyProfile,
-      points: {
-        ...loyaltyProfile.points,
-        available: loyaltyProfile.points.available - points,
-        spent: loyaltyProfile.points.spent + points,
-      },
-      transactions: [transaction, ...loyaltyProfile.transactions],
-    };
-
-    updateProfile(updatedProfile);
     return true;
   };
 
   const redeemReward = (reward: Reward): boolean => {
-    if (!spendPoints(reward.pointsCost, `Resgate: ${reward.name}`, reward.id)) {
+    if (!loyaltyProfile || !user) return false;
+
+    if (loyaltyProfile.points.available < reward.pointsCost) {
+      toast({
+        title: 'Pontos insuficientes',
+        description: `Você precisa de ${reward.pointsCost} pontos, mas tem apenas ${loyaltyProfile.points.available}.`,
+        variant: 'destructive',
+      });
       return false;
     }
 
-    if (!loyaltyProfile) return false;
-
-    const redeemedReward: RedeemedReward = {
-      id: Date.now().toString(),
-      rewardId: reward.id,
-      reward,
-      redeemedAt: new Date().toISOString(),
-      used: false,
-      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 dias
-      code: `REWARD${Date.now().toString().slice(-6)}`,
-    };
-
-    const updatedProfile: LoyaltyProfile = {
-      ...loyaltyProfile,
-      redeemedRewards: [redeemedReward, ...loyaltyProfile.redeemedRewards],
-    };
-
-    updateProfile(updatedProfile);
-
-    toast({
-      title: 'Recompensa resgatada! 🎁',
-      description: `${reward.name} - Código: ${redeemedReward.code}`,
+    loyaltyService.redeemReward(user.id, reward).then(result => {
+      if (result.success) {
+        loyaltyService.getByUserId(user.id).then(profile => {
+          if (profile) setLoyaltyProfile(profile);
+        });
+        toast({
+          title: 'Recompensa resgatada! 🎁',
+          description: `${reward.name} - Código: ${result.code}`,
+        });
+      }
     });
 
     return true;
@@ -182,18 +123,7 @@ export const LoyaltyProvider = ({ children }: LoyaltyProviderProps) => {
 
   const getNextTier = () => {
     if (!loyaltyProfile) return null;
-
-    const currentPoints = loyaltyProfile.points.total;
-    const tiers: LoyaltyTier[] = ['bronze', 'silver', 'gold', 'platinum'];
-    const currentTierIndex = tiers.indexOf(loyaltyProfile.points.tier);
-
-    if (currentTierIndex === tiers.length - 1) return null;
-
-    const nextTier = tiers[currentTierIndex + 1];
-    const nextTierMinPoints = tierBenefits[nextTier].minPoints;
-    const pointsNeeded = nextTierMinPoints - currentPoints;
-
-    return { tier: nextTier, pointsNeeded };
+    return loyaltyService.getNextTier(loyaltyProfile);
   };
 
   return (

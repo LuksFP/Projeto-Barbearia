@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,21 +10,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-
-interface Appointment {
-  id: string;
-  userId: string;
-  service: string;
-  date: string;
-  time: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  isGuest?: boolean;
-  rating?: number;
-  review?: string;
-}
+import { Appointment } from '@/types/appointment';
+import { appointmentService } from '@/services/appointmentService';
 
 const ConsultaAgendamento = () => {
   const { toast } = useToast();
@@ -44,7 +31,7 @@ const ConsultaAgendamento = () => {
     tratamento: 'Tratamento Especial',
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email && !phone) {
@@ -56,23 +43,23 @@ const ConsultaAgendamento = () => {
       return;
     }
 
-    const allAppointments: Appointment[] = JSON.parse(
-      localStorage.getItem('userAppointments') || '[]'
-    );
+    try {
+      const found = await appointmentService.getByContact(email || undefined, phone || undefined);
+      setAppointments(found);
+      setSearched(true);
 
-    const found = allAppointments.filter(
-      (apt) =>
-        (email && apt.customerEmail?.toLowerCase() === email.toLowerCase()) ||
-        (phone && apt.customerPhone?.replace(/\D/g, '') === phone.replace(/\D/g, ''))
-    );
-
-    setAppointments(found);
-    setSearched(true);
-
-    if (found.length === 0) {
+      if (found.length === 0) {
+        toast({
+          title: 'Nenhum agendamento encontrado',
+          description: 'Verifique os dados informados e tente novamente.',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to search appointments:', error);
       toast({
-        title: 'Nenhum agendamento encontrado',
-        description: 'Verifique os dados informados e tente novamente.',
+        title: 'Erro na busca',
+        description: 'Ocorreu um erro ao buscar os agendamentos.',
+        variant: 'destructive',
       });
     }
   };
@@ -105,7 +92,7 @@ const ConsultaAgendamento = () => {
     }
   };
 
-  const handleSubmitRating = () => {
+  const handleSubmitRating = async () => {
     if (!selectedAppointment || rating === 0) {
       toast({
         title: 'Avaliação obrigatória',
@@ -115,36 +102,35 @@ const ConsultaAgendamento = () => {
       return;
     }
 
-    const allAppointments: Appointment[] = JSON.parse(
-      localStorage.getItem('userAppointments') || '[]'
-    );
+    try {
+      await appointmentService.addRating(selectedAppointment.id, rating, review);
 
-    const updatedAppointments = allAppointments.map((apt) =>
-      apt.id === selectedAppointment.id
-        ? { ...apt, rating, review }
-        : apt
-    );
+      // Update local state
+      setAppointments((prev) =>
+        prev.map((apt) =>
+          apt.id === selectedAppointment.id
+            ? { ...apt, rating, review }
+            : apt
+        )
+      );
 
-    localStorage.setItem('userAppointments', JSON.stringify(updatedAppointments));
+      toast({
+        title: 'Avaliação enviada!',
+        description: 'Obrigado pelo seu feedback.',
+      });
 
-    // Update local state
-    setAppointments((prev) =>
-      prev.map((apt) =>
-        apt.id === selectedAppointment.id
-          ? { ...apt, rating, review }
-          : apt
-      )
-    );
-
-    toast({
-      title: 'Avaliação enviada!',
-      description: 'Obrigado pelo seu feedback.',
-    });
-
-    setDialogOpen(false);
-    setRating(0);
-    setReview('');
-    setSelectedAppointment(null);
+      setDialogOpen(false);
+      setRating(0);
+      setReview('');
+      setSelectedAppointment(null);
+    } catch (error) {
+      console.error('Failed to submit rating:', error);
+      toast({
+        title: 'Erro ao enviar avaliação',
+        description: 'Ocorreu um erro inesperado.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

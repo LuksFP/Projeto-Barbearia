@@ -1,15 +1,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { userService, User, UserRole } from '@/services/userService';
 
-export type UserRole = 'client' | 'admin' | 'subscription';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
+export type { UserRole } from '@/services/userService';
 
 interface AuthContextType {
   user: User | null;
@@ -35,97 +29,96 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    // Check for existing session on mount
+    const checkAuth = async () => {
+      try {
+        const currentUser = await userService.getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const foundUser = users.find(
-      (u: any) => u.email === email && u.password === password
-    );
+    try {
+      const loggedInUser = await userService.login({ email, password });
 
-    if (foundUser) {
-      const userData = { 
-        id: foundUser.id, 
-        name: foundUser.name, 
-        email: foundUser.email,
-        role: foundUser.role || 'client' as UserRole
-      };
-      setUser(userData);
-      localStorage.setItem('currentUser', JSON.stringify(userData));
+      if (loggedInUser) {
+        setUser(loggedInUser);
+        toast({
+          title: 'Login realizado com sucesso!',
+          description: `Bem-vindo de volta, ${loggedInUser.name}!`,
+        });
+        return true;
+      }
+
       toast({
-        title: 'Login realizado com sucesso!',
-        description: `Bem-vindo de volta, ${foundUser.name}!`,
+        title: 'Erro ao fazer login',
+        description: 'Email ou senha incorretos',
+        variant: 'destructive',
       });
-      return true;
+      return false;
+    } catch (error) {
+      toast({
+        title: 'Erro ao fazer login',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+      return false;
     }
-
-    toast({
-      title: 'Erro ao fazer login',
-      description: 'Email ou senha incorretos',
-      variant: 'destructive',
-    });
-    return false;
   };
 
   const signup = async (name: string, email: string, password: string, role: UserRole = 'client'): Promise<boolean> => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    if (users.find((u: any) => u.email === email)) {
+    try {
+      const newUser = await userService.signup(name, email, password, role);
+
+      if (newUser) {
+        setUser(newUser);
+        toast({
+          title: 'Cadastro realizado com sucesso!',
+          description: `Bem-vindo, ${name}!`,
+        });
+        return true;
+      }
+
       toast({
         title: 'Erro ao cadastrar',
         description: 'Este email já está cadastrado',
         variant: 'destructive',
       });
       return false;
+    } catch (error) {
+      toast({
+        title: 'Erro ao cadastrar',
+        description: 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+      return false;
     }
-
-    // First user is admin, rest use the selected role
-    const isFirstUser = users.length === 0;
-    const newUser = {
-      id: Date.now().toString(),
-      name,
-      email,
-      password,
-      role: isFirstUser ? 'admin' : role,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-
-    const userData = { 
-      id: newUser.id, 
-      name: newUser.name, 
-      email: newUser.email,
-      role: newUser.role as UserRole
-    };
-    setUser(userData);
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-
-    toast({
-      title: 'Cadastro realizado com sucesso!',
-      description: `Bem-vindo, ${name}!`,
-    });
-    return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await userService.logout();
     setUser(null);
-    localStorage.removeItem('currentUser');
     toast({
       title: 'Logout realizado',
       description: 'Até logo!',
     });
     navigate('/');
   };
+
+  if (loading) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <AuthContext.Provider
