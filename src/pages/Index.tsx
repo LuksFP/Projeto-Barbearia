@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Scissors, Award, Clock } from 'lucide-react';
+import { Scissors, Award, Clock, Sparkles, ArrowRight, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
 import SectionTitle from '@/components/SectionTitle';
 import HaircutCard from '@/components/HaircutCard';
 import lowFade from '@/assets/low-fade.jpg';
@@ -24,79 +25,181 @@ const Index = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    },
+  };
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-hidden">
       {/* Hero Section */}
-      <section className="relative pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 md:pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
+      <section className="relative pt-28 sm:pt-32 md:pt-40 pb-16 sm:pb-20 md:pb-28 px-4">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-gradient-hero" />
+        <div className="absolute inset-0 bg-hero-pattern opacity-50" />
+        
+        {/* Decorative elements */}
+        <motion.div 
+          className="absolute top-32 right-[10%] w-64 h-64 bg-primary/10 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className="absolute bottom-20 left-[5%] w-48 h-48 bg-primary/15 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.4, 0.2, 0.4] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
         
         <div className="container mx-auto relative z-10">
-          <div className="max-w-4xl mx-auto text-center px-2">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-primary/10 mb-6 md:mb-8 animate-in zoom-in duration-500">
-              <Scissors className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary" />
-            </div>
+          <motion.div 
+            className="max-w-4xl mx-auto text-center"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Icon badge */}
+            <motion.div 
+              className="inline-flex items-center justify-center mb-8"
+              variants={itemVariants}
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse-ring" />
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                  <Scissors className="w-8 h-8 sm:w-10 sm:h-10 text-primary-foreground" />
+                </div>
+              </div>
+            </motion.div>
             
-            <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-4 md:mb-6 tracking-wider animate-in fade-in slide-in-from-bottom-4 duration-700">
-              BARBER <span className="text-primary">PRO</span>
-            </h1>
+            {/* Title */}
+            <motion.h1 
+              className="font-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl mb-4 md:mb-6 tracking-wider"
+              variants={itemVariants}
+            >
+              BARBER <span className="text-gradient">PRO</span>
+            </motion.h1>
             
-            <p className="font-body text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-8 md:mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 max-w-lg mx-auto">
+            {/* Subtitle */}
+            <motion.p 
+              className="font-body text-lg sm:text-xl md:text-2xl text-muted-foreground mb-4 max-w-xl mx-auto"
+              variants={itemVariants}
+            >
               Experiência premium em cortes masculinos
-            </p>
+            </motion.p>
+
+            {/* Rating badge */}
+            <motion.div 
+              className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border rounded-full px-4 py-2 mb-10"
+              variants={itemVariants}
+            >
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                ))}
+              </div>
+              <span className="text-sm font-body text-muted-foreground">4.9 • 500+ avaliações</span>
+            </motion.div>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+            {/* CTA Buttons */}
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+              variants={itemVariants}
+            >
               <Button 
-                size="lg" 
+                size="xl" 
+                variant="glow"
                 onClick={handleAgendar}
-                className="font-body font-semibold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto animate-pulse-glow"
+                className="font-body font-bold animate-pulse-glow group"
               >
+                <Sparkles className="w-5 h-5 mr-1" />
                 Agendar Corte
+                <ArrowRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
               </Button>
-              <Link to="/cortes" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="font-body font-semibold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full">
+              <Link to="/cortes">
+                <Button size="xl" variant="outline" className="font-body font-semibold w-full sm:w-auto group">
                   Ver Cortes
+                  <ArrowRight className="w-4 h-4 ml-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                 </Button>
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
+        
+        {/* Scroll indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex justify-center pt-2">
+            <div className="w-1.5 h-3 rounded-full bg-primary" />
+          </div>
+        </motion.div>
       </section>
 
       {/* Info Cards */}
-      <section className="py-12 sm:py-16 md:py-20 px-4 bg-secondary/30">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+      <section className="py-16 md:py-24 px-4 bg-secondary/30 relative">
+        <div className="absolute inset-0 bg-hero-pattern opacity-20" />
+        <div className="container mx-auto relative z-10">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
             {[
-              { icon: Award, title: 'ESPECIALISTAS', desc: 'Barbeiros certificados e experientes' },
-              { icon: Scissors, title: 'PREMIUM', desc: 'Atendimento de alta qualidade' },
-              { icon: Clock, title: 'MODERNO', desc: 'Cortes e estilos atualizados' },
+              { icon: Award, title: 'ESPECIALISTAS', desc: 'Barbeiros certificados com mais de 10 anos de experiência' },
+              { icon: Scissors, title: 'PREMIUM', desc: 'Atendimento exclusivo e personalizado para cada cliente' },
+              { icon: Clock, title: 'MODERNO', desc: 'Técnicas atualizadas e tendências internacionais' },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
-                <div
+                <motion.div
                   key={i}
-                  className="bg-card p-5 sm:p-6 md:p-8 rounded-xl border border-border hover:border-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 group"
+                  variants={itemVariants}
+                  className="glass-card p-6 md:p-8 rounded-2xl hover:border-primary/50 transition-all duration-500 group hover-lift cursor-pointer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-3 md:mb-4 group-hover:scale-110 transition-transform" />
-                  <h3 className="font-heading text-2xl md:text-3xl mb-2 md:mb-4 group-hover:text-primary transition-colors">
+                  <div className="relative mb-5">
+                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Icon className="w-7 h-7 text-primary" />
+                    </div>
+                  </div>
+                  <h3 className="font-heading text-2xl md:text-3xl mb-3 group-hover:text-primary transition-colors">
                     {item.title}
                   </h3>
-                  <p className="font-body text-sm md:text-base text-muted-foreground">{item.desc}</p>
-                </div>
+                  <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed">
+                    {item.desc}
+                  </p>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Cortes Modernos Preview */}
-      <section className="py-12 sm:py-16 md:py-20 px-4">
+      <section className="py-16 md:py-24 px-4">
         <div className="container mx-auto">
           <SectionTitle subtitle="Descubra os estilos que combinam com você">
             CORTES <span className="text-primary">MODERNOS</span>
           </SectionTitle>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto mb-8 md:mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 max-w-7xl mx-auto mb-10 md:mb-14">
             <HaircutCard
               image={lowFade}
               title="LOW FADE"
@@ -123,75 +226,143 @@ const Index = () => {
             />
           </div>
           
-          <div className="text-center">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+          >
             <Link to="/cortes">
-              <Button size="lg" variant="outline" className="font-body font-semibold w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="font-body font-semibold group">
                 Ver Todos os Cortes
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Tipos de Cabelo Preview */}
-      <section className="py-12 sm:py-16 md:py-20 px-4 bg-secondary/30">
-        <div className="container mx-auto">
+      <section className="py-16 md:py-24 px-4 bg-secondary/30 relative overflow-hidden">
+        <div className="absolute inset-0 bg-hero-pattern opacity-20" />
+        <div className="container mx-auto relative z-10">
           <SectionTitle subtitle="Técnicas específicas para cada tipo de cabelo">
             TIPOS DE <span className="text-primary">CABELO</span>
           </SectionTitle>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto mb-8 md:mb-12">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-8 max-w-5xl mx-auto mb-10 md:mb-14"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+          >
             {[
-              { image: cabeloLiso, title: 'LISO', desc: 'Técnicas para volume e textura' },
-              { image: cabeloOndulado, title: 'ONDULADO', desc: 'Valorização das ondas naturais' },
-              { image: cabeloCrespo, title: 'CRESPO', desc: 'Cuidados especiais e atenção' },
+              { image: cabeloLiso, title: 'LISO', desc: 'Técnicas para volume e textura', link: '/cabelo-liso' },
+              { image: cabeloOndulado, title: 'ONDULADO', desc: 'Valorização das ondas naturais', link: '/cabelo-ondulado' },
+              { image: cabeloCrespo, title: 'CRESPO', desc: 'Cuidados especiais e atenção', link: '/cabelo-crespo' },
             ].map((item, i) => (
-              <div
-                key={i}
-                className="group relative overflow-hidden rounded-xl aspect-video animate-in fade-in zoom-in duration-500"
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-4 sm:p-6">
-                  <div className="bg-primary px-2 sm:px-3 py-1 rounded-md inline-block mb-2 self-start">
-                    <span className="font-heading text-base sm:text-lg text-primary-foreground">{item.title}</span>
+              <motion.div key={i} variants={itemVariants}>
+                <Link to={item.link}>
+                  <div className="group relative overflow-hidden rounded-2xl aspect-[4/3] cursor-pointer hover-lift">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                    />
+                    
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-barber-black via-barber-black/50 to-transparent" />
+                    
+                    {/* Content */}
+                    <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6">
+                      <div className="transform transition-all duration-500 group-hover:-translate-y-2">
+                        <div className="inline-flex bg-primary px-3 py-1.5 rounded-lg mb-3 shadow-lg">
+                          <span className="font-heading text-base md:text-lg text-primary-foreground">{item.title}</span>
+                        </div>
+                        <p className="font-body text-sm md:text-base text-white/90">{item.desc}</p>
+                        
+                        <div className="flex items-center gap-2 mt-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <span className="font-body text-sm font-medium">Saiba mais</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="font-body text-sm sm:text-base text-white/90">{item.desc}</p>
-                </div>
-              </div>
+                </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           
-          <div className="text-center">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
             <Link to="/tipos-cabelo">
-              <Button size="lg" className="font-body font-semibold w-full sm:w-auto">
+              <Button size="lg" className="font-body font-semibold group">
                 Saiba Mais
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Final */}
-      <section className="py-12 sm:py-16 md:py-20 px-4">
-        <div className="container mx-auto text-center max-w-3xl px-2">
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 md:mb-6">
-            TRANSFORME SEU <span className="text-primary">ESTILO</span>
-          </h2>
-          <p className="font-body text-base sm:text-lg text-muted-foreground mb-6 md:mb-8">
-            Agende seu horário e experimente o melhor da barbearia moderna.
-          </p>
-          <Button 
-            size="lg" 
-            onClick={handleAgendar}
-            className="font-body font-semibold text-base sm:text-lg px-8 sm:px-12 py-5 sm:py-6 w-full sm:w-auto animate-pulse-glow"
+      <section className="py-20 md:py-32 px-4 relative overflow-hidden">
+        {/* Background decoration */}
+        <motion.div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 180, 360] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+        
+        <div className="container mx-auto relative z-10">
+          <motion.div 
+            className="text-center max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
-            Agendar Agora
-          </Button>
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-6"
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="font-body text-sm font-medium text-primary">Transformação garantida</span>
+            </motion.div>
+            
+            <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight">
+              TRANSFORME SEU <span className="text-gradient">ESTILO</span>
+            </h2>
+            <p className="font-body text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
+              Agende seu horário e experimente o melhor da barbearia moderna. Seu novo visual está a um clique de distância.
+            </p>
+            
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button 
+                size="xl" 
+                variant="glow"
+                onClick={handleAgendar}
+                className="font-body font-bold animate-pulse-glow group"
+              >
+                <Sparkles className="w-5 h-5 mr-1" />
+                Agendar Agora
+                <ArrowRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
     </div>

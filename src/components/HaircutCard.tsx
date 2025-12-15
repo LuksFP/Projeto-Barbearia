@@ -1,4 +1,6 @@
 import { Card } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 
 interface HaircutCardProps {
   image: string;
@@ -9,25 +11,51 @@ interface HaircutCardProps {
 
 const HaircutCard = ({ image, title, description, delay = 0 }: HaircutCardProps) => {
   return (
-    <Card 
-      className="group overflow-hidden border-border hover:border-primary transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 animate-in fade-in slide-in-from-bottom-4"
-      style={{ animationDelay: `${delay}ms` }}
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.5, delay: delay / 1000, ease: "easeOut" }}
     >
-      <div className="relative overflow-hidden aspect-square">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="absolute inset-0 flex items-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
-          <div>
-            <h3 className="font-heading text-3xl text-white mb-2">{title}</h3>
-            <p className="font-body text-white/90">{description}</p>
+      <Card className="group overflow-hidden border-border hover:border-primary/50 transition-all duration-500 hover:shadow-xl hover:shadow-primary/10 bg-card hover-lift cursor-pointer">
+        <div className="relative overflow-hidden aspect-square">
+          {/* Image */}
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+          />
+          
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-barber-black via-barber-black/40 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+          
+          {/* Decorative corner */}
+          <div className="absolute top-4 right-4 w-12 h-12 border-t-2 border-r-2 border-primary/0 group-hover:border-primary transition-colors duration-500" />
+          <div className="absolute bottom-4 left-4 w-12 h-12 border-b-2 border-l-2 border-primary/0 group-hover:border-primary transition-colors duration-500" />
+          
+          {/* Content */}
+          <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6">
+            <div className="transform transition-all duration-500 group-hover:-translate-y-2">
+              {/* Badge */}
+              <motion.div 
+                className="inline-flex items-center gap-1.5 bg-primary/90 backdrop-blur-sm px-3 py-1 rounded-full mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                initial={false}
+              >
+                <span className="text-xs font-body font-semibold text-primary-foreground uppercase tracking-wide">Ver detalhes</span>
+                <ArrowRight className="w-3 h-3 text-primary-foreground" />
+              </motion.div>
+              
+              <h3 className="font-heading text-2xl md:text-3xl text-white mb-1.5 drop-shadow-lg">
+                {title}
+              </h3>
+              <p className="font-body text-sm md:text-base text-white/80">
+                {description}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </motion.div>
   );
 };
 
