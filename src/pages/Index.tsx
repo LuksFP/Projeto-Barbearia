@@ -1,9 +1,12 @@
+import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Scissors, Award, Clock, Sparkles, ArrowRight, Star } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import SectionTitle from '@/components/SectionTitle';
 import HaircutCard from '@/components/HaircutCard';
+import ParallaxSection from '@/components/ParallaxSection';
+import ImageWithSkeleton from '@/components/ImageWithSkeleton';
 import lowFade from '@/assets/low-fade.jpg';
 import taperFade from '@/assets/taper-fade.jpg';
 import americano from '@/assets/americano.jpg';
@@ -16,6 +19,26 @@ import { useAuth } from '@/contexts/AuthContext';
 const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  
+  // Parallax refs
+  const heroRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+
+  // Hero parallax
+  const { scrollYProgress: heroProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  });
+  const heroY = useTransform(heroProgress, [0, 1], [0, 150]);
+  const heroOpacity = useTransform(heroProgress, [0, 0.8], [1, 0]);
+  const heroScale = useTransform(heroProgress, [0, 1], [1, 0.9]);
+
+  // CTA parallax
+  const { scrollYProgress: ctaProgress } = useScroll({
+    target: ctaRef,
+    offset: ['start end', 'center center'],
+  });
+  const ctaScale = useTransform(ctaProgress, [0, 1], [0.9, 1]);
 
   const handleAgendar = () => {
     if (isAuthenticated) {
@@ -44,25 +67,36 @@ const Index = () => {
 
   return (
     <div className="min-h-screen overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative pt-28 sm:pt-32 md:pt-40 pb-16 sm:pb-20 md:pb-28 px-4">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="absolute inset-0 bg-hero-pattern opacity-50" />
+      {/* Hero Section with Parallax */}
+      <section ref={heroRef} className="relative pt-28 sm:pt-32 md:pt-40 pb-16 sm:pb-20 md:pb-28 px-4 min-h-[90vh] flex items-center">
+        {/* Parallax background */}
+        <motion.div 
+          className="absolute inset-0 bg-gradient-hero"
+          style={{ y: heroY }}
+        />
+        <motion.div 
+          className="absolute inset-0 bg-hero-pattern opacity-50"
+          style={{ y: useTransform(heroProgress, [0, 1], [0, 80]) }}
+        />
         
-        {/* Decorative elements */}
+        {/* Animated decorative elements */}
         <motion.div 
           className="absolute top-32 right-[10%] w-64 h-64 bg-primary/10 rounded-full blur-3xl"
           animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          style={{ y: useTransform(heroProgress, [0, 1], [0, -50]) }}
         />
         <motion.div 
           className="absolute bottom-20 left-[5%] w-48 h-48 bg-primary/15 rounded-full blur-3xl"
           animate={{ scale: [1.2, 1, 1.2], opacity: [0.4, 0.2, 0.4] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          style={{ y: useTransform(heroProgress, [0, 1], [0, -30]) }}
         />
         
-        <div className="container mx-auto relative z-10">
+        <motion.div 
+          className="container mx-auto relative z-10"
+          style={{ opacity: heroOpacity, scale: heroScale }}
+        >
           <motion.div 
             className="max-w-4xl mx-auto text-center"
             variants={containerVariants}
@@ -134,13 +168,14 @@ const Index = () => {
               </Link>
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
         
         {/* Scroll indicator */}
         <motion.div 
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          style={{ opacity: heroOpacity }}
         >
           <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex justify-center pt-2">
             <div className="w-1.5 h-3 rounded-full bg-primary" />
@@ -148,10 +183,14 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Info Cards */}
-      <section className="py-16 md:py-24 px-4 bg-secondary/30 relative">
-        <div className="absolute inset-0 bg-hero-pattern opacity-20" />
-        <div className="container mx-auto relative z-10">
+      {/* Info Cards with Parallax */}
+      <ParallaxSection 
+        className="py-16 md:py-24 px-4 bg-secondary/30"
+        backgroundClassName="bg-hero-pattern opacity-20"
+        speed={0.15}
+        fadeIn
+      >
+        <div className="container mx-auto">
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-8"
             variants={containerVariants}
@@ -190,10 +229,14 @@ const Index = () => {
             })}
           </motion.div>
         </div>
-      </section>
+      </ParallaxSection>
 
       {/* Cortes Modernos Preview */}
-      <section className="py-16 md:py-24 px-4">
+      <ParallaxSection 
+        className="py-16 md:py-24 px-4"
+        speed={0.1}
+        fadeIn
+      >
         <div className="container mx-auto">
           <SectionTitle subtitle="Descubra os estilos que combinam com você">
             CORTES <span className="text-primary">MODERNOS</span>
@@ -241,12 +284,17 @@ const Index = () => {
             </Link>
           </motion.div>
         </div>
-      </section>
+      </ParallaxSection>
 
-      {/* Tipos de Cabelo Preview */}
-      <section className="py-16 md:py-24 px-4 bg-secondary/30 relative overflow-hidden">
-        <div className="absolute inset-0 bg-hero-pattern opacity-20" />
-        <div className="container mx-auto relative z-10">
+      {/* Tipos de Cabelo Preview with Parallax */}
+      <ParallaxSection 
+        className="py-16 md:py-24 px-4 bg-secondary/30"
+        backgroundClassName="bg-hero-pattern opacity-20"
+        speed={0.15}
+        fadeIn
+        scaleEffect
+      >
+        <div className="container mx-auto">
           <SectionTitle subtitle="Técnicas específicas para cada tipo de cabelo">
             TIPOS DE <span className="text-primary">CABELO</span>
           </SectionTitle>
@@ -266,17 +314,18 @@ const Index = () => {
               <motion.div key={i} variants={itemVariants}>
                 <Link to={item.link}>
                   <div className="group relative overflow-hidden rounded-2xl aspect-[4/3] cursor-pointer hover-lift">
-                    <img
+                    <ImageWithSkeleton
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                      className="transition-transform duration-700 ease-out group-hover:scale-110"
+                      aspectRatio="4/3"
                     />
                     
                     {/* Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-barber-black via-barber-black/50 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-barber-black via-barber-black/50 to-transparent pointer-events-none" />
                     
                     {/* Content */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6">
+                    <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6 pointer-events-none">
                       <div className="transform transition-all duration-500 group-hover:-translate-y-2">
                         <div className="inline-flex bg-primary px-3 py-1.5 rounded-lg mb-3 shadow-lg">
                           <span className="font-heading text-base md:text-lg text-primary-foreground">{item.title}</span>
@@ -310,10 +359,10 @@ const Index = () => {
             </Link>
           </motion.div>
         </div>
-      </section>
+      </ParallaxSection>
 
-      {/* CTA Final */}
-      <section className="py-20 md:py-32 px-4 relative overflow-hidden">
+      {/* CTA Final with Parallax Scale */}
+      <section ref={ctaRef} className="py-20 md:py-32 px-4 relative overflow-hidden">
         {/* Background decoration */}
         <motion.div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl"
@@ -321,7 +370,10 @@ const Index = () => {
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         />
         
-        <div className="container mx-auto relative z-10">
+        <motion.div 
+          className="container mx-auto relative z-10"
+          style={{ scale: ctaScale }}
+        >
           <motion.div 
             className="text-center max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 40 }}
@@ -363,7 +415,7 @@ const Index = () => {
               </Button>
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
     </div>
   );
