@@ -12,7 +12,7 @@ export interface Subscription {
 }
 
 // Mock data store - will be replaced by database
-let subscriptions: Subscription[] = [];
+const subscriptions: Subscription[] = [];
 
 export const subscriptionService = {
   // Get subscription by user ID

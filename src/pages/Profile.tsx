@@ -6,18 +6,17 @@ import { useNavigate } from 'react-router-dom';
 import { User, Package, LogOut, Calendar, Shield, Crown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Order } from '@/types/product';
-import { Appointment } from '@/types/appointment';
-import AppointmentCard from '@/components/AppointmentCard';
+import AppointmentCard, { type AppointmentDisplay } from '@/components/AppointmentCard';
 import { Badge } from '@/components/ui/badge';
 import { orderService } from '@/services/orderService';
-import { appointmentService } from '@/services/appointmentService';
+import { supabasePublic } from '@/lib/supabase-public';
 
 const Profile = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { isSubscribed, discountPercentage } = useSubscription();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentDisplay[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -27,17 +26,20 @@ const Profile = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (user) {
-        try {
-          const [ordersData, appointmentsData] = await Promise.all([
-            orderService.getByUserId(user.id),
-            appointmentService.getByUserId(user.id),
-          ]);
-          setOrders(ordersData);
-          setAppointments(appointmentsData);
-        } catch (error) {
-          console.error('Failed to load profile data:', error);
-        }
+      if (!user) return;
+      try {
+        const [ordersData, { data: aptData }] = await Promise.all([
+          orderService.getByUserId(user.id),
+          supabasePublic
+            .from('appointments')
+            .select('id, service_name, date, time, status, barber_name')
+            .eq('user_id', user.id)
+            .order('date', { ascending: false }),
+        ]);
+        setOrders(ordersData);
+        setAppointments((aptData ?? []) as AppointmentDisplay[]);
+      } catch (error) {
+        console.error('Failed to load profile data:', error);
       }
     };
     loadData();

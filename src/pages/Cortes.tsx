@@ -1,34 +1,8 @@
 import SectionTitle from '@/components/SectionTitle';
 import HaircutCard from '@/components/HaircutCard';
-import lowFade from '@/assets/low-fade.jpg';
-import taperFade from '@/assets/taper-fade.jpg';
-import americano from '@/assets/americano.jpg';
-import midFade from '@/assets/mid-fade.jpg';
+import { allHaircuts } from '@/data/haircuts';
 
 const Cortes = () => {
-  const haircuts = [
-    {
-      image: lowFade,
-      title: 'LOW FADE',
-      description: 'Degradê baixo com transição suave e precisa, ideal para um visual moderno e profissional.'
-    },
-    {
-      image: taperFade,
-      title: 'TAPER FADE',
-      description: 'Corte gradual que mantém comprimento no topo com laterais desvanecidas de forma natural.'
-    },
-    {
-      image: americano,
-      title: 'AMERICANO',
-      description: 'Clássico atemporal com topo texturizado e laterais curtas, perfeito para qualquer ocasião.'
-    },
-    {
-      image: midFade,
-      title: 'MID FADE',
-      description: 'Degradê médio versátil, perfeito para todos os estilos e tipos de cabelo.'
-    },
-  ];
-
   return (
     <div className="min-h-screen pt-20">
       {/* Hero Section */}
@@ -42,12 +16,15 @@ const Cortes = () => {
 
           {/* Gallery Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {haircuts.map((haircut, index) => (
+            {allHaircuts.map((haircut, index) => (
               <HaircutCard
                 key={index}
                 image={haircut.image}
                 title={haircut.title}
                 description={haircut.description}
+                detail={haircut.detail}
+                framingLabel={haircut.framingLabel}
+                imageClassName={haircut.imageClassName}
                 delay={index * 100}
               />
             ))}

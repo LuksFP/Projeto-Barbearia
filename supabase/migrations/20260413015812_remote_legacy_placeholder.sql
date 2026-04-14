@@ -1,0 +1,2 @@
+-- Placeholder to reconcile local migration history with the linked Supabase project.
+-- The actual schema for this version already exists on the remote database.

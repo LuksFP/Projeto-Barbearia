@@ -1,10 +1,10 @@
 // Appointment Service - Ready for backend integration
 // TODO: Replace mock implementations with actual API calls
 
-import { Appointment } from '@/types/appointment';
+import type { Appointment } from '@/types/appointment';
 
 // Mock data store - will be replaced by database
-let appointments: Appointment[] = [];
+const appointments: Appointment[] = [];
 
 export const appointmentService = {
   // Get all appointments

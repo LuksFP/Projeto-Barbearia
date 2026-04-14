@@ -1,10 +1,10 @@
 // Order Service - Ready for backend integration
 // TODO: Replace mock implementations with actual API calls
 
-import { Order } from '@/types/product';
+import type { Order, OrderTracking } from '@/types/product';
 
 // Mock data store - will be replaced by database
-let orders: Order[] = [];
+const orders: Order[] = [];
 let lastOrder: Order | null = null;
 
 export const orderService = {
@@ -64,7 +64,7 @@ export const orderService = {
   },
 
   // Track order
-  async track(code: string): Promise<{ code: string; status: string; steps: any[] } | null> {
+  async track(code: string): Promise<OrderTracking | null> {
     // TODO: Replace with API call
     // return await api.get(`/orders/track/${code}`);
     const order = orders.find(o => o.id === code);

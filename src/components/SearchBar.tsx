@@ -52,7 +52,7 @@ const SearchBar = () => {
       <div className="relative">
         <motion.button
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 text-foreground hover:text-primary transition-colors"
+          className="flex items-center gap-2 rounded-full px-3.5 py-2 text-foreground/90 hover:bg-background/45 hover:text-primary transition-all duration-300"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -67,7 +67,7 @@ const SearchBar = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-full right-0 mt-2 w-[90vw] max-w-md bg-background border border-border rounded-lg shadow-xl z-50"
+              className="absolute top-full right-0 mt-3 w-[90vw] max-w-md rounded-2xl border border-border/50 bg-background/85 backdrop-blur-xl shadow-2xl z-50"
             >
               {/* Search Input */}
               <div className="p-4 border-b border-border">

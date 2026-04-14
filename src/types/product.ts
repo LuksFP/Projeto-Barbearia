@@ -38,3 +38,15 @@ export interface Order {
   status: 'pending' | 'processing' | 'shipped' | 'delivered';
   deliveryMethod?: 'delivery' | 'pickup';
 }
+
+export interface OrderTrackingStep {
+  status: string;
+  date: string;
+  completed: boolean;
+}
+
+export interface OrderTracking {
+  code: string;
+  status: Order['status'];
+  steps: OrderTrackingStep[];
+}

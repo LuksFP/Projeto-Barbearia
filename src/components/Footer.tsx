@@ -20,11 +20,11 @@ const Footer = () => {
 
   const linkItems = [
     { to: '/', label: 'Home' },
-    { to: '/sobre', label: 'Sobre' },
-    { to: '/cortes', label: 'Cortes' },
-    { to: '/tipos-cabelo', label: 'Tipos de Cabelo' },
-    { to: '/loja', label: 'Loja' },
-    { to: '/consulta-agendamento', label: 'Consultar Agendamento' },
+    { to: '/sobre', label: 'Plataforma' },
+    { to: '/cortes', label: 'Demo de Site' },
+    { to: '/admin', label: 'Demo de Dashboard' },
+    { to: '/login', label: 'Entrar no app' },
+    { to: '/assinatura', label: 'Planos e recorrencia' },
   ];
 
   return (
@@ -52,7 +52,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="font-body text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Experiência premium em cortes masculinos desde 2008. Excelência em cada detalhe, transformando estilos com maestria.
+              SaaS para barbearias que precisam de site publico, agenda, equipe, clientes e operacao organizada em um so ambiente.
             </p>
             
             {/* Social icons */}
@@ -117,38 +117,38 @@ const Footer = () => {
                   <MapPin className="w-4 h-4 text-primary" />
                 </div>
                 <span className="font-body text-sm text-muted-foreground">
-                  Rua dos Barbeiros, 123<br />São Paulo - SP
+                  Operação remota para onboarding, setup e suporte<br />Brasil
                 </span>
               </li>
             </ul>
           </motion.div>
 
-          {/* Horários */}
+          {/* Operação */}
           <motion.div variants={itemVariants}>
-            <h4 className="font-heading text-xl mb-5 text-foreground">HORÁRIOS</h4>
+            <h4 className="font-heading text-xl mb-5 text-foreground">MODELO</h4>
             <ul className="space-y-3">
               <li className="flex justify-between font-body text-sm">
-                <span className="text-muted-foreground">Seg - Sex</span>
-                <span className="text-foreground font-medium">09:00 - 20:00</span>
+                <span className="text-muted-foreground">Site padrão</span>
+                <span className="text-foreground font-medium">Incluído</span>
               </li>
               <li className="flex justify-between font-body text-sm">
-                <span className="text-muted-foreground">Sábado</span>
-                <span className="text-foreground font-medium">09:00 - 18:00</span>
+                <span className="text-muted-foreground">Dashboard por casa</span>
+                <span className="text-foreground font-medium">Isolado</span>
               </li>
               <li className="flex justify-between font-body text-sm">
-                <span className="text-muted-foreground">Domingo</span>
-                <span className="text-foreground font-medium">Fechado</span>
+                <span className="text-muted-foreground">Setup assistido</span>
+                <span className="text-foreground font-medium">Opcional</span>
               </li>
             </ul>
             
             {/* CTA */}
             <div className="mt-6 p-4 rounded-xl bg-primary/10 border border-primary/20">
-              <p className="font-body text-xs text-muted-foreground mb-2">Agende seu horário</p>
+              <p className="font-body text-xs text-muted-foreground mb-2">Entre na plataforma</p>
               <Link 
-                to="/agendamento-visitante" 
+                to="/login" 
                 className="font-heading text-lg text-primary hover:text-primary/80 transition-colors"
               >
-                Fazer Agendamento →
+                Acessar dashboard →
               </Link>
             </div>
           </motion.div>
@@ -163,7 +163,7 @@ const Footer = () => {
           transition={{ delay: 0.4 }}
         >
           <p className="font-body text-xs text-muted-foreground text-center md:text-left">
-            © 2024 Barber Pro. Todos os direitos reservados.
+            © 2026 Barber Pro. Todos os direitos reservados.
           </p>
           <div className="flex gap-6">
             <Link to="#" className="font-body text-xs text-muted-foreground hover:text-primary transition-colors">

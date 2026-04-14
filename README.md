@@ -1,138 +1,100 @@
-# Barber Pro - Sistema de Barbearia
+# BarberOS — Plataforma de Gestão para Barbearias
 
-Um sistema completo de gerenciamento para barbearias, construído com React, TypeScript e Tailwind CSS.
+**Agenda online, gestão de equipe, clube VIP e muito mais — tudo em um só lugar.**
 
-## 🚀 Tecnologias
+---
 
-- **React 18** - Biblioteca para construção de interfaces
-- **TypeScript** - Superset JavaScript com tipagem estática
-- **Vite** - Build tool e dev server
-- **Tailwind CSS** - Framework CSS utilitário
-- **Shadcn/UI** - Componentes de UI acessíveis
-- **React Router DOM** - Roteamento
-- **Date-fns** - Manipulação de datas
-- **Framer Motion** - Animações
-- **Lucide React** - Ícones
+## Para o Dono da Barbearia
 
-## 📋 Pré-requisitos
+### Agenda Online
+- Seus clientes agendam direto pelo site, sem precisar ligar
+- Você recebe cada agendamento em tempo real no painel
+- Confirme, conclua ou cancele com um clique
+- Visualize a agenda por semana, dia a dia
 
-- Node.js 18+ ou Bun
-- npm, yarn, pnpm ou bun
+### Site Próprio da Sua Barbearia
+- Página profissional pronta no ar em minutos
+- URL no formato `barberos.io/b/seu-nome` (plano Pro) ou domínio próprio (plano Premium)
+- Hero com foto de capa, serviços, equipe, depoimentos e botão de agendamento
+- Personalize cores, logo, textos e informações de contato direto no painel
 
-## 🔧 Instalação
+### Gestão de Equipe
+- Cadastre todos os barbeiros da casa
+- Convide novos membros por email — eles criam a própria conta e já aparecem vinculados
+- Foto de perfil para cada barbeiro
+- Clientes escolhem o barbeiro preferido na hora de agendar
 
-1. Clone o repositório:
-```bash
-git clone <url-do-repositorio>
-cd barber-pro
-```
+### Gestão de Serviços
+- Cadastre todos os serviços com nome, preço, duração e categoria
+- Categorias prontas: Corte, Barba, Combo, Coloração, Sobrancelha, Tratamento
+- Ative ou desative serviços quando quiser
 
-2. Instale as dependências:
-```bash
-# Com npm
-npm install
+### Clube VIP / Assinaturas
+- Crie planos de assinatura mensais, trimestrais ou anuais
+- Seus clientes assinam e têm benefícios exclusivos
+- Gerencie assinantes e acompanhe a recorrência
 
-# Com yarn
-yarn install
+### Gestão de Clientes
+- Lista completa de todos que já agendaram
+- Visualize clientes VIP vs standard
+- Histórico de visitas e contato de cada cliente
 
-# Com pnpm
-pnpm install
+### Financeiro
+- Receita mensal, ticket médio e total de atendimentos
+- Gráfico de barras por período: 3, 6 ou 12 meses
+- Quebra por categoria de serviço (Corte, Barba, Combo...)
+- Ranking de receita por barbeiro
+- Exportação para planilha (CSV) com um clique
 
-# Com bun
-bun install
-```
+### Notificações e Email
+- Cliente recebe email de confirmação automaticamente após agendar
+- Você recebe alertas de novos agendamentos
+- Email transacional profissional com o nome da sua barbearia
 
-3. Inicie o servidor de desenvolvimento:
-```bash
-# Com npm
-npm run dev
+---
 
-# Com yarn
-yarn dev
+## Para o Cliente
 
-# Com pnpm
-pnpm dev
+- **Agendamento em minutos** — escolhe serviço, barbeiro, dia e horário
+- **Sem cadastro obrigatório** — pode agendar só com nome e telefone
+- **Confirmação por email** — recebe os detalhes do agendamento na caixa de entrada
+- **Clube VIP** — pode assinar planos com benefícios e descontos
 
-# Com bun
-bun dev
-```
+---
 
-4. Acesse `http://localhost:5173` no navegador.
+## Planos
 
-## 🏗️ Estrutura do Projeto
+| | Básico | Pro | Premium |
+|---|---|---|---|
+| Agenda online | ✅ | ✅ | ✅ |
+| Gestão de clientes | ✅ | ✅ | ✅ |
+| Até 2 barbeiros | ✅ | — | — |
+| Barbeiros ilimitados | — | ✅ | ✅ |
+| Site genérico BarberOS | — | ✅ | ✅ |
+| Clube VIP e assinaturas | — | ✅ | ✅ |
+| Relatórios financeiros | — | ✅ | ✅ |
+| Site com design exclusivo | — | — | ✅ |
+| Domínio próprio incluso | — | — | ✅ |
+| SEO local configurado | — | — | ✅ |
+| Preço | R$ 19,90/mês | R$ 59,90/mês | R$ 79,90/mês |
 
-```
-src/
-├── assets/           # Imagens e recursos estáticos
-├── components/       # Componentes reutilizáveis
-│   └── ui/          # Componentes Shadcn/UI
-├── contexts/         # Contexts React (Auth, Cart, etc.)
-├── data/            # Dados estáticos (produtos, recompensas)
-├── hooks/           # Custom hooks
-├── lib/             # Utilitários
-├── pages/           # Páginas da aplicação
-├── services/        # Camada de serviços (pronta para backend)
-└── types/           # Tipos TypeScript
-```
+Todos os planos começam com **período de trial gratuito**.
 
-## 🔌 Integração com Backend
+---
 
-O projeto está **preparado para integração com backend**. Todos os serviços estão na pasta `src/services/`:
+## Como Começar
 
-- `userService.ts` - Autenticação e gerenciamento de usuários
-- `appointmentService.ts` - Agendamentos
-- `orderService.ts` - Pedidos
-- `subscriptionService.ts` - Assinaturas VIP
-- `loyaltyService.ts` - Programa de fidelidade
-- `notificationService.ts` - Notificações
-- `cartService.ts` - Carrinho de compras
+1. Acesse **barberos.io/planos** e escolha seu plano
+2. Crie sua conta com nome, email e nome da barbearia
+3. Finalize o pagamento via Stripe (cartão de crédito, seguro)
+4. Seu painel e site já estão no ar — configure à vontade
+5. Compartilhe o link do seu site com os clientes e comece a receber agendamentos
 
-### Como integrar com seu backend:
+---
 
-1. Em cada arquivo de serviço, substitua as implementações mock por chamadas API reais:
+## Segurança e Confiabilidade
 
-```typescript
-// Antes (mock)
-async getAll(): Promise<Appointment[]> {
-  return appointments;
-}
-
-// Depois (com API)
-async getAll(): Promise<Appointment[]> {
-  const response = await fetch('/api/appointments');
-  return response.json();
-}
-```
-
-2. Configure a URL base da API em um arquivo `.env`:
-```env
-VITE_API_URL=https://sua-api.com
-```
-
-## 📦 Scripts Disponíveis
-
-| Script | Descrição |
-|--------|-----------|
-| `dev` | Inicia servidor de desenvolvimento |
-| `build` | Compila para produção |
-| `preview` | Visualiza build de produção |
-| `lint` | Executa linter |
-
-## 🎨 Funcionalidades
-
-- ✅ Sistema de autenticação (Login/Cadastro)
-- ✅ Agendamento de cortes (usuários e visitantes)
-- ✅ Loja de produtos
-- ✅ Carrinho de compras
-- ✅ Checkout com cálculo de frete
-- ✅ Rastreamento de pedidos
-- ✅ Programa de fidelidade
-- ✅ Assinatura VIP com descontos
-- ✅ Painel administrativo
-- ✅ Sistema de notificações
-- ✅ Avaliação de atendimentos
-- ✅ Tema claro/escuro
-
-## 📄 Licença
-
-MIT
+- Dados armazenados com criptografia
+- Pagamentos processados pelo Stripe (padrão PCI-DSS)
+- Sem dados de cartão armazenados nos nossos servidores
+- Disponível 24h por dia, 7 dias por semana

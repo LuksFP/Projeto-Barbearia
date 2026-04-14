@@ -5,10 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, CheckCircle2 } from 'lucide-react';
 import { orderService } from '@/services/orderService';
+import type { OrderTracking } from '@/types/product';
 
 const Rastreamento = () => {
   const [trackingCode, setTrackingCode] = useState('');
-  const [tracking, setTracking] = useState<any>(null);
+  const [tracking, setTracking] = useState<OrderTracking | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,7 +89,7 @@ const Rastreamento = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {tracking.steps.map((step: any, index: number) => (
+                {tracking.steps.map((step, index) => (
                   <div key={index} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div

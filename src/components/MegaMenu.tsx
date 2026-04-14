@@ -52,12 +52,12 @@ const MegaMenu = ({ label, to }: MegaMenuProps) => {
     >
       <Link
         to={to}
-        className="px-4 py-2 font-body font-medium text-sm tracking-wide transition-all duration-300 rounded-lg relative group text-foreground hover:text-primary"
+        className="px-4 py-2.5 font-body font-medium text-sm tracking-wide transition-all duration-300 rounded-full relative group text-foreground hover:text-primary hover:bg-background/45"
       >
         {label}
         <span
-          className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
-            isOpen ? 'w-full' : 'w-0 group-hover:w-full'
+          className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-primary transition-all duration-300 ${
+            isOpen ? 'w-8' : 'w-0 group-hover:w-full'
           }`}
         />
       </Link>
@@ -69,7 +69,7 @@ const MegaMenu = ({ label, to }: MegaMenuProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-background border border-border rounded-lg shadow-2xl z-50 overflow-hidden"
+            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[800px] overflow-hidden rounded-[1.6rem] border border-border/50 bg-background/85 backdrop-blur-xl shadow-2xl z-50"
           >
             {isLojaMenu && (
               <div className="grid grid-cols-3 gap-6 p-6">

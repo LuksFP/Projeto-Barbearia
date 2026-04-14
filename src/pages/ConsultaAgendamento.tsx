@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,26 +10,29 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Appointment } from '@/types/appointment';
-import { appointmentService } from '@/services/appointmentService';
+import { supabasePublic } from '@/lib/supabase-public';
+
+type AptDisplay = {
+  id: string
+  service_name: string
+  date: string
+  time: string
+  status: string
+  barber_name: string
+  rating: number | null
+  review: string | null
+}
 
 const ConsultaAgendamento = () => {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<AptDisplay[]>([]);
   const [searched, setSearched] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const serviceNames: Record<string, string> = {
-    corte: 'Corte de Cabelo',
-    barba: 'Barba',
-    combo: 'Corte + Barba',
-    tratamento: 'Tratamento Especial',
-  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +47,14 @@ const ConsultaAgendamento = () => {
     }
 
     try {
-      const found = await appointmentService.getByContact(email || undefined, phone || undefined);
+      const { data, error } = await supabasePublic.rpc('search_appointments_by_contact', {
+        p_email: email || null,
+        p_phone: phone || null,
+      });
+
+      if (error) throw error;
+
+      const found = (data ?? []) as AptDisplay[];
       setAppointments(found);
       setSearched(true);
 
@@ -67,12 +77,14 @@ const ConsultaAgendamento = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'scheduled':
+      case 'confirmed':
         return (
           <Badge className="bg-blue-500/20 text-blue-600 gap-1">
             <AlertCircle className="w-3 h-3" />
-            Agendado
+            {status === 'confirmed' ? 'Confirmado' : 'Agendado'}
           </Badge>
         );
+      case 'done':
       case 'completed':
         return (
           <Badge className="bg-green-500/20 text-green-600 gap-1">
@@ -93,7 +105,7 @@ const ConsultaAgendamento = () => {
   };
 
   const handleSubmitRating = async () => {
-    if (!selectedAppointment || rating === 0) {
+    if (!selectedId || rating === 0) {
       toast({
         title: 'Avaliação obrigatória',
         description: 'Por favor, selecione uma nota.',
@@ -103,14 +115,16 @@ const ConsultaAgendamento = () => {
     }
 
     try {
-      await appointmentService.addRating(selectedAppointment.id, rating, review);
+      const { error } = await supabasePublic
+        .from('appointments')
+        .update({ rating, review: review || null })
+        .eq('id', selectedId);
 
-      // Update local state
+      if (error) throw error;
+
       setAppointments((prev) =>
         prev.map((apt) =>
-          apt.id === selectedAppointment.id
-            ? { ...apt, rating, review }
-            : apt
+          apt.id === selectedId ? { ...apt, rating, review: review || null } : apt
         )
       );
 
@@ -122,7 +136,7 @@ const ConsultaAgendamento = () => {
       setDialogOpen(false);
       setRating(0);
       setReview('');
-      setSelectedAppointment(null);
+      setSelectedId(null);
     } catch (error) {
       console.error('Failed to submit rating:', error);
       toast({
@@ -200,15 +214,13 @@ const ConsultaAgendamento = () => {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <Scissors className="w-5 h-5 text-primary" />
-                            <span className="font-heading text-xl">
-                              {serviceNames[apt.service] || apt.service}
-                            </span>
+                            <span className="font-heading text-xl">{apt.service_name}</span>
                             {getStatusBadge(apt.status)}
                           </div>
                           <div className="flex items-center gap-4 text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
-                              {format(new Date(apt.date), "d 'de' MMMM 'de' yyyy", {
+                              {format(new Date(apt.date + 'T12:00'), "d 'de' MMMM 'de' yyyy", {
                                 locale: ptBR,
                               })}
                             </span>
@@ -217,7 +229,7 @@ const ConsultaAgendamento = () => {
                               {apt.time}
                             </span>
                           </div>
-                          {apt.rating && (
+                          {apt.rating !== null && apt.rating > 0 && (
                             <div className="flex items-center gap-1">
                               <span className="text-sm text-muted-foreground">Sua avaliação:</span>
                               {[1, 2, 3, 4, 5].map((star) => (
@@ -233,17 +245,20 @@ const ConsultaAgendamento = () => {
                             </div>
                           )}
                         </div>
-                        {apt.status === 'completed' && !apt.rating && (
-                          <Dialog open={dialogOpen && selectedAppointment?.id === apt.id} onOpenChange={(open) => {
-                            setDialogOpen(open);
-                            if (open) {
-                              setSelectedAppointment(apt);
-                            } else {
-                              setSelectedAppointment(null);
-                              setRating(0);
-                              setReview('');
-                            }
-                          }}>
+                        {(apt.status === 'completed' || apt.status === 'done') && !apt.rating && (
+                          <Dialog
+                            open={dialogOpen && selectedId === apt.id}
+                            onOpenChange={(open) => {
+                              setDialogOpen(open);
+                              if (open) {
+                                setSelectedId(apt.id);
+                              } else {
+                                setSelectedId(null);
+                                setRating(0);
+                                setReview('');
+                              }
+                            }}
+                          >
                             <DialogTrigger asChild>
                               <Button variant="outline" className="gap-2">
                                 <Star className="w-4 h-4" />

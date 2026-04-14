@@ -1,11 +1,11 @@
 // Loyalty Service - Ready for backend integration
 // TODO: Replace mock implementations with actual API calls
 
-import { LoyaltyProfile, LoyaltyTier, PointsTransaction, Reward, RedeemedReward } from '@/types/loyalty';
+import type { LoyaltyProfile, LoyaltyTier, PointsTransaction, Reward, RedeemedReward } from '@/types/loyalty';
 import { tierBenefits } from '@/data/rewards';
 
 // Mock data store - will be replaced by database
-let loyaltyProfiles: Record<string, LoyaltyProfile> = {};
+const loyaltyProfiles: Record<string, LoyaltyProfile> = {};
 
 export const loyaltyService = {
   // Get loyalty profile by user ID

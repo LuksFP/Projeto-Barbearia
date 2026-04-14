@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#0a0a0a"/>
+  <!-- Scissor blade 1 -->
+  <path d="M10 8 L22 20" stroke="#C9A84C" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Scissor blade 2 -->
+  <path d="M22 8 L10 20" stroke="#C9A84C" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Handle circles -->
+  <circle cx="8.5" cy="22.5" r="3" stroke="#C9A84C" stroke-width="1.8" fill="none"/>
+  <circle cx="23.5" cy="22.5" r="3" stroke="#C9A84C" stroke-width="1.8" fill="none"/>
+  <!-- Center pivot dot -->
+  <circle cx="16" cy="14" r="1.4" fill="#C9A84C"/>
+</svg>
