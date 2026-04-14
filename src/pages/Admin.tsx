@@ -37,7 +37,7 @@ const Admin = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/entrar');
       return;
     }
     if (user?.role !== 'admin') {

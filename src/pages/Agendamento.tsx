@@ -34,7 +34,7 @@ const Agendamento = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/entrar');
     }
   }, [isAuthenticated, navigate]);
 

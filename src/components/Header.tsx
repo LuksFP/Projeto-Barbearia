@@ -225,9 +225,9 @@ const Header = () => {
                       </Button>
                     </div>
                   ) : (
-                    <Button
+                  <Button
                       variant="outline"
-                      onClick={() => navigate('/login')}
+                      onClick={() => navigate('/entrar')}
                       className="rounded-full border-border/50 bg-background/35 px-6 backdrop-blur-sm hover:bg-background/55"
                     >
                       Entrar
@@ -409,11 +409,11 @@ const Header = () => {
                           </motion.div>
                         ) : (
                           <motion.div whileTap={{ scale: 0.98 }}>
-                            <Button
-                              variant="default"
-                              className="w-full"
-                              onClick={() => {
-                                navigate('/login');
+                              <Button
+                                variant="default"
+                                className="w-full"
+                                onClick={() => {
+                                navigate('/entrar');
                                 setIsMobileMenuOpen(false);
                               }}
                             >

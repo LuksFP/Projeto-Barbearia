@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -36,7 +36,6 @@ import CabeloLiso from "./pages/CabeloLiso";
 import CabeloOndulado from "./pages/CabeloOndulado";
 import CabeloCrespo from "./pages/CabeloCrespo";
 import Loja from "./pages/Loja";
-import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Checkout from "./pages/Checkout";
@@ -94,7 +93,7 @@ const App = () => (
                           <Route path="/tipos-cabelo/ondulado" element={<CabeloOndulado />} />
                           <Route path="/tipos-cabelo/crespo" element={<CabeloCrespo />} />
                           <Route path="/loja" element={<Loja />} />
-                          <Route path="/login" element={<Login />} />
+                          <Route path="/login" element={<Navigate to="/entrar" replace />} />
                           <Route path="/perfil" element={<Profile />} />
                           <Route path="/admin" element={<Admin />} />
                           <Route path="/checkout" element={<Checkout />} />
