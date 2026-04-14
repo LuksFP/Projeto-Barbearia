@@ -23,7 +23,7 @@ const Footer = () => {
     { to: '/sobre', label: 'Plataforma' },
     { to: '/cortes', label: 'Demo de Site' },
     { to: '/admin', label: 'Demo de Dashboard' },
-    { to: '/login', label: 'Entrar no app' },
+    { to: '/entrar', label: 'Entrar no painel' },
     { to: '/assinatura', label: 'Planos e recorrencia' },
   ];
 
@@ -145,7 +145,7 @@ const Footer = () => {
             <div className="mt-6 p-4 rounded-xl bg-primary/10 border border-primary/20">
               <p className="font-body text-xs text-muted-foreground mb-2">Entre na plataforma</p>
               <Link 
-                to="/login" 
+                to="/entrar" 
                 className="font-heading text-lg text-primary hover:text-primary/80 transition-colors"
               >
                 Acessar dashboard →

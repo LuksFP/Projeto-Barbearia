@@ -48,7 +48,7 @@ const EntrarSaas = () => {
           </button>
           <span className="font-heading text-lg text-amber-400 tracking-wider">BARBEROS</span>
           <Link to="/planos" className="text-white/40 hover:text-white text-sm font-body transition-colors">
-            Criar conta
+            Ver planos
           </Link>
         </div>
       </div>

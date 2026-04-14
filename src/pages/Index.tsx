@@ -101,6 +101,7 @@ const templateCards = [
 
 const pricingPlans = [
   {
+    planId: 'basic',
     eyebrow: 'entrada rapida',
     title: 'BÁSICO',
     price: 'R$ 19,90',
@@ -114,6 +115,7 @@ const pricingPlans = [
     accent: false,
   },
   {
+    planId: 'pro',
     eyebrow: 'operacao completa',
     title: 'PRO',
     price: 'R$ 59,90',
@@ -127,6 +129,7 @@ const pricingPlans = [
     accent: true,
   },
   {
+    planId: 'premium',
     eyebrow: 'identidade propria',
     title: 'PREMIUM',
     price: 'R$ 79,90',
@@ -1265,172 +1268,160 @@ const Index = () => {
                 transition={{ duration: 0.5 }}
               >
                 {pricingPlans.map((plan) => (
-                  <div
+                  <Link
                     key={plan.title}
-                    className={
-                      plan.accent
-                        ? 'relative overflow-hidden rounded-[1.75rem] border border-[#ca7f34] bg-[linear-gradient(180deg,rgba(214,122,34,0.93)_0%,rgba(151,80,18,0.97)_100%)] px-5 py-6 text-[#170d06] shadow-[0_20px_46px_rgba(140,73,18,0.18)]'
-                        : 'relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(25,15,10,0.94)_0%,rgba(10,7,5,1)_100%)] px-5 py-6 text-white shadow-[0_22px_60px_rgba(0,0,0,0.26)]'
-                    }
+                    to={`/registrar?plano=${plan.planId}`}
+                    className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffb45a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0704]"
+                    aria-label={`Escolher plano ${plan.title}`}
                   >
-                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                    {plan.accent && (
-                      <div className="absolute right-5 top-5 rounded-full border border-[#8d4d13] bg-[#23150b]/10 px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#48280d]">
-                        recomendado
-                      </div>
-                    )}
-                    <p
-                      className={
-                        plan.accent
-                          ? 'font-body text-[10px] uppercase tracking-[0.34em] text-[#3d220b]'
-                          : 'font-body text-[10px] uppercase tracking-[0.34em] text-[#ffb457]'
-                      }
-                    >
-                      {plan.eyebrow}
-                    </p>
-                    <h3 className="mt-4 font-heading text-[2.1rem] leading-[0.9] tracking-[0.08em] sm:text-[2.4rem]">
-                      {plan.title}
-                    </h3>
-                    <div className="mt-5 flex items-end justify-between gap-3">
-                      <span className="font-heading text-[2.8rem] leading-none sm:text-[3.35rem]">
-                        {plan.price}
-                      </span>
-                      <span
-                        className={
-                          plan.accent
-                            ? 'rounded-full border border-[#8d4d13] bg-[#1f130b]/10 px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#48280d]'
-                            : 'rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-white/54'
-                        }
-                      >
-                        mensal
-                      </span>
-                    </div>
-                    {/* Site type badge */}
-                    <div className="mt-4 flex items-center gap-2">
-                      {plan.siteTag === 'generico' ? (
-                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 font-body text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          site genérico
-                        </span>
-                      ) : (
-                        <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-body text-[10px] font-semibold uppercase tracking-[0.2em] ${plan.accent ? 'border-[#1a4a8a]/60 bg-blue-500/15 text-blue-300' : 'border-blue-500/30 bg-blue-500/10 text-blue-400'}`}>
-                          <span className={`inline-block w-1.5 h-1.5 rounded-full ${plan.accent ? 'bg-blue-300' : 'bg-blue-400'}`} />
-                          site externo
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className={
-                        plan.accent
-                          ? 'mt-3 font-body text-[15px] leading-6 text-[#2d1a0b]'
-                          : 'mt-3 font-body text-[15px] leading-6 text-white/72'
-                      }
-                    >
-                      {plan.description}
-                    </p>
                     <div
                       className={
                         plan.accent
-                          ? 'mt-5 rounded-[1.15rem] border border-[#8d4d13]/40 bg-[#23150b]/10 px-4 py-4'
-                          : 'mt-5 rounded-[1.15rem] border border-white/8 bg-white/[0.03] px-4 py-4'
+                          ? 'group relative h-full overflow-hidden rounded-[1.75rem] border border-[#ca7f34] bg-[linear-gradient(180deg,rgba(214,122,34,0.93)_0%,rgba(151,80,18,0.97)_100%)] px-5 py-6 text-[#170d06] shadow-[0_20px_46px_rgba(140,73,18,0.18)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb457]/70'
+                          : 'group relative h-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(25,15,10,0.94)_0%,rgba(10,7,5,1)_100%)] px-5 py-6 text-white shadow-[0_22px_60px_rgba(0,0,0,0.26)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb457]/35'
                       }
                     >
-                      <p
-                        className={
-                          plan.accent
-                            ? 'font-body text-[10px] uppercase tracking-[0.26em] text-[#5a3410]'
-                            : 'font-body text-[10px] uppercase tracking-[0.26em] text-[#ffb45a]'
-                        }
-                      >
-                        melhor encaixe
-                      </p>
-                      <p
-                        className={
-                          plan.accent
-                            ? 'mt-3 font-body text-sm leading-6 text-[#26170b]'
-                            : 'mt-3 font-body text-sm leading-6 text-white/62'
-                        }
-                      >
-                        {plan.fit}
-                      </p>
-                    </div>
-                    <div
-                      className={
-                        plan.accent
-                          ? 'mt-5 border-t border-[#8a4d17]/40 pt-4'
-                          : 'mt-5 border-t border-white/8 pt-4'
-                      }
-                    >
-                      <p
-                        className={
-                          plan.accent
-                            ? 'font-body text-[10px] uppercase tracking-[0.28em] text-[#5a3410]'
-                            : 'font-body text-[10px] uppercase tracking-[0.28em] text-white/34'
-                        }
-                      >
-                        inclui
-                      </p>
-                      <p
-                        className={
-                          plan.accent
-                            ? 'mt-2 font-body text-sm leading-6 text-[#26170b]'
-                            : 'mt-2 font-body text-sm leading-6 text-white/58'
-                        }
-                      >
-                        {plan.detail}
-                      </p>
-                    </div>
-                    <div className={plan.accent ? 'mt-4 space-y-2' : 'mt-4 space-y-2'}>
-                      {plan.bullets.map((bullet) => (
-                        <div key={bullet} className="flex items-start gap-2">
-                          <span className={plan.accent ? 'mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#8d4d13] bg-[#1f130b]/10 text-[#48280d]' : 'mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[#ffb45a]'}>
-                            <Check className="h-3 w-3" />
-                          </span>
-                          <span className={plan.accent ? 'font-body text-sm leading-6 text-[#26170b]' : 'font-body text-sm leading-6 text-white/56'}>
-                            {bullet}
-                          </span>
+                      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                      {plan.accent && (
+                        <div className="absolute right-5 top-5 rounded-full border border-[#8d4d13] bg-[#23150b]/10 px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#48280d]">
+                          recomendado
                         </div>
-                      ))}
-                    </div>
-                    <div
-                      className={
-                        plan.accent
-                          ? 'mt-5 border-t border-[#8a4d17]/40 pt-4'
-                          : 'mt-5 border-t border-white/8 pt-4'
-                      }
-                    >
+                      )}
                       <p
                         className={
                           plan.accent
-                            ? 'font-body text-[10px] uppercase tracking-[0.26em] text-[#5a3410]'
-                            : 'font-body text-[10px] uppercase tracking-[0.26em] text-white/34'
+                            ? 'font-body text-[10px] uppercase tracking-[0.34em] text-[#3d220b]'
+                            : 'font-body text-[10px] uppercase tracking-[0.34em] text-[#ffb457]'
                         }
                       >
-                        destrava
+                        {plan.eyebrow}
                       </p>
+                      <h3 className="mt-4 font-body text-[1.95rem] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[2.25rem]">
+                        {plan.title}
+                      </h3>
+                      <div className="mt-5 flex items-end justify-between gap-3">
+                        <span className="font-body text-[2.7rem] font-semibold leading-none tracking-[-0.05em] sm:text-[3.1rem]">
+                          {plan.price}
+                        </span>
+                        <span
+                          className={
+                            plan.accent
+                              ? 'rounded-full border border-[#8d4d13] bg-[#1f130b]/10 px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#48280d]'
+                              : 'rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-white/54'
+                          }
+                        >
+                          mensal
+                        </span>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                        {plan.siteTag === 'generico' ? (
+                          <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-body text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            site genérico
+                          </span>
+                        ) : (
+                          <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-body text-[10px] font-semibold uppercase tracking-[0.2em] ${plan.accent ? 'border-[#1a4a8a]/60 bg-blue-500/15 text-blue-300' : 'border-blue-500/30 bg-blue-500/10 text-blue-400'}`}>
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${plan.accent ? 'bg-blue-300' : 'bg-blue-400'}`} />
+                            site externo
+                          </span>
+                        )}
+                      </div>
                       <p
                         className={
                           plan.accent
-                            ? 'mt-3 font-body text-sm leading-6 text-[#26170b]'
-                            : 'mt-3 font-body text-sm leading-6 text-white/58'
+                            ? 'mt-3 font-body text-[15px] leading-6 text-[#2d1a0b]'
+                            : 'mt-3 font-body text-[15px] leading-6 text-white/72'
                         }
                       >
-                        {plan.result}
+                        {plan.description}
                       </p>
-                    </div>
-                    <div className="mt-5 flex items-center justify-between">
-                      <span
+                      <div
                         className={
                           plan.accent
-                            ? 'rounded-full border border-[#8d4d13] bg-[#23150b]/10 px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#48280d]'
-                            : 'rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#ffb45a]'
+                            ? 'mt-5 rounded-[1.15rem] border border-[#8d4d13]/40 bg-[#23150b]/10 px-4 py-4'
+                            : 'mt-5 rounded-[1.15rem] border border-white/8 bg-white/[0.03] px-4 py-4'
                         }
                       >
-                        {plan.cta}
-                      </span>
-                      <ArrowRight className={plan.accent ? 'h-4 w-4 text-[#48280d]' : 'h-4 w-4 text-[#ffb45a]'} />
+                        <p
+                          className={
+                            plan.accent
+                              ? 'font-body text-[10px] uppercase tracking-[0.28em] text-[#5a3410]'
+                              : 'font-body text-[10px] uppercase tracking-[0.28em] text-[#ffb45a]'
+                          }
+                        >
+                          melhor encaixe
+                        </p>
+                        <p
+                          className={
+                            plan.accent
+                              ? 'mt-2 font-body text-sm leading-6 text-[#26170b]'
+                              : 'mt-2 font-body text-sm leading-6 text-white/62'
+                          }
+                        >
+                          {plan.fit}
+                        </p>
+                        <p
+                          className={
+                            plan.accent
+                              ? 'mt-3 font-body text-[13px] leading-6 text-[#26170b]/80'
+                              : 'mt-3 font-body text-[13px] leading-6 text-white/50'
+                          }
+                        >
+                          {plan.detail}
+                        </p>
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        {plan.bullets.map((bullet) => (
+                          <div key={bullet} className="flex items-start gap-2">
+                            <span className={plan.accent ? 'mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#8d4d13] bg-[#1f130b]/10 text-[#48280d]' : 'mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[#ffb45a]'}>
+                              <Check className="h-3 w-3" />
+                            </span>
+                            <span className={plan.accent ? 'font-body text-sm leading-6 text-[#26170b]' : 'font-body text-sm leading-6 text-white/56'}>
+                              {bullet}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div
+                        className={
+                          plan.accent
+                            ? 'mt-5 border-t border-[#8a4d17]/40 pt-4'
+                            : 'mt-5 border-t border-white/8 pt-4'
+                        }
+                      >
+                        <p
+                          className={
+                            plan.accent
+                              ? 'font-body text-[10px] uppercase tracking-[0.26em] text-[#5a3410]'
+                              : 'font-body text-[10px] uppercase tracking-[0.26em] text-white/34'
+                          }
+                        >
+                          destrava
+                        </p>
+                        <p
+                          className={
+                            plan.accent
+                              ? 'mt-3 font-body text-sm leading-6 text-[#26170b]'
+                              : 'mt-3 font-body text-sm leading-6 text-white/58'
+                          }
+                        >
+                          {plan.result}
+                        </p>
+                      </div>
+                      <div className="mt-5 flex items-center justify-between">
+                        <span
+                          className={
+                            plan.accent
+                              ? 'rounded-full border border-[#8d4d13] bg-[#23150b]/10 px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#48280d]'
+                              : 'rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 font-body text-[10px] uppercase tracking-[0.24em] text-[#ffb45a]'
+                          }
+                        >
+                          {plan.cta}
+                        </span>
+                        <ArrowRight className={plan.accent ? 'h-4 w-4 text-[#48280d]' : 'h-4 w-4 text-[#ffb45a]'} />
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </motion.div>
 
@@ -1602,12 +1593,12 @@ const Index = () => {
                   >
                     Ver Templates
                   </Button>
-                  <Link to="/login">
+                  <Link to="/entrar">
                     <Button
                       size="lg"
                       className="rounded-full bg-[linear-gradient(180deg,#d88422_0%,#b56418_100%)] px-6 font-body font-semibold text-[#1d1007] hover:brightness-110"
                     >
-                      Entrar No App
+                      Entrar No Painel
                     </Button>
                   </Link>
                 </div>

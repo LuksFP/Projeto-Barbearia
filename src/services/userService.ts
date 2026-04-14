@@ -1,4 +1,4 @@
-// User Service — auth de clientes da barbearia (lado público/landing)
+// User Service — login público da barbearia
 // Usa cliente Supabase separado (supabasePublic) para não conflitar com
 // a sessão do dashboard SaaS (SaasAccountContext usa o cliente principal).
 import { supabasePublic } from '@/lib/supabase-public'
@@ -40,16 +40,6 @@ export const userService = {
     const { data, error } = await supabasePublic.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
-    })
-    if (error || !data.user) return null
-    return mapUser(data.user)
-  },
-
-  async signup(name: string, email: string, password: string, role: UserRole = 'client'): Promise<User | null> {
-    const { data, error } = await supabasePublic.auth.signUp({
-      email,
-      password,
-      options: { data: { name, role } },
     })
     if (error || !data.user) return null
     return mapUser(data.user)

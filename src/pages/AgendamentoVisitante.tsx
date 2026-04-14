@@ -175,13 +175,7 @@ const AgendamentoVisitante = () => {
             </h1>
           </div>
           <p className="text-muted-foreground font-body text-lg">
-            Agende seu corte sem precisar criar uma conta. Para benefícios exclusivos,{' '}
-            <button 
-              onClick={() => navigate('/login')} 
-              className="text-primary underline hover:text-primary/80"
-            >
-              crie sua conta VIP
-            </button>
+            Agende seu corte sem precisar criar uma conta. O cadastro de clientes foi removido; o fluxo agora é direto e mais rápido.
           </p>
         </div>
 

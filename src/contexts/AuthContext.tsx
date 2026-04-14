@@ -2,14 +2,13 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabasePublic } from '@/lib/supabase-public';
-import { userService, User, UserRole } from '@/services/userService';
+import { userService, User } from '@/services/userService';
 
 export type { UserRole } from '@/services/userService';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string, role?: UserRole) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -52,17 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
-  const signup = async (name: string, email: string, password: string, role: UserRole = 'client'): Promise<boolean> => {
-    const newUser = await userService.signup(name, email, password, role);
-    if (newUser) {
-      setUser(newUser);
-      toast({ title: 'Cadastro realizado!', description: `Bem-vindo, ${name}!` });
-      return true;
-    }
-    toast({ title: 'Erro ao cadastrar', description: 'Este email já está cadastrado ou ocorreu um erro', variant: 'destructive' });
-    return false;
-  };
-
   const logout = async () => {
     await userService.logout();
     setUser(null);
@@ -71,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

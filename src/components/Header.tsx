@@ -180,10 +180,10 @@ const Header = () => {
                     Ver Planos
                   </Button>
                   <Button
-                    onClick={() => navigate(isAuthenticated ? appEntryPath : '/login')}
+                    onClick={() => navigate(isAuthenticated ? appEntryPath : '/entrar')}
                     className="rounded-full px-6"
                   >
-                    {isAuthenticated ? 'Entrar No Painel' : 'Entrar No App'}
+                    Entrar No Painel
                   </Button>
                 </>
               ) : (
@@ -331,11 +331,11 @@ const Header = () => {
                             variant="default"
                             className="w-full"
                             onClick={() => {
-                              navigate(isAuthenticated ? appEntryPath : '/login');
+                              navigate(isAuthenticated ? appEntryPath : '/entrar');
                               setIsMobileMenuOpen(false);
                             }}
                           >
-                            {isAuthenticated ? 'Entrar No Painel' : 'Entrar No App'}
+                            Entrar No Painel
                           </Button>
                         </motion.div>
                       </>
