@@ -26,10 +26,8 @@ export const DEMO_CREDENTIALS: Record<DemoPlan, { email: string; password: strin
   premium: { email: 'demo-premium@barberos.io', password: 'demo1234' },
 }
 
-/** Retorna o plano se o par email+senha bater com alguma conta demo, ou null.
- *  Em produção (import.meta.env.PROD) sempre retorna null — demo desativado. */
+/** Retorna o plano se o par email+senha bater com alguma conta demo, ou null. */
 export function matchDemoCredentials(email: string, password: string): DemoPlan | null {
-  if (import.meta.env.PROD) return null
   for (const [plan, creds] of Object.entries(DEMO_CREDENTIALS) as [DemoPlan, { email: string; password: string }][]) {
     if (creds.email === email.trim().toLowerCase() && creds.password === password) {
       return plan
@@ -38,9 +36,9 @@ export function matchDemoCredentials(email: string, password: string): DemoPlan 
   return null
 }
 
-/** Rota /demo/:plan só funciona em desenvolvimento */
+/** Rota /demo/:plan disponível em todos os ambientes */
 export function isDemoRouteAllowed(): boolean {
-  return import.meta.env.DEV
+  return true
 }
 
 // ─── Contas SaaS demo ────────────────────────────────────────────────────────
