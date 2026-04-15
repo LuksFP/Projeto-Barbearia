@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { motion } from 'framer-motion'
 
 const EntrarSaas = () => {
   const navigate = useNavigate()
   const { login, isLoggedIn, hasActivePlan } = useSaasAccount()
+  const [searchParams] = useSearchParams()
+  const senhaAlterada = searchParams.get('senha') === 'alterada'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -59,6 +61,12 @@ const EntrarSaas = () => {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-sm"
         >
+          {senhaAlterada && (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-6">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <p className="text-emerald-400 text-sm font-body">Senha alterada com sucesso! Entre com a nova senha.</p>
+            </div>
+          )}
           <h1 className="font-heading text-3xl tracking-wide text-white mb-2">ENTRAR</h1>
           <p className="text-white/40 text-sm font-body mb-8">Acesse o painel da sua barbearia.</p>
 
