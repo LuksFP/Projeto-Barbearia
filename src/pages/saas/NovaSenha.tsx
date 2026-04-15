@@ -46,26 +46,24 @@ const NovaSenha = () => {
     setError('')
 
     try {
-      // Pega o access token da sessão atual (recovery ou normal)
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         setError('Link expirado. Solicite um novo link de redefinição de senha.')
         return
       }
 
-      // Chama a API do Supabase Auth diretamente com AbortController.
-      // Evita o SDK tentar auto-refresh em loop e travar indefinidamente.
+      // Usa Edge Function com admin client — garante que a senha é alterada
+      // independente do tipo de sessão (recovery, regular) sem travar no SDK.
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 15_000)
 
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/user`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-password`,
         {
-          method: 'PUT',
+          method: 'POST',
           signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY as string,
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ password }),
@@ -74,12 +72,11 @@ const NovaSenha = () => {
       clearTimeout(timeoutId)
 
       if (!res.ok) {
-        const body = await res.json() as { msg?: string; error_description?: string }
-        const msg = body.msg ?? body.error_description ?? ''
-        const expired = res.status === 401 || msg.toLowerCase().includes('expired')
+        const body = await res.json() as { error?: string }
+        const expired = res.status === 401
         setError(expired
           ? 'Link expirado. Solicite um novo link de redefinição.'
-          : 'Não foi possível salvar a senha. Tente novamente.'
+          : (body.error ?? 'Não foi possível salvar a senha. Tente novamente.')
         )
         return
       }
