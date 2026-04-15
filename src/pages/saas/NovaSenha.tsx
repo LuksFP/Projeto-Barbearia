@@ -13,10 +13,17 @@ const NovaSenha = () => {
   const [ready, setReady] = useState(false)  // link válido = sessão restaurada
 
   // O Supabase redireciona com #access_token=...&type=recovery na URL.
-  // onAuthStateChange dispara com event=PASSWORD_RECOVERY quando detectado.
+  // O SDK processa o hash durante a inicialização — antes do useEffect rodar —
+  // então o evento PASSWORD_RECOVERY pode ter disparado antes da subscription.
+  // Solução: checa getSession() no mount E escuta o evento como fallback.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    // Verifica se já existe uma sessão de recovery ativa (evento já processado)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setReady(true)
       }
     })
