@@ -134,21 +134,6 @@ export const saasAccountRepository = {
     }
   },
 
-  async activatePlan(userId: string, plan: SaasPlan): Promise<SaasAccountRow> {
-    const update: TablesUpdate<'saas_accounts'> = {
-      plan,
-      plan_status: 'active',
-      plan_started_at: new Date().toISOString(),
-    }
-    const { data, error } = await supabase
-      .from('saas_accounts')
-      .update(update)
-      .eq('user_id', userId)
-      .select()
-      .single()
-    if (error) throw error
-    return data
-  },
 }
 
 function mapAccount(row: SaasAccountRow): SaasAccountRow {

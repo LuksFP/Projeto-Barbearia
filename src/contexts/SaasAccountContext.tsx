@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
-import type { SaasAccount, SaasLoginInput, SaasPlan, SaasPaymentCardInput, SaasSignupInput } from '@/types/saas'
+import type { SaasAccount, SaasLoginInput, SaasSignupInput } from '@/types/saas'
 import { saasAccountRepository } from '@/repositories/saasAccountRepository'
 import { supabase } from '@/lib/supabase'
 import { isDemoMode, getDemoPlan, getDemoAccount, clearDemoSession, matchDemoCredentials, setDemoSession } from '@/lib/demo'
@@ -13,7 +13,6 @@ interface SaasAccountContextType {
   signup: (data: SaasSignupInput) => Promise<void>
   login: (email: string, password: string) => Promise<boolean | 'blocked'>
   logout: () => Promise<void>
-  activatePlan: (plan: SaasPlan, paymentCard?: SaasPaymentCardInput) => Promise<void>
   refreshAccount: () => Promise<void>
 }
 
@@ -126,14 +125,6 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const activatePlan = async (plan: SaasPlan, _paymentCard?: SaasPaymentCardInput): Promise<void> => {
-    if (!account) throw new Error('Nenhuma conta SaaS ativa')
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('Sessão expirada')
-    const row = await saasAccountRepository.activatePlan(session.user.id, plan)
-    setAccount(mapRowToAccount(row))
-  }
-
   const hasActivePlan = account?.planStatus === 'active' || account?.planStatus === 'trial'
 
   return (
@@ -146,7 +137,6 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       signup,
       login,
       logout,
-      activatePlan,
       refreshAccount,
     }}>
       {children}
