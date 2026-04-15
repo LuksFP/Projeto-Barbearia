@@ -1,21 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Scissors, Moon, Sun, Menu, X, User, ShoppingCart, Shield, Crown } from 'lucide-react';
+import { Scissors, Moon, Sun, Menu, X, User, Shield, Crown } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { motion, AnimatePresence } from 'framer-motion';
-import CartDrawer from './CartDrawer';
-import SearchBar from './SearchBar';
 import MegaMenu from './MegaMenu';
 import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
   const { toggleTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
-  const { items } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,7 +28,6 @@ const Header = () => {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/cortes', label: 'Cortes Modernos' },
-    { to: '/loja', label: 'Loja' },
     { to: '/agendamento', label: 'Agendamento' },
     { to: '/fidelidade', label: 'Fidelidade' },
   ];
@@ -77,8 +72,6 @@ const Header = () => {
     setIsMobileMenuOpen(false);
   };
 
-  const cartItemsCount = items.reduce((acc, item) => acc + item.quantity, 0);
-
   return (
     <header
       className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4"
@@ -122,7 +115,7 @@ const Header = () => {
                     </button>
                   ))
                 : navLinks.map((link) => {
-                    if (link.to === '/loja' || link.to === '/cortes') {
+                    if (link.to === '/cortes') {
                       return (
                         <MegaMenu
                           key={link.to}
@@ -188,9 +181,6 @@ const Header = () => {
                 </>
               ) : (
                 <>
-                  <SearchBar />
-                  <CartDrawer />
-
                   {isAuthenticated && <NotificationDropdown />}
 
                   {isAuthenticated ? (
@@ -225,7 +215,7 @@ const Header = () => {
                       </Button>
                     </div>
                   ) : (
-                  <Button
+                    <Button
                       variant="outline"
                       onClick={() => navigate('/entrar')}
                       className="rounded-full border-border/50 bg-background/35 px-6 backdrop-blur-sm hover:bg-background/55"
@@ -341,30 +331,6 @@ const Header = () => {
                       </>
                     ) : (
                       <>
-                        <motion.div whileTap={{ scale: 0.98 }}>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start gap-2"
-                            onClick={() => {
-                              setIsMobileMenuOpen(false);
-                              document.dispatchEvent(new CustomEvent('openCartDrawer'));
-                            }}
-                          >
-                            <ShoppingCart className="h-5 w-5" />
-                            <span>Carrinho</span>
-                            {cartItemsCount > 0 && (
-                              <motion.span 
-                                className="ml-auto bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                              >
-                                {cartItemsCount}
-                              </motion.span>
-                            )}
-                          </Button>
-                        </motion.div>
-
                         {user?.role === 'admin' && (
                           <Button
                             variant="outline"

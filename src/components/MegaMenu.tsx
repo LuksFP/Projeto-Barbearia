@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { products } from '@/data/products';
 import lowFade from '@/assets/low-fade.jpg';
 import taperFade from '@/assets/taper-fade.jpg';
 import americano from '@/assets/americano.jpg';
@@ -15,27 +14,11 @@ interface MegaMenuProps {
 const MegaMenu = ({ label, to }: MegaMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const isLojaMenu = to === '/loja';
   const isCortesMenu = to === '/cortes';
 
-  if (!isLojaMenu && !isCortesMenu) {
+  if (!isCortesMenu) {
     return null;
   }
-
-  const productCategories = [
-    {
-      name: 'Pomadas & Ceras',
-      items: products.filter((p) => p.category === 'pomada').slice(0, 3),
-    },
-    {
-      name: 'Cuidados com Barba',
-      items: products.filter((p) => p.category === 'barba').slice(0, 3),
-    },
-    {
-      name: 'Camisetas',
-      items: products.filter((p) => p.category === 'camiseta').slice(0, 3),
-    },
-  ];
 
   const haircutStyles = [
     { image: lowFade, title: 'LOW FADE', to: '/cortes' },
@@ -71,53 +54,6 @@ const MegaMenu = ({ label, to }: MegaMenuProps) => {
             transition={{ duration: 0.2 }}
             className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[800px] overflow-hidden rounded-[1.6rem] border border-border/50 bg-background/85 backdrop-blur-xl shadow-2xl z-50"
           >
-            {isLojaMenu && (
-              <div className="grid grid-cols-3 gap-6 p-6">
-                {productCategories.map((category, idx) => (
-                  <motion.div
-                    key={category.name}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="space-y-4"
-                  >
-                    <h3 className="font-heading text-sm uppercase tracking-wider text-primary border-b border-border pb-2">
-                      {category.name}
-                    </h3>
-                    <div className="space-y-3">
-                      {category.items.map((product) => (
-                        <Link
-                          key={product.id}
-                          to="/loja"
-                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors group"
-                        >
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-12 h-12 object-cover rounded group-hover:scale-110 transition-transform"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-body text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                              {product.name}
-                            </p>
-                            <p className="font-body text-xs text-primary font-bold">
-                              R$ {product.price.toFixed(2)}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                    <Link
-                      to="/loja"
-                      className="inline-block text-sm font-body font-semibold text-primary hover:underline"
-                    >
-                      Ver todos →
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-
             {isCortesMenu && (
               <div className="grid grid-cols-4 gap-4 p-6">
                 {haircutStyles.map((style, idx) => (

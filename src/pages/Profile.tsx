@@ -3,19 +3,16 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { User, Package, LogOut, Calendar, Shield, Crown } from 'lucide-react';
+import { User, LogOut, Calendar, Shield, Crown } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Order } from '@/types/product';
 import AppointmentCard, { type AppointmentDisplay } from '@/components/AppointmentCard';
 import { Badge } from '@/components/ui/badge';
-import { orderService } from '@/services/orderService';
 import { supabasePublic } from '@/lib/supabase-public';
 
 const Profile = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { isSubscribed, discountPercentage } = useSubscription();
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
   const [appointments, setAppointments] = useState<AppointmentDisplay[]>([]);
 
   useEffect(() => {
@@ -28,15 +25,11 @@ const Profile = () => {
     const loadData = async () => {
       if (!user) return;
       try {
-        const [ordersData, { data: aptData }] = await Promise.all([
-          orderService.getByUserId(user.id),
-          supabasePublic
-            .from('appointments')
-            .select('id, service_name, date, time, status, barber_name')
-            .eq('user_id', user.id)
-            .order('date', { ascending: false }),
-        ]);
-        setOrders(ordersData);
+        const { data: aptData } = await supabasePublic
+          .from('appointments')
+          .select('id, service_name, date, time, status, barber_name')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
         setAppointments((aptData ?? []) as AppointmentDisplay[]);
       } catch (error) {
         console.error('Failed to load profile data:', error);
@@ -46,26 +39,6 @@ const Profile = () => {
   }, [user]);
 
   if (!user) return null;
-
-  const getStatusColor = (status: Order['status']) => {
-    const colors = {
-      pending: 'text-yellow-600',
-      processing: 'text-blue-600',
-      shipped: 'text-purple-600',
-      delivered: 'text-green-600',
-    };
-    return colors[status];
-  };
-
-  const getStatusText = (status: Order['status']) => {
-    const texts = {
-      pending: 'Pendente',
-      processing: 'Em Processamento',
-      shipped: 'Enviado',
-      delivered: 'Entregue',
-    };
-    return texts[status];
-  };
 
   return (
     <div className="min-h-screen pt-20 pb-16">
@@ -170,72 +143,6 @@ const Profile = () => {
               <div className="space-y-4">
                 {appointments.map((appointment) => (
                   <AppointmentCard key={appointment.id} appointment={appointment} />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Histórico de pedidos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading text-2xl flex items-center gap-2">
-              <Package className="w-6 h-6 text-primary" />
-              Histórico de Pedidos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {orders.length === 0 ? (
-              <p className="text-center text-muted-foreground font-body py-8">
-                Você ainda não realizou nenhum pedido.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="border border-border rounded-lg p-4 hover:border-primary transition-colors"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="font-heading text-lg">Pedido #{order.id}</p>
-                        <p className="text-sm text-muted-foreground font-body">
-                          {new Date(order.date).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                      <span className={`font-heading ${getStatusColor(order.status)}`}>
-                        {getStatusText(order.status)}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 mb-4">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-sm">
-                          <span className="font-body">
-                            {item.quantity}x {item.product.name}
-                          </span>
-                          <span className="font-body">
-                            R$ {(item.product.price * item.quantity).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex justify-between items-center pt-4 border-t border-border">
-                      <span className="font-heading text-lg">Total</span>
-                      <span className="font-heading text-xl text-primary">
-                        R$ {order.total.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      className="w-full mt-4"
-                      onClick={() => navigate(`/rastreamento?order=${order.id}`)}
-                    >
-                      Rastrear Pedido
-                    </Button>
-                  </div>
                 ))}
               </div>
             )}

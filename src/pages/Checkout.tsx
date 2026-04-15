@@ -116,11 +116,11 @@ const Checkout = () => {
       <div className="min-h-screen pt-20 pb-16">
         <div className="container mx-auto px-4">
           <div className="text-center py-16">
-            <h1 className="font-heading text-4xl mb-4">Carrinho Vazio</h1>
+            <h1 className="font-heading text-4xl mb-4">Área não disponível</h1>
             <p className="text-muted-foreground font-body mb-8">
-              Adicione produtos ao carrinho para continuar
+              O fluxo de loja foi removido desta versão.
             </p>
-            <Button onClick={() => navigate('/loja')}>Ir para Loja</Button>
+            <Button onClick={() => navigate('/')}>Voltar para a home</Button>
           </div>
         </div>
       </div>

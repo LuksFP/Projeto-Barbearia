@@ -17,11 +17,11 @@ const OrderConfirmation = () => {
         if (lastOrder) {
           setOrder(lastOrder);
         } else {
-          navigate('/loja');
+          navigate('/');
         }
       } catch (error) {
         console.error('Failed to load order:', error);
-        navigate('/loja');
+        navigate('/');
       }
     };
     loadOrder();
@@ -139,8 +139,8 @@ const OrderConfirmation = () => {
             <Button onClick={() => navigate('/rastreamento')}>
               Rastrear Pedido
             </Button>
-            <Button variant="outline" onClick={() => navigate('/loja')}>
-              Continuar Comprando
+            <Button variant="outline" onClick={() => navigate('/')}>
+              Voltar para a home
             </Button>
           </div>
         </div>

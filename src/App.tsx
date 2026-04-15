@@ -35,12 +35,8 @@ import TiposCabelo from "./pages/TiposCabelo";
 import CabeloLiso from "./pages/CabeloLiso";
 import CabeloOndulado from "./pages/CabeloOndulado";
 import CabeloCrespo from "./pages/CabeloCrespo";
-import Loja from "./pages/Loja";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
-import Checkout from "./pages/Checkout";
-import OrderConfirmation from "./pages/OrderConfirmation";
-import Rastreamento from "./pages/Rastreamento";
 import Agendamento from "./pages/Agendamento";
 import AgendamentoVisitante from "./pages/AgendamentoVisitante";
 import ConsultaAgendamento from "./pages/ConsultaAgendamento";
@@ -92,13 +88,13 @@ const App = () => (
                           <Route path="/tipos-cabelo/liso" element={<CabeloLiso />} />
                           <Route path="/tipos-cabelo/ondulado" element={<CabeloOndulado />} />
                           <Route path="/tipos-cabelo/crespo" element={<CabeloCrespo />} />
-                          <Route path="/loja" element={<Loja />} />
+                          <Route path="/loja" element={<Navigate to="/" replace />} />
                           <Route path="/login" element={<Navigate to="/entrar" replace />} />
                           <Route path="/perfil" element={<Profile />} />
                           <Route path="/admin" element={<Admin />} />
-                          <Route path="/checkout" element={<Checkout />} />
-                          <Route path="/confirmacao" element={<OrderConfirmation />} />
-                          <Route path="/rastreamento" element={<Rastreamento />} />
+                          <Route path="/checkout" element={<Navigate to="/" replace />} />
+                          <Route path="/confirmacao" element={<Navigate to="/" replace />} />
+                          <Route path="/rastreamento" element={<Navigate to="/" replace />} />
                           <Route path="/agendamento" element={<Agendamento />} />
                           <Route path="/agendamento-visitante" element={<AgendamentoVisitante />} />
                           <Route path="/consulta-agendamento" element={<ConsultaAgendamento />} />

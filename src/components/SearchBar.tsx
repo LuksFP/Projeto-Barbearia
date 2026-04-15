@@ -37,7 +37,7 @@ const SearchBar = () => {
   }, [query]);
 
   const handleProductClick = (productId: string) => {
-    navigate('/loja');
+    navigate('/');
     setIsOpen(false);
     setQuery('');
     setTimeout(() => {

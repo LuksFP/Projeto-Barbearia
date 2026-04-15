@@ -105,12 +105,9 @@ const pricingPlans = [
     eyebrow: 'entrada rapida',
     title: 'BÁSICO',
     price: 'R$ 19,90',
-    description: 'Só o essencial: agenda online funcionando hoje, sem complicação.',
-    detail: 'agenda online, gestao de clientes, confirmacao por WhatsApp',
-    bullets: ['agenda online completa', 'até 2 barbeiros', 'gestão de clientes'],
+    description: 'O essencial para entrar no ar sem enrolação.',
+    bullets: ['agenda online', 'até 2 barbeiros', 'gestão de clientes'],
     fit: 'bom para barbeiro solo ou casa pequena',
-    result: 'profissionaliza o agendamento sem custo de entrada',
-    siteTag: 'agenda',
     cta: 'entrar no ar',
     accent: false,
   },
@@ -119,12 +116,9 @@ const pricingPlans = [
     eyebrow: 'operacao completa',
     title: 'PRO',
     price: 'R$ 59,90',
-    description: 'Agenda + site no ar em minutos, clube VIP e relatórios.',
-    detail: 'site generico barberos.io/b/slug, barbeiros ilimitados, clube VIP',
-    bullets: ['site genérico BarberOS publicado', 'barbeiros ilimitados', 'clube VIP e assinaturas'],
+    description: 'Agenda, site e operação no mesmo fluxo.',
+    bullets: ['site genérico publicado', 'barbeiros ilimitados', 'clube VIP e assinaturas'],
     fit: 'bom para casas com equipe e volume',
-    result: 'presenca online + operacao completa sem travar em personalizacao',
-    siteTag: 'generico',
     cta: 'rodar a casa',
     accent: true,
   },
@@ -133,12 +127,9 @@ const pricingPlans = [
     eyebrow: 'identidade propria',
     title: 'PREMIUM',
     price: 'R$ 79,90',
-    description: 'Agenda + site personalizado com design exclusivo e domínio próprio.',
-    detail: 'site personalizado, dominio proprio, SEO local, onboarding dedicado',
+    description: 'Para quem quer identidade própria e domínio.',
     bullets: ['site com design exclusivo', 'domínio próprio incluso', 'onboarding dedicado'],
     fit: 'bom para casas que querem identidade de marca forte',
-    result: 'barbearia com site proprio sem depender de agencia',
-    siteTag: 'personalizado',
     cta: 'quero o premium',
     accent: false,
   },
@@ -1277,8 +1268,8 @@ const Index = () => {
                     <div
                       className={
                         plan.accent
-                          ? 'group relative h-full overflow-hidden rounded-[1.75rem] border border-[#ca7f34] bg-[linear-gradient(180deg,rgba(214,122,34,0.93)_0%,rgba(151,80,18,0.97)_100%)] px-5 py-6 text-[#170d06] shadow-[0_20px_46px_rgba(140,73,18,0.18)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb457]/70'
-                          : 'group relative h-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(25,15,10,0.94)_0%,rgba(10,7,5,1)_100%)] px-5 py-6 text-white shadow-[0_22px_60px_rgba(0,0,0,0.26)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb457]/35'
+                          ? 'group relative h-full overflow-hidden rounded-[1.75rem] border border-[#ca7f34] bg-[linear-gradient(180deg,rgba(214,122,34,0.94)_0%,rgba(151,80,18,0.98)_100%)] px-6 py-7 text-[#160d06] shadow-[0_20px_46px_rgba(140,73,18,0.18)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb457]/70'
+                          : 'group relative h-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(25,15,10,0.94)_0%,rgba(10,7,5,1)_100%)] px-6 py-7 text-white shadow-[0_22px_60px_rgba(0,0,0,0.26)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb457]/35'
                       }
                     >
                       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
@@ -1296,11 +1287,11 @@ const Index = () => {
                       >
                         {plan.eyebrow}
                       </p>
-                      <h3 className="mt-4 font-body text-[1.95rem] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[2.25rem]">
+                      <h3 className="mt-4 font-heading text-[2rem] leading-[1] tracking-[0.02em] sm:text-[2.4rem]">
                         {plan.title}
                       </h3>
                       <div className="mt-5 flex items-end justify-between gap-3">
-                        <span className="font-body text-[2.7rem] font-semibold leading-none tracking-[-0.05em] sm:text-[3.1rem]">
+                        <span className="font-heading text-[2.85rem] font-semibold leading-none tracking-[-0.05em] sm:text-[3.25rem]">
                           {plan.price}
                         </span>
                         <span
@@ -1313,61 +1304,15 @@ const Index = () => {
                           mensal
                         </span>
                       </div>
-                      <div className="mt-4 flex items-center gap-2">
-                        {plan.siteTag === 'generico' ? (
-                          <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-body text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                            site genérico
-                          </span>
-                        ) : (
-                          <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-body text-[10px] font-semibold uppercase tracking-[0.2em] ${plan.accent ? 'border-[#1a4a8a]/60 bg-blue-500/15 text-blue-300' : 'border-blue-500/30 bg-blue-500/10 text-blue-400'}`}>
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${plan.accent ? 'bg-blue-300' : 'bg-blue-400'}`} />
-                            site externo
-                          </span>
-                        )}
-                      </div>
-                      <p
-                        className={
-                          plan.accent
-                            ? 'mt-3 font-body text-[15px] leading-6 text-[#2d1a0b]'
-                            : 'mt-3 font-body text-[15px] leading-6 text-white/72'
-                        }
-                      >
+                      <p className={plan.accent ? 'mt-3 font-body text-[15px] leading-7 text-[#2d1a0b]' : 'mt-3 font-body text-[15px] leading-7 text-white/72'}>
                         {plan.description}
                       </p>
-                      <div
-                        className={
-                          plan.accent
-                            ? 'mt-5 rounded-[1.15rem] border border-[#8d4d13]/40 bg-[#23150b]/10 px-4 py-4'
-                            : 'mt-5 rounded-[1.15rem] border border-white/8 bg-white/[0.03] px-4 py-4'
-                        }
-                      >
-                        <p
-                          className={
-                            plan.accent
-                              ? 'font-body text-[10px] uppercase tracking-[0.28em] text-[#5a3410]'
-                              : 'font-body text-[10px] uppercase tracking-[0.28em] text-[#ffb45a]'
-                          }
-                        >
+                      <div className={plan.accent ? 'mt-5 rounded-[1.15rem] border border-[#8d4d13]/40 bg-[#23150b]/10 px-4 py-3' : 'mt-5 rounded-[1.15rem] border border-white/8 bg-white/[0.03] px-4 py-3'}>
+                        <p className={plan.accent ? 'font-body text-[10px] uppercase tracking-[0.28em] text-[#5a3410]' : 'font-body text-[10px] uppercase tracking-[0.28em] text-[#ffb45a]'}>
                           melhor encaixe
                         </p>
-                        <p
-                          className={
-                            plan.accent
-                              ? 'mt-2 font-body text-sm leading-6 text-[#26170b]'
-                              : 'mt-2 font-body text-sm leading-6 text-white/62'
-                          }
-                        >
+                        <p className={plan.accent ? 'mt-1 font-body text-sm leading-6 text-[#26170b]' : 'mt-1 font-body text-sm leading-6 text-white/62'}>
                           {plan.fit}
-                        </p>
-                        <p
-                          className={
-                            plan.accent
-                              ? 'mt-3 font-body text-[13px] leading-6 text-[#26170b]/80'
-                              : 'mt-3 font-body text-[13px] leading-6 text-white/50'
-                          }
-                        >
-                          {plan.detail}
                         </p>
                       </div>
                       <div className="mt-4 space-y-2">
@@ -1381,32 +1326,6 @@ const Index = () => {
                             </span>
                           </div>
                         ))}
-                      </div>
-                      <div
-                        className={
-                          plan.accent
-                            ? 'mt-5 border-t border-[#8a4d17]/40 pt-4'
-                            : 'mt-5 border-t border-white/8 pt-4'
-                        }
-                      >
-                        <p
-                          className={
-                            plan.accent
-                              ? 'font-body text-[10px] uppercase tracking-[0.26em] text-[#5a3410]'
-                              : 'font-body text-[10px] uppercase tracking-[0.26em] text-white/34'
-                          }
-                        >
-                          destrava
-                        </p>
-                        <p
-                          className={
-                            plan.accent
-                              ? 'mt-3 font-body text-sm leading-6 text-[#26170b]'
-                              : 'mt-3 font-body text-sm leading-6 text-white/58'
-                          }
-                        >
-                          {plan.result}
-                        </p>
                       </div>
                       <div className="mt-5 flex items-center justify-between">
                         <span
