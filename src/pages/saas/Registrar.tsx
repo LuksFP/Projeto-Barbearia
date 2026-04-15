@@ -12,7 +12,7 @@ const Registrar = () => {
   const plano = (searchParams.get('plano') ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
 
-  const { signup, isLoggedIn, hasActivePlan } = useSaasAccount()
+  const { signup, isLoggedIn, hasActivePlan, account } = useSaasAccount()
 
   const [form, setForm] = useState({
     ownerName: '',
@@ -33,8 +33,9 @@ const Registrar = () => {
 
   const isPasswordStrong = passwordRules.every(r => r.ok)
 
-  // Já logado e com plano → vai direto pro dashboard
-  if (isLoggedIn && hasActivePlan) {
+  // Já logado e com plano pago → vai direto pro dashboard
+  // Não redireciona se plan === null (trial recém-criado aguardando pagamento)
+  if (isLoggedIn && hasActivePlan && account?.plan) {
     navigate('/dashboard', { replace: true })
     return null
   }
