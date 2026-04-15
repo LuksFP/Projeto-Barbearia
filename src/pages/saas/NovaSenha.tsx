@@ -46,15 +46,17 @@ const NovaSenha = () => {
     setError('')
 
     try {
-      // Timeout de 10s — se o updateUser travar (sessão expirada, rede lenta), não fica preso
-      const result = await Promise.race([
-        supabase.auth.updateUser({ password }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 10_000)
-        ),
-      ]) as Awaited<ReturnType<typeof supabase.auth.updateUser>>
+      // Força refresh do token antes de atualizar a senha.
+      // Isso falha rápido se o link de recovery expirou, em vez de travar no updateUser.
+      const { error: refreshError } = await supabase.auth.refreshSession()
+      if (refreshError) {
+        setError('Link expirado. Solicite um novo link de redefinição de senha.')
+        return
+      }
 
-      if (result.error) {
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+
+      if (updateError) {
         setError('Não foi possível redefinir a senha. Solicite um novo link.')
         return
       }
@@ -64,7 +66,7 @@ const NovaSenha = () => {
       navigate('/entrar?senha=alterada', { replace: true })
 
     } catch {
-      setError('A requisição demorou demais. Verifique sua conexão e tente novamente.')
+      setError('Erro inesperado. Verifique sua conexão e tente novamente.')
     } finally {
       setLoading(false)
     }
