@@ -45,28 +45,37 @@ const NovaSenha = () => {
     setLoading(true)
     setError('')
 
-    try {
-      // Força refresh do token antes de atualizar a senha.
-      // Isso falha rápido se o link de recovery expirou, em vez de travar no updateUser.
-      const { error: refreshError } = await supabase.auth.refreshSession()
-      if (refreshError) {
-        setError('Link expirado. Solicite um novo link de redefinição de senha.')
-        return
-      }
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 20_000)
+    )
 
-      const { error: updateError } = await supabase.auth.updateUser({ password })
+    try {
+      const { error: updateError } = await Promise.race([
+        supabase.auth.updateUser({ password }),
+        timeout,
+      ]) as Awaited<ReturnType<typeof supabase.auth.updateUser>>
 
       if (updateError) {
-        setError('Não foi possível redefinir a senha. Solicite um novo link.')
+        // Auth session missing = link de recovery expirado
+        const expired = updateError.message?.toLowerCase().includes('session') ||
+                        updateError.message?.toLowerCase().includes('expired') ||
+                        updateError.status === 401
+        setError(expired
+          ? 'Link expirado. Solicite um novo link de redefinição de senha.'
+          : 'Não foi possível redefinir a senha. Tente novamente.'
+        )
         return
       }
 
-      // Faz logout para forçar login com a nova senha (boa prática de segurança)
       await supabase.auth.signOut()
       navigate('/entrar?senha=alterada', { replace: true })
 
-    } catch {
-      setError('Erro inesperado. Verifique sua conexão e tente novamente.')
+    } catch (err) {
+      const isTimeout = err instanceof Error && err.message === 'timeout'
+      setError(isTimeout
+        ? 'Link de redefinição expirado ou inválido. Solicite um novo.'
+        : 'Erro de conexão. Verifique sua internet e tente novamente.'
+      )
     } finally {
       setLoading(false)
     }
