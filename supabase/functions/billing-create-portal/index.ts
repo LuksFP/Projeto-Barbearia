@@ -29,12 +29,26 @@ Deno.serve(async (req) => {
   if (authErr || !user) return err('Unauthorized', 401)
 
   // ── Body ──────────────────────────────────────────────────────────────────
+  const ALLOWED_RETURN_ORIGINS = ['https://barberos.io', 'http://localhost:5173', 'http://localhost:4173']
+  const DEFAULT_RETURN_URL = 'https://barberos.io/dashboard/assinatura'
+
   let returnUrl: string
   try {
     const body = await req.json() as { returnUrl?: string }
-    returnUrl = body.returnUrl ?? `${req.headers.get('origin') ?? 'https://barberos.io'}/dashboard/assinatura`
+    const candidate = body.returnUrl ?? ''
+    if (candidate) {
+      try {
+        const parsed = new URL(candidate)
+        const origin = parsed.origin
+        returnUrl = ALLOWED_RETURN_ORIGINS.includes(origin) ? candidate : DEFAULT_RETURN_URL
+      } catch {
+        returnUrl = DEFAULT_RETURN_URL
+      }
+    } else {
+      returnUrl = DEFAULT_RETURN_URL
+    }
   } catch {
-    returnUrl = 'https://barberos.io/dashboard/assinatura'
+    returnUrl = DEFAULT_RETURN_URL
   }
 
   // ── Conta SaaS ────────────────────────────────────────────────────────────

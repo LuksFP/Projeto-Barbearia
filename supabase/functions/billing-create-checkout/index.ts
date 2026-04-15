@@ -50,6 +50,15 @@ Deno.serve(async (req) => {
   if (!priceId) return err(`Unknown plan: ${plan}`)
   if (!successUrl || !cancelUrl) return err('successUrl and cancelUrl required')
 
+  // Valida origens para evitar open redirect
+  const ALLOWED_ORIGINS = ['https://barberos.io', 'http://localhost:5173', 'http://localhost:4173']
+  const isAllowedUrl = (url: string) => {
+    try { return ALLOWED_ORIGINS.includes(new URL(url).origin) } catch { return false }
+  }
+  if (!isAllowedUrl(successUrl) || !isAllowedUrl(cancelUrl)) {
+    return err('URL de redirecionamento inválida', 400)
+  }
+
   // ── Conta SaaS ────────────────────────────────────────────────────────────
   const { data: account, error: accErr } = await supabase
     .from('saas_accounts')

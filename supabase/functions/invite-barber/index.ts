@@ -115,14 +115,24 @@ Deno.serve(async (req) => {
     .eq('active', true)
     .maybeSingle()
 
-  // Também pode ser o saas_account owner
+  // Também pode ser o saas_account owner — mas somente se a barbearia pertence à sua conta
   const { data: account } = await supabase
     .from('saas_accounts')
     .select('id')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  const isSaasOwner = !!account
+  let isSaasOwner = false
+  if (account) {
+    const { data: ownedShop } = await supabase
+      .from('barbershops')
+      .select('id')
+      .eq('id', barbershopId)
+      .eq('saas_account_id', account.id)
+      .maybeSingle()
+    isSaasOwner = !!ownedShop
+  }
+
   const isAdmin = member?.role === 'owner' || member?.role === 'admin'
 
   if (!isSaasOwner && !isAdmin) return err('Permissão negada', 403)
