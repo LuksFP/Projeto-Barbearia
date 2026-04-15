@@ -14,6 +14,7 @@ interface SaasAccountContextType {
   login: (email: string, password: string) => Promise<boolean | 'blocked'>
   logout: () => Promise<void>
   activatePlan: (plan: SaasPlan, paymentCard?: SaasPaymentCardInput) => Promise<void>
+  refreshAccount: () => Promise<void>
 }
 
 const SaasAccountContext = createContext<SaasAccountContextType | undefined>(undefined)
@@ -117,6 +118,14 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(null)
   }
 
+  const refreshAccount = async (): Promise<void> => {
+    const session = await saasAccountRepository.getSession()
+    if (session) {
+      setAccount(session.account as unknown as SaasAccount)
+      setAccessToken(session.accessToken)
+    }
+  }
+
   const activatePlan = async (plan: SaasPlan, _paymentCard?: SaasPaymentCardInput): Promise<void> => {
     if (!account) throw new Error('Nenhuma conta SaaS ativa')
     const { data: { session } } = await supabase.auth.getSession()
@@ -138,6 +147,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       login,
       logout,
       activatePlan,
+      refreshAccount,
     }}>
       {children}
     </SaasAccountContext.Provider>

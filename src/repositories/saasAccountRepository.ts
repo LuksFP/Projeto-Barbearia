@@ -50,9 +50,22 @@ export const saasAccountRepository = {
       throw new Error(rpcError.message ?? 'Erro ao criar conta.')
     }
 
+    // signUp() retorna session null quando confirmação de email está ativa no projeto.
+    // Fallback: faz login imediato para garantir que a sessão existe antes de ir ao checkout.
+    let session = authData.session
+    if (!session) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: input.email,
+        password: input.password,
+      })
+      if (!signInError && signInData.session) {
+        session = signInData.session
+      }
+    }
+
     return {
       account: mapAccount(account as SaasAccountRow),
-      accessToken: authData.session?.access_token ?? null,
+      accessToken: session?.access_token ?? null,
     }
   },
 
