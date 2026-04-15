@@ -45,24 +45,41 @@ const NovaSenha = () => {
     setLoading(true)
     setError('')
 
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 20_000)
-    )
-
     try {
-      const { error: updateError } = await Promise.race([
-        supabase.auth.updateUser({ password }),
-        timeout,
-      ]) as Awaited<ReturnType<typeof supabase.auth.updateUser>>
+      // Pega o access token da sessão atual (recovery ou normal)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError('Link expirado. Solicite um novo link de redefinição de senha.')
+        return
+      }
 
-      if (updateError) {
-        // Auth session missing = link de recovery expirado
-        const expired = updateError.message?.toLowerCase().includes('session') ||
-                        updateError.message?.toLowerCase().includes('expired') ||
-                        updateError.status === 401
+      // Chama a API do Supabase Auth diretamente com AbortController.
+      // Evita o SDK tentar auto-refresh em loop e travar indefinidamente.
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15_000)
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/user`,
+        {
+          method: 'PUT',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ password }),
+        }
+      )
+      clearTimeout(timeoutId)
+
+      if (!res.ok) {
+        const body = await res.json() as { msg?: string; error_description?: string }
+        const msg = body.msg ?? body.error_description ?? ''
+        const expired = res.status === 401 || msg.toLowerCase().includes('expired')
         setError(expired
-          ? 'Link expirado. Solicite um novo link de redefinição de senha.'
-          : 'Não foi possível redefinir a senha. Tente novamente.'
+          ? 'Link expirado. Solicite um novo link de redefinição.'
+          : 'Não foi possível salvar a senha. Tente novamente.'
         )
         return
       }
@@ -71,10 +88,10 @@ const NovaSenha = () => {
       navigate('/entrar?senha=alterada', { replace: true })
 
     } catch (err) {
-      const isTimeout = err instanceof Error && err.message === 'timeout'
-      setError(isTimeout
-        ? 'Link de redefinição expirado ou inválido. Solicite um novo.'
-        : 'Erro de conexão. Verifique sua internet e tente novamente.'
+      const aborted = err instanceof Error && err.name === 'AbortError'
+      setError(aborted
+        ? 'Conexão lenta. Verifique sua internet e tente novamente.'
+        : 'Erro inesperado. Tente novamente.'
       )
     } finally {
       setLoading(false)
