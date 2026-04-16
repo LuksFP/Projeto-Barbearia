@@ -17,6 +17,22 @@ const benefits = [
   'Painel para equipe, clientes e operação no mesmo lugar',
 ]
 
+const heroStats = [
+  { value: '+32%', label: 'agenda mais previsível', detail: 'menos buraco na semana' },
+  { value: '24h', label: 'link vendendo sozinho', detail: 'cliente agenda fora do horário' },
+  { value: '1 lugar', label: 'operação centralizada', detail: 'site, agenda e equipe' },
+]
+
+const motionStrip = [
+  'agenda online',
+  'confirmação automática',
+  'mais retorno',
+  'menos buraco na agenda',
+  'site no ar',
+  'equipe organizada',
+  'cliente volta mais',
+]
+
 const testimonials = [
   {
     quote: 'A gente saiu do caderno em dois dias. Só isso já limpou a recepção e reduziu falta.',
@@ -162,70 +178,198 @@ const ParallaxCard = ({
 const Index = () => {
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#efe6d7]">
-      <section className="relative px-6 pb-28 pt-40 sm:px-8 sm:pb-36 lg:px-12 lg:pt-44">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(198,151,67,0.08),transparent_26%)]" />
+      <section className="relative overflow-hidden px-6 pb-24 pt-36 sm:px-8 sm:pb-28 lg:px-12 lg:pt-40">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(198,151,67,0.16),transparent_22%),radial-gradient(circle_at_84%_18%,rgba(255,130,72,0.07),transparent_18%),linear-gradient(180deg,#0b0a08_0%,#0d0a07_52%,#090806_100%)]" />
+        <motion.div
+          animate={{ x: [0, 18, 0], y: [0, -10, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="pointer-events-none absolute -left-8 top-24 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(199,155,75,0.18),transparent_70%)] blur-2xl"
+        />
+        <motion.div
+          animate={{ x: [0, -14, 0], y: [0, 12, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+          className="pointer-events-none absolute right-0 top-16 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,132,65,0.10),transparent_72%)] blur-3xl"
+        />
 
-        <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
+        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55 }}
+              className="inline-flex rounded-full border border-[#3b2d17] bg-[#120f0b] px-4 py-2 text-[11px] uppercase tracking-[0.26em] text-[#bf9447]"
+            >
+              +500 barbearias já usam
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.08 }}
+              className="mt-8 max-w-4xl font-heading text-[3rem] leading-[0.93] tracking-[-0.065em] text-[#f3eadb] sm:text-[4.5rem] lg:text-[6.1rem]"
+            >
+              Sua barbearia pode
+              <span className="block text-[#c79b4b]">parecer cheia</span>
+              <span className="block">antes mesmo do cliente chegar.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.16 }}
+              className="mt-6 max-w-xl text-sm leading-7 text-[#9f9688] sm:text-base"
+            >
+              Agenda online, confirmação automática e presença digital no mesmo sistema. Mais organização, mais percepção de valor e menos improviso no dia a dia.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.24 }}
+              className="mt-8 flex flex-col items-start gap-5"
+            >
+              <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+                <span className="text-xs text-[#5f574c] line-through sm:text-sm">De R$ 39,90</span>
+                <span className="font-heading text-[2rem] tracking-[-0.05em] text-[#c79b4b] sm:text-[2.8rem]">
+                  A partir de R$ 19,90/mês
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <Button asChild className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
+                  <Link to="/registrar?plano=basic">
+                    Quero começar agora
+                  </Link>
+                </Button>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-[#746b5d] sm:text-xs">
+                  Sem fidelidade • Cancele quando quiser
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.32 }}
+              className="mt-10 grid max-w-2xl gap-3 sm:grid-cols-3"
+            >
+              {heroStats.map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.34 + index * 0.06 }}
+                  whileHover={liftCard}
+                  className="rounded-[22px] border border-[#251c12] bg-[linear-gradient(180deg,#14110d_0%,#0d0b08_100%)] p-4 text-left shadow-[0_20px_40px_rgba(0,0,0,0.18)]"
+                >
+                  <p className="font-heading text-[1.7rem] tracking-[-0.05em] text-[#f4e8d6]">{item.value}</p>
+                  <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[#bf9447]">{item.label}</p>
+                  <p className="mt-3 text-sm leading-6 text-[#958a7b]">{item.detail}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55 }}
-            className="rounded-full border border-[#3b2d17] bg-[#120f0b] px-4 py-2 text-[11px] uppercase tracking-[0.26em] text-[#bf9447]"
+            initial={{ opacity: 0, x: 22 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="relative mx-auto w-full max-w-[32rem] lg:ml-auto"
           >
-            +500 barbearias já usam
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -left-4 top-12 hidden rounded-2xl border border-[#3b2d17] bg-[#15110d]/95 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur md:block"
+            >
+              <p className="text-[10px] uppercase tracking-[0.26em] text-[#bf9447]">agora</p>
+              <p className="mt-2 text-sm text-[#eee1ce]">2 horários preenchidos no link de agendamento</p>
+            </motion.div>
+
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+              className="absolute -right-3 bottom-10 hidden rounded-2xl border border-[#3a2a17] bg-[#110f0c]/95 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur md:block"
+            >
+              <p className="text-[10px] uppercase tracking-[0.26em] text-[#bf9447]">percepção</p>
+              <p className="mt-2 text-sm text-[#eee1ce]">cliente vê organização antes de entrar na cadeira</p>
+            </motion.div>
+
+            <ParallaxCard className="rounded-[34px] border border-[#3a2c18] bg-[linear-gradient(180deg,#17130e_0%,#0c0a08_100%)] p-6 shadow-[0_34px_120px_rgba(0,0,0,0.38)]">
+              <div className="flex items-center justify-between border-b border-[#241c14] pb-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-[#bf9447]">barbearia no controle</p>
+                  <p className="mt-2 font-heading text-[2rem] tracking-[-0.05em] text-[#f6ebdd]">Hoje, 14 de 21 horários ocupados</p>
+                </div>
+                <div className="rounded-full border border-[#3a2d1c] bg-[#130f0b] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-[#d4aa57]">
+                  operação ao vivo
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-[1.15fr_0.85fr]">
+                <div className="space-y-3">
+                  {[
+                    ['09:00', 'Corte + barba', 'confirmado', 'Marcos Silva'],
+                    ['11:30', 'Corte social', 'novo cliente', 'André Costa'],
+                    ['15:00', 'Barba premium', 'recorrente', 'Fábio Luz'],
+                  ].map(([time, service, state, client], index) => (
+                    <motion.div
+                      key={`${time}-${client}`}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.45, delay: 0.2 + index * 0.08 }}
+                      whileHover={{ x: 6, scale: 1.01 }}
+                      className="rounded-[22px] border border-[#2d241a] bg-[#120f0b] px-4 py-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-heading text-[1.45rem] text-[#f3eadb]">{time}</p>
+                          <p className="mt-1 text-sm text-[#dfd4c4]">{service}</p>
+                          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-[#897d6b]">{client}</p>
+                        </div>
+                        <div className="rounded-full border border-[#3a2d1c] bg-[#17120d] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#cba25a]">
+                          {state}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <motion.div
+                    whileHover={{ ...liftCard, scale: 1.02 }}
+                    className="rounded-[24px] border border-[#2f2418] bg-[#120f0b] p-4 transition-colors duration-200 hover:border-[#c79b4b]"
+                  >
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-[#bf9447]">esta semana</p>
+                    <p className="mt-3 font-heading text-[2.4rem] tracking-[-0.06em] text-[#f8eedf]">R$ 4.820</p>
+                    <p className="mt-2 text-sm leading-6 text-[#958a7b]">Faturamento visível sem depender de caderno ou memória.</p>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ ...liftCard, scale: 1.02 }}
+                    className="rounded-[24px] border border-[#2f2418] bg-[#0f0d0a] p-4 transition-colors duration-200 hover:border-[#c79b4b]"
+                  >
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-[#bf9447]">recuperação</p>
+                    <p className="mt-3 font-heading text-[2.1rem] tracking-[-0.06em] text-[#f8eedf]">11 clientes</p>
+                    <p className="mt-2 text-sm leading-6 text-[#958a7b]">voltaram depois do lembrete automático este mês.</p>
+                  </motion.div>
+                </div>
+              </div>
+            </ParallaxCard>
           </motion.div>
+        </div>
+      </section>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.08 }}
-            className="mt-10 max-w-3xl font-heading text-[3rem] leading-[0.95] tracking-[-0.06em] text-[#f3eadb] sm:text-[4.4rem] lg:text-[5.5rem]"
-          >
-            Sua barbearia ainda vive
-            <span className="block text-[#c79b4b]">de caderno e WhatsApp?</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.16 }}
-            className="mt-6 max-w-2xl text-sm leading-7 text-[#9f9688] sm:text-base"
-          >
-            Organize sua agenda, pare de perder clientes e faça sua barbearia faturar mais com um sistema profissional que cabe no bolso.
-          </motion.p>
-
+      <section className="border-y border-[#171411] bg-[#090806] py-4">
+        <div className="overflow-hidden">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.24 }}
-            className="mt-8 flex flex-col items-center"
+            animate={{ x: ['0%', '-50%'] }}
+            transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+            className="flex min-w-max items-center gap-4"
           >
-            <div className="flex items-end gap-3">
-              <span className="text-xs text-[#5f574c] line-through sm:text-sm">De R$ 39,90</span>
-              <span className="font-heading text-[2rem] tracking-[-0.05em] text-[#c79b4b] sm:text-[2.8rem]">
-                A partir de R$ 19,90/mês
-              </span>
-            </div>
-
-            <Button asChild className="liquid-glass-button mt-5 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
-              <Link to="/registrar?plano=basic">
-                Quero começar agora
-              </Link>
-            </Button>
-
-            <p className="mt-3 text-[11px] text-[#746b5d] sm:text-xs">
-              Sem fidelidade • Cancele quando quiser
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.32 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] uppercase tracking-[0.22em] text-[#756d60]"
-          >
-            {proofStrip.map((item) => (
-              <span key={item}>{item}</span>
+            {[...motionStrip, ...motionStrip, ...motionStrip].map((item, index) => (
+              <div key={`${item}-${index}`} className="flex items-center gap-4 px-2">
+                <span className="text-[11px] uppercase tracking-[0.28em] text-[#bf9447]">{item}</span>
+                <span className="text-[#463b2d]">✦</span>
+              </div>
             ))}
           </motion.div>
         </div>
@@ -564,18 +708,27 @@ const Index = () => {
             <ParallaxCard className="rounded-[30px] border border-[#3a2d1b] bg-[linear-gradient(180deg,#17120d_0%,#0f0d0a_100%)] px-7 py-7 text-left shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
               <p className="text-[11px] uppercase tracking-[0.24em] text-[#bf9447]">por que isso converte</p>
               <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                <motion.div
+                  whileHover={{ ...liftCard, scale: 1.02 }}
+                  className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4 transition-colors duration-200 hover:border-[#c79b4b]"
+                >
                   <p className="font-heading text-[1.7rem] text-[#fff0d8]">Preço claro</p>
                   <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem esconder valor e sem pedir contato para descobrir quanto custa.</p>
-                </div>
-                <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                </motion.div>
+                <motion.div
+                  whileHover={{ ...liftCard, scale: 1.02 }}
+                  className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4 transition-colors duration-200 hover:border-[#c79b4b]"
+                >
                   <p className="font-heading text-[1.7rem] text-[#fff0d8]">Oferta simples</p>
                   <p className="mt-2 text-sm leading-7 text-[#a89d8d]">O dono entende rápido o que entra: agenda, site e operação no mesmo produto.</p>
-                </div>
-                <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                </motion.div>
+                <motion.div
+                  whileHover={{ ...liftCard, scale: 1.02 }}
+                  className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4 transition-colors duration-200 hover:border-[#c79b4b]"
+                >
                   <p className="font-heading text-[1.7rem] text-[#fff0d8]">Risco baixo</p>
                   <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem fidelidade, sem contrato travado e com caminho curto para testar.</p>
-                </div>
+                </motion.div>
               </div>
             </ParallaxCard>
           </div>
