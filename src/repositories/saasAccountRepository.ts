@@ -50,15 +50,15 @@ export const saasAccountRepository = {
       throw new Error(body.error ?? 'Erro ao criar conta.')
     }
 
-    // Restaura sessão no cliente Supabase se disponível
+    if (!body.account) throw new Error('Conta criada mas perfil não encontrado.')
+
+    // Dispara setSession em background — não bloqueia a navegação
     if (body.access_token && body.refresh_token) {
-      await supabase.auth.setSession({
+      supabase.auth.setSession({
         access_token:  body.access_token,
         refresh_token: body.refresh_token,
       })
     }
-
-    if (!body.account) throw new Error('Conta criada mas perfil não encontrado.')
 
     return {
       account: { ...mapAccount(body.account), email: input.email },

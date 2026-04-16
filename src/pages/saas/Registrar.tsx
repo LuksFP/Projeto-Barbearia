@@ -23,6 +23,7 @@ const Registrar = () => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState('')
   const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [error, setError] = useState('')
 
@@ -73,17 +74,21 @@ const Registrar = () => {
       return
     }
     setLoading(true)
+    setLoadingStep('Criando sua conta...')
     try {
+      const stepTimer = setTimeout(() => setLoadingStep('Configurando barbearia...'), 800)
       await signup({ ...form, plan: plano })
-      navigate(`/pagamento?plano=${plano}`)
+      clearTimeout(stepTimer)
+      setLoadingStep('Conta criada!')
+      setTimeout(() => navigate(`/pagamento?plano=${plano}`), 400)
     } catch (signupError) {
       setError(
         signupError instanceof Error
           ? signupError.message
           : 'Erro ao criar conta. Tente novamente.',
       )
-    } finally {
       setLoading(false)
+      setLoadingStep('')
     }
   }
 
@@ -283,7 +288,7 @@ const Registrar = () => {
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold font-body text-sm tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
-                {loading ? 'Criando conta...' : 'Criar conta e ir para pagamento →'}
+                {loading ? loadingStep || 'Criando conta...' : 'Criar conta e ir para pagamento →'}
               </button>
             </form>
 
