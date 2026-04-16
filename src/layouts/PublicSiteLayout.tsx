@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, Link, useParams } from 'react-router-dom'
 import { Menu, X, Scissors, Phone } from 'lucide-react'
 import { supabasePublic } from '@/lib/supabase-public'
+import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
 import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership } from '@/types/tenant'
 import type { Tables } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -100,6 +101,20 @@ const PublicSiteLayout = () => {
 
       setIsLoading(true)
       setNotFound(false)
+
+      if (isDemoMode()) {
+        const demoSite = getDemoPublicSiteBySlug(slug)
+
+        if (demoSite) {
+          if (cancelled) return
+          setBarbershop(demoSite.barbershop)
+          setServices(demoSite.services)
+          setBarbers(demoSite.barbers)
+          setMemberships(demoSite.memberships)
+          setIsLoading(false)
+          return
+        }
+      }
 
       const { data: bs, error } = await supabasePublic
         .from('barbershops')

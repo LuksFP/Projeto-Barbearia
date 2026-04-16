@@ -254,6 +254,30 @@ export function getDemoMemberships(plan: DemoPlan): BarbershopMembership[] {
   ]
 }
 
+export function getDemoPublicSiteBySlug(slug: string): {
+  barbershop: Barbershop
+  services: BarbershopService[]
+  barbers: BarbershopBarber[]
+  memberships: BarbershopMembership[]
+} | null {
+  const normalizedSlug = slug.trim().toLowerCase()
+  const plans: DemoPlan[] = ['basic', 'pro', 'premium']
+
+  for (const plan of plans) {
+    const barbershop = getDemoBarbershop(plan)
+    if (barbershop.slug !== normalizedSlug) continue
+
+    return {
+      barbershop,
+      services: getDemoServices(plan),
+      barbers: getDemoBarbers(plan),
+      memberships: getDemoMemberships(plan),
+    }
+  }
+
+  return null
+}
+
 // ─── Dados financeiros mock ──────────────────────────────────────────────────
 
 const FINANCIAL_DATA: Record<DemoPlan, MonthRevenue[]> = {
