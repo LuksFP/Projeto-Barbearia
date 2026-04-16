@@ -34,6 +34,34 @@ const testimonials = [
   },
 ]
 
+const comparisonLists = {
+  without: [
+    'Agenda no caderno, cheia de rasuras',
+    'WhatsApp lotado de mensagens perdidas',
+    'Clientes esperando sem previsao',
+    'Sem controle de faturamento',
+  ],
+  with: [
+    'Agendamento online 24h',
+    'Notificacoes automaticas',
+    'Relatorios claros e objetivos',
+    'Faturamento sob controle',
+  ],
+}
+
+const setupSteps = [
+  'Crie sua conta em 1 minuto',
+  'Cadastre seus barbeiros',
+  'Compartilhe seu link de agendamento',
+  'Receba clientes no piloto automatico',
+]
+
+const resultCards = [
+  { name: 'Joao Silva', city: 'Sao Paulo, SP', result: 'Aumentou em 40% os agendamentos no primeiro mes' },
+  { name: 'Carlos Mendes', city: 'Belo Horizonte, MG', result: 'Parou de perder clientes por esquecimento' },
+  { name: 'Rafael Torres', city: 'Rio de Janeiro, RJ', result: 'Organizou 3 barbeiros sem precisar de secretaria' },
+]
+
 const faqs = [
   {
     question: 'Preciso contratar site por fora?',
@@ -143,6 +171,45 @@ const Index = () => {
         </div>
       </section>
 
+      <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <h2 className="font-heading text-[2.3rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.6rem]">
+              O segredo que barbearias de sucesso <span className="text-[#c79b4b]">ja usam</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-3xl text-sm leading-8 text-[#9f9688] sm:text-base">
+              O problema nunca foi falta de clientes. E falta de organizacao e profissionalismo. Quando sua barbearia funciona com sistema, os clientes confiam mais, voltam mais e indicam mais.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 lg:grid-cols-2">
+            <div className="rounded-[24px] border border-[#5b1f1f] bg-[#120d0d] p-6">
+              <p className="font-heading text-[1.8rem] tracking-[-0.04em] text-[#ff6c5f]">Sem o sistema</p>
+              <ul className="mt-5 space-y-3">
+                {comparisonLists.without.map((item) => (
+                  <li key={item} className="flex gap-3 text-sm leading-7 text-[#cbbdb8]">
+                    <span className="text-[#ff6c5f]">✕</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-[24px] border border-[#4c3a19] bg-[#11100d] p-6">
+              <p className="font-heading text-[1.8rem] tracking-[-0.04em] text-[#d3aa58]">Com o sistema</p>
+              <ul className="mt-5 space-y-3">
+                {comparisonLists.with.map((item) => (
+                  <li key={item} className="flex gap-3 text-sm leading-7 text-[#d7cdc0]">
+                    <span className="text-[#b7da72]">✔</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="plans" className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
@@ -217,6 +284,52 @@ const Index = () => {
         </div>
       </section>
 
+      <section className="border-t border-[#171411] bg-[#141311] px-6 py-24 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="font-heading text-[2.2rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.5rem]">
+            Tudo isso por apenas <span className="text-[#c79b4b]">R$ 59,90/mes</span> no plano Pro
+          </h2>
+          <ul className="mx-auto mt-8 max-w-xl space-y-3 text-left">
+            {[
+              'Acesso completo a plataforma',
+              'Site generico no ar e agenda no mesmo fluxo',
+              'Estrategia de fidelizacao de clientes',
+              'Suporte prioritario',
+              'Atualizacoes gratuitas',
+            ].map((item) => (
+              <li key={item} className="flex gap-3 text-sm leading-7 text-[#d7cdc0]">
+                <span className="text-[#b7da72]">✔</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <Button asChild className="liquid-glass-button mt-8 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
+            <Link to="/registrar?plano=pro">
+              Quero os bonus agora
+            </Link>
+          </Button>
+        </div>
+      </section>
+
+      <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-5xl text-center">
+          <h2 className="font-heading text-[2.2rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.3rem]">
+            Configure em <span className="text-[#c79b4b]">4 passos simples</span>
+          </h2>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {setupSteps.map((step, index) => (
+              <div key={step} className="rounded-[20px] border border-[#25201a] bg-[#0f0d0a] px-4 py-6">
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#d1aa58] text-sm font-semibold text-[#120d08]">
+                  {index + 1}
+                </div>
+                <p className="mt-4 text-sm leading-6 text-[#d7cdc0]">{step}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-xs text-[#756d60]">Sem tecnico. Sem complicacao. So voce e seu celular.</p>
+        </div>
+      </section>
+
       <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
@@ -244,6 +357,35 @@ const Index = () => {
                   <p className="font-heading text-[1.45rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
                   <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#7f7668]">{item.role}</p>
                 </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[#171411] bg-[#0a0907] px-6 py-24 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-5xl text-center">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#bf9447]">resultados</p>
+          <h2 className="mt-4 font-heading text-[2.3rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.6rem]">
+            Resultados reais de <span className="text-[#c79b4b]">barbearias reais</span>
+          </h2>
+
+          <div className="mt-12 grid gap-5 lg:grid-cols-3">
+            {resultCards.map((item, index) => (
+              <motion.article
+                key={item.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.45, delay: index * 0.05 }}
+                className="rounded-[24px] border border-[#1d1813] bg-[#11100d] p-6"
+              >
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#1a1712] text-[#c79b4b]">
+                  ✂
+                </div>
+                <p className="mt-4 font-heading text-[1.45rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#7f7668]">{item.city}</p>
+                <p className="mt-5 text-sm leading-7 text-[#d7cdc0]">{item.result}</p>
               </motion.article>
             ))}
           </div>
