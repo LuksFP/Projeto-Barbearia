@@ -5,26 +5,26 @@ import { Button } from '@/components/ui/button'
 import { SAAS_PLANS } from '@/types/saas'
 
 const proofStrip = [
-  'Configuracao inicial rapida',
+  'Configuração inicial rápida',
   'Sem contrato anual',
   'Plano pronto para crescer com a casa',
 ]
 
 const benefits = [
-  'Agenda online para parar de perder horario e cliente',
+  'Agenda online para parar de perder horário e cliente',
   'Site pronto para colocar no ar sem projeto separado',
-  'Painel para equipe, clientes e operacao no mesmo lugar',
+  'Painel para equipe, clientes e operação no mesmo lugar',
 ]
 
 const testimonials = [
   {
-    quote: 'A gente saiu do caderno em dois dias. So isso ja limpou a recepcao e reduziu falta.',
+    quote: 'A gente saiu do caderno em dois dias. Só isso já limpou a recepção e reduziu falta.',
     name: 'Rafael Moura',
     role: 'Barbearia Corvo',
   },
   {
     quote: 'Antes eu perdia cliente no direct. Hoje mando um link e o cara entende na hora como agendar.',
-    name: 'Joao Faria',
+    name: 'João Faria',
     role: 'Casa Faria',
   },
   {
@@ -38,13 +38,13 @@ const comparisonLists = {
   without: [
     'Agenda no caderno, cheia de rasuras',
     'WhatsApp lotado de mensagens perdidas',
-    'Clientes esperando sem previsao',
+    'Clientes esperando sem previsão',
     'Sem controle de faturamento',
   ],
   with: [
     'Agendamento online 24h',
-    'Notificacoes automaticas',
-    'Relatorios claros e objetivos',
+    'Notificações automáticas',
+    'Relatórios claros e objetivos',
     'Faturamento sob controle',
   ],
 }
@@ -53,27 +53,27 @@ const setupSteps = [
   'Crie sua conta em 1 minuto',
   'Cadastre seus barbeiros',
   'Compartilhe seu link de agendamento',
-  'Receba clientes no piloto automatico',
+  'Receba clientes no piloto automático',
 ]
 
 const resultCards = [
-  { name: 'Joao Silva', city: 'Sao Paulo, SP', result: 'Aumentou em 40% os agendamentos no primeiro mes' },
+  { name: 'João Silva', city: 'São Paulo, SP', result: 'Aumentou em 40% os agendamentos no primeiro mês' },
   { name: 'Carlos Mendes', city: 'Belo Horizonte, MG', result: 'Parou de perder clientes por esquecimento' },
-  { name: 'Rafael Torres', city: 'Rio de Janeiro, RJ', result: 'Organizou 3 barbeiros sem precisar de secretaria' },
+  { name: 'Rafael Torres', city: 'Rio de Janeiro, RJ', result: 'Organizou 3 barbeiros sem precisar de secretária' },
 ]
 
 const faqs = [
   {
     question: 'Preciso contratar site por fora?',
-    answer: 'Nao. A propria plataforma ja entrega a pagina publica junto da agenda e da operacao interna.',
+    answer: 'Não. A própria plataforma já entrega a página pública junto da agenda e da operação interna.',
   },
   {
-    question: 'Quanto tempo leva para comecar?',
-    answer: 'A proposta e justamente reduzir atrito: cadastro, pagamento e configuracao inicial no mesmo fluxo.',
+    question: 'Quanto tempo leva para começar?',
+    answer: 'A proposta é justamente reduzir atrito: cadastro, pagamento e configuração inicial no mesmo fluxo.',
   },
   {
     question: 'Qual plano faz mais sentido para a maioria?',
-    answer: 'O Pro tende a encaixar melhor porque junta agenda, site e operacao completa sem precisar de estrutura paralela.',
+    answer: 'O Pro tende a encaixar melhor porque junta agenda, site e operação completa sem precisar de estrutura paralela.',
   },
 ]
 
@@ -90,7 +90,7 @@ const Index = () => {
             transition={{ duration: 0.55 }}
             className="rounded-full border border-[#3b2d17] bg-[#120f0b] px-4 py-2 text-[11px] uppercase tracking-[0.26em] text-[#bf9447]"
           >
-            +500 barbearias ja usam
+            +500 barbearias já usam
           </motion.div>
 
           <motion.h1
@@ -109,7 +109,7 @@ const Index = () => {
             transition={{ duration: 0.65, delay: 0.16 }}
             className="mt-6 max-w-2xl text-sm leading-7 text-[#9f9688] sm:text-base"
           >
-            Organize sua agenda, pare de perder clientes e faca sua barbearia faturar mais com um sistema profissional que cabe no bolso.
+            Organize sua agenda, pare de perder clientes e faça sua barbearia faturar mais com um sistema profissional que cabe no bolso.
           </motion.p>
 
           <motion.div
@@ -121,13 +121,13 @@ const Index = () => {
             <div className="flex items-end gap-3">
               <span className="text-xs text-[#5f574c] line-through sm:text-sm">De R$ 39,90</span>
               <span className="font-heading text-[2rem] tracking-[-0.05em] text-[#c79b4b] sm:text-[2.8rem]">
-                A partir de R$ 19,90/mes
+                A partir de R$ 19,90/mês
               </span>
             </div>
 
             <Button asChild className="liquid-glass-button mt-5 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
               <Link to="/registrar?plano=basic">
-                Quero comecar agora
+                Quero começar agora
               </Link>
             </Button>
 
@@ -175,10 +175,10 @@ const Index = () => {
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
             <h2 className="font-heading text-[2.3rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.6rem]">
-              O segredo que barbearias de sucesso <span className="text-[#c79b4b]">ja usam</span>
+              O segredo que barbearias de sucesso <span className="text-[#c79b4b]">já usam</span>
             </h2>
             <p className="mx-auto mt-4 max-w-3xl text-sm leading-8 text-[#9f9688] sm:text-base">
-              O problema nunca foi falta de clientes. E falta de organizacao e profissionalismo. Quando sua barbearia funciona com sistema, os clientes confiam mais, voltam mais e indicam mais.
+              O problema nunca foi falta de clientes. É falta de organização e profissionalismo. Quando sua barbearia funciona com sistema, os clientes confiam mais, voltam mais e indicam mais.
             </p>
           </div>
 
@@ -215,7 +215,7 @@ const Index = () => {
           <div className="text-center">
             <p className="text-[11px] uppercase tracking-[0.3em] text-[#bf9447]">planos</p>
             <h2 className="mx-auto mt-4 max-w-3xl font-heading text-[2.5rem] leading-[0.96] tracking-[-0.05em] text-[#f3eadb] sm:text-[4rem]">
-              Escolha o nivel certo para a sua operacao.
+              Escolha o nível certo para a sua operação.
             </h2>
           </div>
 
@@ -286,16 +286,20 @@ const Index = () => {
 
       <section className="border-t border-[#171411] bg-[#141311] px-6 py-24 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-4xl text-center">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#bf9447]">oferta principal</p>
           <h2 className="font-heading text-[2.2rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.5rem]">
-            Tudo isso por apenas <span className="text-[#c79b4b]">R$ 59,90/mes</span> no plano Pro
+            Tudo isso por apenas <span className="text-[#c79b4b]">R$ 59,90/mês</span> no plano Pro
           </h2>
-          <ul className="mx-auto mt-8 max-w-xl space-y-3 text-left">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-8 text-[#aa9f90] sm:text-base">
+            O plano mais completo para quem quer agenda, presença digital e operação no mesmo lugar, sem montar um quebra-cabeça de ferramentas.
+          </p>
+          <ul className="mx-auto mt-8 max-w-xl space-y-3 rounded-[26px] border border-[#342817] bg-[linear-gradient(180deg,#18130d_0%,#100d09_100%)] p-7 text-left shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
             {[
-              'Acesso completo a plataforma',
-              'Site generico no ar e agenda no mesmo fluxo',
-              'Estrategia de fidelizacao de clientes',
-              'Suporte prioritario',
-              'Atualizacoes gratuitas',
+              'Acesso completo à plataforma',
+              'Site genérico no ar e agenda no mesmo fluxo',
+              'Estratégia de fidelização de clientes',
+              'Suporte prioritário',
+              'Atualizações gratuitas',
             ].map((item) => (
               <li key={item} className="flex gap-3 text-sm leading-7 text-[#d7cdc0]">
                 <span className="text-[#b7da72]">✔</span>
@@ -305,7 +309,7 @@ const Index = () => {
           </ul>
           <Button asChild className="liquid-glass-button mt-8 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
             <Link to="/registrar?plano=pro">
-              Quero os bonus agora
+              Quero os bônus agora
             </Link>
           </Button>
         </div>
@@ -313,30 +317,34 @@ const Index = () => {
 
       <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-5xl text-center">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#bf9447]">comece rápido</p>
           <h2 className="font-heading text-[2.2rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.3rem]">
             Configure em <span className="text-[#c79b4b]">4 passos simples</span>
           </h2>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {setupSteps.map((step, index) => (
-              <div key={step} className="rounded-[20px] border border-[#25201a] bg-[#0f0d0a] px-4 py-6">
+              <div key={step} className="rounded-[24px] border border-[#2d2318] bg-[linear-gradient(180deg,#15110d_0%,#0f0d0a_100%)] px-5 py-7 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
                 <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#d1aa58] text-sm font-semibold text-[#120d08]">
                   {index + 1}
                 </div>
-                <p className="mt-4 text-sm leading-6 text-[#d7cdc0]">{step}</p>
+                <p className="mt-4 text-sm leading-7 text-[#e0d6c7]">{step}</p>
               </div>
             ))}
           </div>
-          <p className="mt-6 text-xs text-[#756d60]">Sem tecnico. Sem complicacao. So voce e seu celular.</p>
+          <p className="mt-6 text-xs text-[#756d60]">Sem técnico. Sem complicação. Só você e seu celular.</p>
         </div>
       </section>
 
-      <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
+      <section className="border-t border-[#171411] bg-[linear-gradient(180deg,#0c0a08_0%,#120e0a_100%)] px-6 py-24 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
             <p className="text-[11px] uppercase tracking-[0.3em] text-[#bf9447]">depoimentos</p>
             <h2 className="mx-auto mt-4 max-w-3xl font-heading text-[2.5rem] leading-[0.96] tracking-[-0.05em] text-[#f3eadb] sm:text-[4rem]">
               O tipo de resposta que convence mais do que promessa.
             </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-8 text-[#a89e90] sm:text-base">
+              Depoimento bom não parece slogan. Parece dono de barbearia falando o que mudou depois que a casa deixou de operar no improviso.
+            </p>
           </div>
 
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
@@ -347,15 +355,20 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="rounded-[24px] border border-[#1d1813] bg-[#0f0d0a] p-6"
+                className="rounded-[28px] border border-[#2a2117] bg-[linear-gradient(180deg,#16120d_0%,#0f0d0a_100%)] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)]"
               >
-                <p className="font-heading text-[1.8rem] leading-none text-[#c79b4b]">“</p>
-                <p className="mt-3 text-sm leading-8 text-[#d5cbbb]">
+                <div className="flex items-center justify-between">
+                  <p className="font-heading text-[2.4rem] leading-none text-[#c79b4b]">“</p>
+                  <div className="rounded-full border border-[#3a2c18] bg-[#17120d] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-[#c79b4b]">
+                    cliente real
+                  </div>
+                </div>
+                <p className="mt-4 text-[15px] leading-8 text-[#ece1d0]">
                   {item.quote}
                 </p>
-                <div className="mt-6 border-t border-[#1b1712] pt-4">
-                  <p className="font-heading text-[1.45rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#7f7668]">{item.role}</p>
+                <div className="mt-7 border-t border-[#2b2219] pt-5">
+                  <p className="font-heading text-[1.5rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#b08c4b]">{item.role}</p>
                 </div>
               </motion.article>
             ))}
@@ -369,6 +382,9 @@ const Index = () => {
           <h2 className="mt-4 font-heading text-[2.3rem] leading-[0.98] tracking-[-0.05em] text-[#f3eadb] sm:text-[3.6rem]">
             Resultados reais de <span className="text-[#c79b4b]">barbearias reais</span>
           </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-8 text-[#a79d8e] sm:text-base">
+            Não é só estética. Quando a operação fica mais organizada, o cliente percebe, agenda com menos atrito e volta com mais frequência.
+          </p>
 
           <div className="mt-12 grid gap-5 lg:grid-cols-3">
             {resultCards.map((item, index) => (
@@ -378,21 +394,21 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="rounded-[24px] border border-[#1d1813] bg-[#11100d] p-6"
+                className="rounded-[28px] border border-[#2a2117] bg-[linear-gradient(180deg,#17120d_0%,#100d09_100%)] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)]"
               >
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#1a1712] text-[#c79b4b]">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#3a2c18] bg-[#17120d] text-[#d5aa55] shadow-[0_0_0_6px_rgba(199,155,75,0.05)]">
                   ✂
                 </div>
-                <p className="mt-4 font-heading text-[1.45rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
-                <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#7f7668]">{item.city}</p>
-                <p className="mt-5 text-sm leading-7 text-[#d7cdc0]">{item.result}</p>
+                <p className="mt-5 font-heading text-[1.55rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#b08c4b]">{item.city}</p>
+                <p className="mt-5 text-[15px] leading-8 text-[#e2d7c7]">{item.result}</p>
               </motion.article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
+      <section className="border-t border-[#171411] bg-[#0d0b08] px-6 py-24 sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-3">
           {faqs.map((faq, index) => (
             <motion.article
@@ -401,12 +417,13 @@ const Index = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.45, delay: index * 0.05 }}
-              className="rounded-[24px] border border-[#1d1813] bg-[#0f0d0a] p-6"
+              className="rounded-[28px] border border-[#2b2117] bg-[linear-gradient(180deg,#15110d_0%,#0f0d0a_100%)] p-7 shadow-[0_22px_60px_rgba(0,0,0,0.22)]"
             >
-              <h3 className="font-heading text-[1.8rem] leading-[0.98] tracking-[-0.04em] text-[#f3eadb]">
+              <div className="mb-4 h-px w-14 bg-[linear-gradient(90deg,#c79b4b,transparent)]" />
+              <h3 className="font-heading text-[1.95rem] leading-[0.95] tracking-[-0.04em] text-[#f8eedf]">
                 {faq.question}
               </h3>
-              <p className="mt-4 text-sm leading-7 text-[#9f9688]">
+              <p className="mt-5 text-sm leading-8 text-[#b1a797]">
                 {faq.answer}
               </p>
             </motion.article>
@@ -414,42 +431,42 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
+      <section className="border-t border-[#171411] bg-[radial-gradient(circle_at_top,rgba(199,155,75,0.12),transparent_32%),#090806] px-6 py-28 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-[11px] uppercase tracking-[0.3em] text-[#bf9447]">entrar no ar</p>
-          <h2 className="mt-4 font-heading text-[2.5rem] leading-[0.96] tracking-[-0.05em] text-[#f3eadb] sm:text-[4rem]">
+          <h2 className="mt-4 font-heading text-[2.8rem] leading-[0.92] tracking-[-0.06em] text-[#fff4e4] sm:text-[4.8rem]">
             Pare de vender no improviso.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-8 text-[#9f9688] sm:text-base">
-            Se a ideia e ficar mais perto da referencia, esse e o centro da pagina: uma promessa direta, um preco claro e um caminho simples para cadastro.
+            Uma promessa direta, um preço claro e um caminho curto para a decisão. Sem rodeio, sem fricção e sem deixar o dono adivinhar o próximo passo.
           </p>
 
-          <div className="mx-auto mt-8 max-w-2xl rounded-[24px] border border-[#1d1813] bg-[#0f0d0a] px-6 py-5 text-left">
+          <div className="mx-auto mt-10 max-w-3xl rounded-[30px] border border-[#3a2d1b] bg-[linear-gradient(180deg,#17120d_0%,#0f0d0a_100%)] px-7 py-7 text-left shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
             <p className="text-[11px] uppercase tracking-[0.24em] text-[#bf9447]">por que isso converte</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div>
-                <p className="font-heading text-[1.6rem] text-[#f3eadb]">Preco claro</p>
-                <p className="mt-1 text-sm leading-7 text-[#938a7c]">Sem esconder valor e sem pedir contato para descobrir quanto custa.</p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                <p className="font-heading text-[1.7rem] text-[#fff0d8]">Preço claro</p>
+                <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem esconder valor e sem pedir contato para descobrir quanto custa.</p>
               </div>
-              <div>
-                <p className="font-heading text-[1.6rem] text-[#f3eadb]">Oferta simples</p>
-                <p className="mt-1 text-sm leading-7 text-[#938a7c]">O dono entende rapido o que entra: agenda, site e operacao no mesmo produto.</p>
+              <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                <p className="font-heading text-[1.7rem] text-[#fff0d8]">Oferta simples</p>
+                <p className="mt-2 text-sm leading-7 text-[#a89d8d]">O dono entende rápido o que entra: agenda, site e operação no mesmo produto.</p>
               </div>
-              <div>
-                <p className="font-heading text-[1.6rem] text-[#f3eadb]">Risco baixo</p>
-                <p className="mt-1 text-sm leading-7 text-[#938a7c]">Sem fidelidade, sem contrato travado e com caminho curto para testar.</p>
+              <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                <p className="font-heading text-[1.7rem] text-[#fff0d8]">Risco baixo</p>
+                <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem fidelidade, sem contrato travado e com caminho curto para testar.</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button asChild className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button asChild className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:min-w-[250px] sm:px-10 sm:text-sm">
               <Link to="/registrar?plano=pro">
                 Quero o plano Pro
               </Link>
             </Button>
 
-            <Button asChild variant="ghost" className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f1e7d8] sm:h-14 sm:text-sm">
+            <Button asChild variant="ghost" className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f1e7d8] sm:h-14 sm:min-w-[250px] sm:text-sm">
               <Link to="/entrar">
                 Entrar no painel
                 <ArrowRight className="ml-2 h-4 w-4" />
