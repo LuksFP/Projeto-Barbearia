@@ -44,7 +44,7 @@ export const saasAccountRepository = {
       }),
     })
 
-    const body = await res.json() as { error?: string; access_token?: string | null; refresh_token?: string | null }
+    const body = await res.json() as { error?: string; access_token?: string | null; refresh_token?: string | null; account?: SaasAccountRow }
 
     if (!res.ok) {
       throw new Error(body.error ?? 'Erro ao criar conta.')
@@ -58,16 +58,11 @@ export const saasAccountRepository = {
       })
     }
 
-    // Busca os dados da conta recém-criada
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('Conta criada mas não foi possível iniciar sessão. Faça login.')
-
-    const account = await saasAccountRepository.getByUserId(session.user.id)
-    if (!account) throw new Error('Conta criada mas perfil não encontrado.')
+    if (!body.account) throw new Error('Conta criada mas perfil não encontrado.')
 
     return {
-      account: { ...mapAccount(account), email: session.user.email ?? '' },
-      accessToken: session.access_token,
+      account: { ...mapAccount(body.account), email: input.email },
+      accessToken: body.access_token ?? null,
     }
   },
 
