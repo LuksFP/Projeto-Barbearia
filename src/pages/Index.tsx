@@ -4,10 +4,34 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { SAAS_PLANS } from '@/types/saas'
 
+const proofStrip = [
+  'Configuracao inicial rapida',
+  'Sem contrato anual',
+  'Plano pronto para crescer com a casa',
+]
+
 const benefits = [
   'Agenda online para parar de perder horario e cliente',
   'Site pronto para colocar no ar sem projeto separado',
   'Painel para equipe, clientes e operacao no mesmo lugar',
+]
+
+const testimonials = [
+  {
+    quote: 'A gente saiu do caderno em dois dias. So isso ja limpou a recepcao e reduziu falta.',
+    name: 'Rafael Moura',
+    role: 'Barbearia Corvo',
+  },
+  {
+    quote: 'Antes eu perdia cliente no direct. Hoje mando um link e o cara entende na hora como agendar.',
+    name: 'Joao Faria',
+    role: 'Casa Faria',
+  },
+  {
+    quote: 'O que mais pesou foi parecer profissional sem contratar site, designer e sistema separado.',
+    name: 'Mateus Prado',
+    role: 'Clube 27',
+  },
 ]
 
 const faqs = [
@@ -73,7 +97,7 @@ const Index = () => {
               </span>
             </div>
 
-            <Button asChild className="mt-5 h-12 rounded-xl bg-[#c79b4b] px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#110d08] hover:bg-[#d8ac5d] sm:h-14 sm:px-10 sm:text-sm">
+            <Button asChild className="liquid-glass-button mt-5 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
               <Link to="/registrar?plano=basic">
                 Quero comecar agora
               </Link>
@@ -82,6 +106,17 @@ const Index = () => {
             <p className="mt-3 text-[11px] text-[#746b5d] sm:text-xs">
               Sem fidelidade • Cancele quando quiser
             </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.32 }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] uppercase tracking-[0.22em] text-[#756d60]"
+          >
+            {proofStrip.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
           </motion.div>
         </div>
       </section>
@@ -167,8 +202,8 @@ const Index = () => {
                     asChild
                     className={`mt-8 h-12 w-full rounded-xl text-xs font-semibold uppercase tracking-[0.18em] sm:text-sm ${
                       isFeatured
-                        ? 'bg-[#c79b4b] text-[#110d08] hover:bg-[#d8ac5d]'
-                        : 'bg-[#18130d] text-[#f1e7d8] hover:bg-[#201911]'
+                        ? 'liquid-glass-button text-[#f5ead3]'
+                        : 'liquid-glass-button text-[#e7ddcf]'
                     }`}
                   >
                     <Link to={`/registrar?plano=${plan.id}`}>
@@ -178,6 +213,39 @@ const Index = () => {
                 </motion.article>
               )
             })}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[#171411] px-6 py-24 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-[#bf9447]">depoimentos</p>
+            <h2 className="mx-auto mt-4 max-w-3xl font-heading text-[2.5rem] leading-[0.96] tracking-[-0.05em] text-[#f3eadb] sm:text-[4rem]">
+              O tipo de resposta que convence mais do que promessa.
+            </h2>
+          </div>
+
+          <div className="mt-14 grid gap-5 lg:grid-cols-3">
+            {testimonials.map((item, index) => (
+              <motion.article
+                key={item.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.45, delay: index * 0.05 }}
+                className="rounded-[24px] border border-[#1d1813] bg-[#0f0d0a] p-6"
+              >
+                <p className="font-heading text-[1.8rem] leading-none text-[#c79b4b]">“</p>
+                <p className="mt-3 text-sm leading-8 text-[#d5cbbb]">
+                  {item.quote}
+                </p>
+                <div className="mt-6 border-t border-[#1b1712] pt-4">
+                  <p className="font-heading text-[1.45rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#7f7668]">{item.role}</p>
+                </div>
+              </motion.article>
+            ))}
           </div>
         </div>
       </section>
@@ -214,14 +282,32 @@ const Index = () => {
             Se a ideia e ficar mais perto da referencia, esse e o centro da pagina: uma promessa direta, um preco claro e um caminho simples para cadastro.
           </p>
 
+          <div className="mx-auto mt-8 max-w-2xl rounded-[24px] border border-[#1d1813] bg-[#0f0d0a] px-6 py-5 text-left">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-[#bf9447]">por que isso converte</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div>
+                <p className="font-heading text-[1.6rem] text-[#f3eadb]">Preco claro</p>
+                <p className="mt-1 text-sm leading-7 text-[#938a7c]">Sem esconder valor e sem pedir contato para descobrir quanto custa.</p>
+              </div>
+              <div>
+                <p className="font-heading text-[1.6rem] text-[#f3eadb]">Oferta simples</p>
+                <p className="mt-1 text-sm leading-7 text-[#938a7c]">O dono entende rapido o que entra: agenda, site e operacao no mesmo produto.</p>
+              </div>
+              <div>
+                <p className="font-heading text-[1.6rem] text-[#f3eadb]">Risco baixo</p>
+                <p className="mt-1 text-sm leading-7 text-[#938a7c]">Sem fidelidade, sem contrato travado e com caminho curto para testar.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button asChild className="h-12 rounded-xl bg-[#c79b4b] px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#110d08] hover:bg-[#d8ac5d] sm:h-14 sm:px-10 sm:text-sm">
+            <Button asChild className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
               <Link to="/registrar?plano=pro">
                 Quero o plano Pro
               </Link>
             </Button>
 
-            <Button asChild variant="ghost" className="h-12 rounded-xl border border-[#2b2318] bg-[#120f0b] px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f1e7d8] hover:bg-[#17120d] sm:h-14 sm:text-sm">
+            <Button asChild variant="ghost" className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f1e7d8] sm:h-14 sm:text-sm">
               <Link to="/entrar">
                 Entrar no painel
                 <ArrowRight className="ml-2 h-4 w-4" />

@@ -206,6 +206,68 @@ All colors MUST be HSL.
   .touch-feedback:active {
     @apply scale-[0.98] opacity-80;
   }
+
+  .liquid-glass-button {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid hsl(42 52% 34% / 0.42);
+    background:
+      linear-gradient(180deg, hsl(36 31% 22% / 0.68), hsl(30 24% 10% / 0.72)),
+      radial-gradient(circle at top, hsl(42 84% 67% / 0.18), transparent 58%);
+    box-shadow:
+      inset 0 1px 0 hsl(42 80% 84% / 0.22),
+      inset 0 -1px 0 hsl(0 0% 100% / 0.05),
+      0 18px 44px hsl(0 0% 0% / 0.28);
+    backdrop-filter: blur(18px) saturate(135%);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+    transition:
+      transform 220ms ease,
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      background 220ms ease;
+  }
+
+  .liquid-glass-button::before {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background:
+      linear-gradient(180deg, hsl(0 0% 100% / 0.16), transparent 34%),
+      radial-gradient(circle at 18% 18%, hsl(42 95% 78% / 0.18), transparent 28%);
+    opacity: 0.95;
+    pointer-events: none;
+  }
+
+  .liquid-glass-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 24%, hsl(42 100% 78% / 0.22) 50%, transparent 76%);
+    opacity: 0;
+    transform: translateX(-135%);
+    transition: transform 420ms ease, opacity 260ms ease;
+    pointer-events: none;
+  }
+
+  .liquid-glass-button:hover {
+    transform: translateY(-1px);
+    border-color: hsl(42 63% 46% / 0.62);
+    box-shadow:
+      inset 0 1px 0 hsl(42 100% 84% / 0.28),
+      inset 0 -1px 0 hsl(0 0% 100% / 0.08),
+      0 22px 54px hsl(0 0% 0% / 0.34),
+      0 0 0 1px hsl(42 78% 58% / 0.08);
+  }
+
+  .liquid-glass-button:hover::after {
+    opacity: 1;
+    transform: translateX(135%);
+  }
+
+  .liquid-glass-button:active {
+    transform: translateY(0);
+  }
 }
 
 /* Keyframes */
