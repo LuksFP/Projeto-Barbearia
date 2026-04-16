@@ -59,10 +59,11 @@ export const saasAccountRepository = {
     }
   },
 
-  async login(input: SaasLoginInput): Promise<SaasSession> {
-    // Login direto no Supabase — sem EF intermediária para eliminar latência
-    // O Supabase Auth já tem rate limiting nativo
-    const { data, error } = await supabase.auth.signInWithPassword({
+  async login(input: SaasLoginInput): Promise<void> {
+    // signInWithPassword dispara onAuthStateChange (SIGNED_IN) que carrega o account.
+    // Não buscamos o account aqui para não serializar duas chamadas de rede —
+    // o context já faz isso via onAuthStateChange, economizando ~200 ms visíveis.
+    const { error } = await supabase.auth.signInWithPassword({
       email: input.email,
       password: input.password,
     })
@@ -70,15 +71,6 @@ export const saasAccountRepository = {
     if (error) {
       if (error.status === 429) throw new Error('Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.')
       throw new Error('Email ou senha incorretos.')
-    }
-    if (!data.user) throw new Error('Login inválido.')
-
-    const account = await saasAccountRepository.getByUserId(data.user.id)
-    if (!account) throw new Error('Conta SaaS não encontrada')
-
-    return {
-      account: { ...mapAccount(account), email: data.user.email ?? input.email },
-      accessToken: data.session?.access_token ?? null,
     }
   },
 

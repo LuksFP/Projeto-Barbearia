@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
-import type { SaasAccount, SaasLoginInput, SaasSignupInput } from '@/types/saas'
+import type { SaasAccount, SaasSignupInput } from '@/types/saas'
 import { saasAccountRepository } from '@/repositories/saasAccountRepository'
 import { supabase } from '@/lib/supabase'
 import { isDemoMode, getDemoPlan, getDemoAccount, clearDemoSession, matchDemoCredentials, setDemoSession } from '@/lib/demo'
@@ -11,7 +11,7 @@ interface SaasAccountContextType {
   hasActivePlan: boolean
   isLoading: boolean
   signup: (data: SaasSignupInput) => Promise<void>
-  login: (email: string, password: string) => Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] }>
+  login: (email: string, password: string) => Promise<boolean | 'blocked'>
   logout: () => Promise<void>
   refreshAccount: () => Promise<void>
 }
@@ -79,7 +79,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(session.accessToken)
   }
 
-  const login = async (email: string, password: string): Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] }> => {
+  const login = async (email: string, password: string): Promise<boolean | 'blocked'> => {
     // Intercepta credenciais demo antes de chamar o Supabase
     const demoPlan = matchDemoCredentials(email, password)
     if (demoPlan) {
@@ -89,17 +89,12 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       return true
     }
 
-    const credentials: SaasLoginInput = { email, password }
     try {
-      const session = await saasAccountRepository.login(credentials)
-      setAccount(session.account as unknown as SaasAccount)
-      setAccessToken(session.accessToken)
-      if (session.account.planStatus !== 'active') {
-        return { status: 'payment_required', plan: session.account.plan }
-      }
+      // Apenas autentica — onAuthStateChange (SIGNED_IN) carrega o account em paralelo.
+      // SaasGuard redireciona para /pagamento se o plano não estiver ativo.
+      await saasAccountRepository.login({ email, password })
       return true
     } catch (err: unknown) {
-      // Diferencia bloqueio de rate limit de credencial errada
       if (err instanceof Error && err.message.includes('Muitas tentativas')) return 'blocked'
       return false
     }

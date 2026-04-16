@@ -44,9 +44,9 @@ const EntrarSaas = () => {
     const result = await login(email, password)
     setLoading(false)
     if (result === true) {
+      // onAuthStateChange já carregou o account — SaasGuard redireciona para
+      // /pagamento se o plano não estiver ativo, ou exibe o dashboard direto.
       navigate('/dashboard')
-    } else if (typeof result === 'object' && result.status === 'payment_required') {
-      navigate(`/pagamento?plano=${result.plan ?? 'pro'}`)
     } else if (result === 'blocked') {
       setError('Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.')
     } else {
