@@ -89,17 +89,18 @@ export const saasAccountRepository = {
       refresh_token: string
     }
 
-    // Restaura a sessão no cliente Supabase para que auth.getSession() funcione
-    const { data, error } = await supabase.auth.setSession({ access_token, refresh_token })
-    if (error) throw error
-    if (!data.user) throw new Error('Login inválido')
+    // Decodifica o JWT para obter user_id sem aguardar setSession
+    const payload = JSON.parse(atob(access_token.split('.')[1])) as { sub: string; email: string }
 
-    const account = await saasAccountRepository.getByUserId(data.user.id)
+    // Dispara setSession em background — não bloqueia o login
+    supabase.auth.setSession({ access_token, refresh_token })
+
+    const account = await saasAccountRepository.getByUserId(payload.sub)
     if (!account) throw new Error('Conta SaaS não encontrada')
 
     return {
-      account: { ...mapAccount(account), email: data.user.email ?? '' },
-      accessToken: data.session?.access_token ?? null,
+      account: { ...mapAccount(account), email: payload.email ?? input.email },
+      accessToken: access_token,
     }
   },
 
