@@ -210,16 +210,19 @@ All colors MUST be HSL.
   .liquid-glass-button {
     position: relative;
     overflow: hidden;
-    border: 1px solid hsl(42 52% 34% / 0.42);
+    border: 1px solid hsl(43 65% 44% / 0.58);
     background:
-      linear-gradient(180deg, hsl(36 31% 22% / 0.68), hsl(30 24% 10% / 0.72)),
-      radial-gradient(circle at top, hsl(42 84% 67% / 0.18), transparent 58%);
+      linear-gradient(120deg, hsl(44 72% 66% / 0.94) 0%, hsl(42 63% 58% / 0.96) 18%, hsl(39 58% 42% / 0.96) 38%, hsl(46 80% 72% / 0.96) 52%, hsl(40 61% 46% / 0.98) 72%, hsl(44 68% 62% / 0.96) 100%),
+      radial-gradient(circle at top, hsl(44 95% 82% / 0.3), transparent 55%);
+    background-size: 220% 220%, 100% 100%;
     box-shadow:
-      inset 0 1px 0 hsl(42 80% 84% / 0.22),
-      inset 0 -1px 0 hsl(0 0% 100% / 0.05),
-      0 18px 44px hsl(0 0% 0% / 0.28);
+      inset 0 1px 0 hsl(45 100% 92% / 0.42),
+      inset 0 -1px 0 hsl(33 75% 24% / 0.18),
+      0 14px 38px hsl(38 88% 22% / 0.32),
+      0 0 0 1px hsl(43 82% 62% / 0.08);
     backdrop-filter: blur(18px) saturate(135%);
     -webkit-backdrop-filter: blur(18px) saturate(135%);
+    animation: gold-flow 5.8s linear infinite;
     transition:
       transform 220ms ease,
       border-color 220ms ease,
@@ -233,9 +236,10 @@ All colors MUST be HSL.
     inset: 1px;
     border-radius: inherit;
     background:
-      linear-gradient(180deg, hsl(0 0% 100% / 0.16), transparent 34%),
-      radial-gradient(circle at 18% 18%, hsl(42 95% 78% / 0.18), transparent 28%);
-    opacity: 0.95;
+      linear-gradient(180deg, hsl(0 0% 100% / 0.34), transparent 30%),
+      linear-gradient(90deg, transparent 8%, hsl(44 100% 92% / 0.34) 26%, transparent 42%),
+      radial-gradient(circle at 18% 18%, hsl(45 100% 88% / 0.22), transparent 28%);
+    opacity: 0.98;
     pointer-events: none;
   }
 
@@ -243,25 +247,26 @@ All colors MUST be HSL.
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(115deg, transparent 24%, hsl(42 100% 78% / 0.22) 50%, transparent 76%);
-    opacity: 0;
+    background: linear-gradient(115deg, transparent 18%, hsl(45 100% 96% / 0.04) 34%, hsl(45 100% 94% / 0.52) 50%, hsl(45 100% 96% / 0.04) 66%, transparent 82%);
+    opacity: 0.72;
     transform: translateX(-135%);
+    animation: gold-sheen 2.9s ease-in-out infinite;
     transition: transform 420ms ease, opacity 260ms ease;
     pointer-events: none;
   }
 
   .liquid-glass-button:hover {
     transform: translateY(-1px);
-    border-color: hsl(42 63% 46% / 0.62);
+    border-color: hsl(45 88% 70% / 0.92);
     box-shadow:
-      inset 0 1px 0 hsl(42 100% 84% / 0.28),
-      inset 0 -1px 0 hsl(0 0% 100% / 0.08),
-      0 22px 54px hsl(0 0% 0% / 0.34),
-      0 0 0 1px hsl(42 78% 58% / 0.08);
+      inset 0 1px 0 hsl(45 100% 95% / 0.48),
+      inset 0 -1px 0 hsl(35 88% 26% / 0.16),
+      0 18px 46px hsl(37 84% 24% / 0.38),
+      0 0 0 1px hsl(45 100% 76% / 0.18);
   }
 
   .liquid-glass-button:hover::after {
-    opacity: 1;
+    opacity: 0.9;
     transform: translateX(135%);
   }
 
@@ -279,6 +284,32 @@ All colors MUST be HSL.
   50% {
     box-shadow: 0 0 20px hsl(45 100% 50% / 0.8), 0 0 48px hsl(45 100% 50% / 0.5);
     background-color: hsl(45 90% 55%);
+  }
+}
+
+@keyframes gold-flow {
+  0% {
+    background-position: 0% 50%, 50% 0%;
+  }
+  50% {
+    background-position: 100% 50%, 50% 0%;
+  }
+  100% {
+    background-position: 0% 50%, 50% 0%;
+  }
+}
+
+@keyframes gold-sheen {
+  0% {
+    opacity: 0.15;
+    transform: translateX(-140%);
+  }
+  45% {
+    opacity: 0.78;
+  }
+  100% {
+    opacity: 0.18;
+    transform: translateX(145%);
   }
 }
 
