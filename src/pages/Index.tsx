@@ -1,5 +1,6 @@
+import type { MouseEvent, ReactNode } from 'react'
 import { ArrowRight, Check } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, useMotionTemplate, useMotionValue, useSpring } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { SAAS_PLANS } from '@/types/saas'
@@ -76,6 +77,87 @@ const faqs = [
     answer: 'O Pro tende a encaixar melhor porque junta agenda, site e operação completa sem precisar de estrutura paralela.',
   },
 ]
+
+const revealUp = {
+  initial: { opacity: 0, y: 26, scale: 0.985 },
+  whileInView: { opacity: 1, y: 0, scale: 1 },
+}
+
+const liftCard = {
+  y: -8,
+  scale: 1.012,
+  transition: { duration: 0.22, ease: 'easeOut' },
+}
+
+const iconFloat = {
+  y: -3,
+  scale: 1.06,
+  transition: { duration: 0.22, ease: 'easeOut' },
+}
+
+const ParallaxCard = ({
+  children,
+  className,
+  glowClassName = 'from-[#c79b4b]/20 via-[#f0d39a]/10 to-transparent',
+}: {
+  children: ReactNode
+  className: string
+  glowClassName?: string
+}) => {
+  const rotateX = useMotionValue(0)
+  const rotateY = useMotionValue(0)
+  const mouseX = useMotionValue(50)
+  const mouseY = useMotionValue(50)
+
+  const smoothRotateX = useSpring(rotateX, { stiffness: 180, damping: 18, mass: 0.4 })
+  const smoothRotateY = useSpring(rotateY, { stiffness: 180, damping: 18, mass: 0.4 })
+  const smoothMouseX = useSpring(mouseX, { stiffness: 180, damping: 18, mass: 0.4 })
+  const smoothMouseY = useSpring(mouseY, { stiffness: 180, damping: 18, mass: 0.4 })
+
+  const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const relativeX = (event.clientX - rect.left) / rect.width
+    const relativeY = (event.clientY - rect.top) / rect.height
+
+    rotateX.set((0.5 - relativeY) * 7)
+    rotateY.set((relativeX - 0.5) * 9)
+    mouseX.set(relativeX * 100)
+    mouseY.set(relativeY * 100)
+  }
+
+  const handleMouseLeave = () => {
+    rotateX.set(0)
+    rotateY.set(0)
+    mouseX.set(50)
+    mouseY.set(50)
+  }
+
+  const glare = useMotionTemplate`radial-gradient(circle at ${smoothMouseX}% ${smoothMouseY}%, rgba(245, 212, 149, 0.18), transparent 34%)`
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX: smoothRotateX,
+        rotateY: smoothRotateY,
+        transformPerspective: 1200,
+        transformStyle: 'preserve-3d',
+      }}
+      whileHover={{ y: -10, scale: 1.016 }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+      className={`group relative overflow-hidden ${className}`}
+    >
+      <motion.div
+        aria-hidden
+        style={{ backgroundImage: glare }}
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+      />
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${glowClassName} opacity-90`} />
+      <div className="relative z-10">{children}</div>
+    </motion.div>
+  )
+}
 
 const Index = () => {
   return (
@@ -155,15 +237,15 @@ const Index = () => {
             {benefits.map((benefit, index) => (
               <motion.div
                 key={benefit}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                {...revealUp}
+                whileHover={liftCard}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.45, delay: index * 0.06 }}
-                className="flex items-start gap-4 rounded-[22px] border border-[#1d1813] bg-[#0f0d0a] px-5 py-5"
+                className="group flex items-start gap-4 rounded-[22px] border border-[#1d1813] bg-[#0f0d0a] px-5 py-5 transition-colors duration-200 hover:border-[#3a2c18]"
               >
-                <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#17120c] text-[#c79b4b]">
+                <motion.div whileHover={iconFloat} className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#17120c] text-[#c79b4b] shadow-[0_0_0_0_rgba(199,155,75,0)] transition-shadow duration-200 group-hover:shadow-[0_0_0_6px_rgba(199,155,75,0.08)]">
                   <Check className="h-3.5 w-3.5" />
-                </div>
+                </motion.div>
                 <p className="text-sm leading-7 text-[#d4cbbb] sm:text-[15px]">{benefit}</p>
               </motion.div>
             ))}
@@ -183,7 +265,13 @@ const Index = () => {
           </div>
 
           <div className="mt-12 grid gap-5 lg:grid-cols-2">
-            <div className="rounded-[24px] border border-[#5b1f1f] bg-[#120d0d] p-6">
+            <motion.div
+              {...revealUp}
+              whileHover={{ ...liftCard, rotate: -0.4 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 0.45 }}
+              className="group rounded-[24px] border border-[#5b1f1f] bg-[#120d0d] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.16)] transition-colors duration-200 hover:border-[#8a2d2d]"
+            >
               <p className="font-heading text-[1.8rem] tracking-[-0.04em] text-[#ff6c5f]">Sem o sistema</p>
               <ul className="mt-5 space-y-3">
                 {comparisonLists.without.map((item) => (
@@ -193,9 +281,15 @@ const Index = () => {
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
-            <div className="rounded-[24px] border border-[#4c3a19] bg-[#11100d] p-6">
+            <motion.div
+              {...revealUp}
+              whileHover={{ ...liftCard, rotate: 0.4 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 0.45, delay: 0.05 }}
+              className="group rounded-[24px] border border-[#4c3a19] bg-[#11100d] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.16)] transition-colors duration-200 hover:border-[#c79b4b]"
+            >
               <p className="font-heading text-[1.8rem] tracking-[-0.04em] text-[#d3aa58]">Com o sistema</p>
               <ul className="mt-5 space-y-3">
                 {comparisonLists.with.map((item) => (
@@ -205,7 +299,7 @@ const Index = () => {
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -222,20 +316,8 @@ const Index = () => {
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
             {SAAS_PLANS.map((plan) => {
               const isFeatured = plan.id === 'pro'
-
-              return (
-                <motion.article
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 22 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.45 }}
-                  className={`rounded-[28px] border p-7 ${
-                    isFeatured
-                      ? 'border-[#c79b4b] bg-[#12100c] shadow-[0_18px_70px_rgba(199,155,75,0.08)]'
-                      : 'border-[#1d1813] bg-[#0f0d0a]'
-                  }`}
-                >
+              const cardContent = (
+                <>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[11px] uppercase tracking-[0.26em] text-[#867d6e]">{plan.name}</p>
@@ -248,9 +330,9 @@ const Index = () => {
                     </div>
 
                     {isFeatured && (
-                      <div className="rounded-full border border-[#4a391d] bg-[#1a140d] px-3 py-1.5 text-[10px] uppercase tracking-[0.24em] text-[#d2a24d]">
+                      <motion.div whileHover={{ scale: 1.06 }} className="rounded-full border border-[#4a391d] bg-[#1a140d] px-3 py-1.5 text-[10px] uppercase tracking-[0.24em] text-[#d2a24d]">
                         recomendado
-                      </div>
+                      </motion.div>
                     )}
                   </div>
 
@@ -277,7 +359,33 @@ const Index = () => {
                       {plan.cta}
                     </Link>
                   </Button>
-                </motion.article>
+                </>
+              )
+
+              return (
+                isFeatured ? (
+                  <motion.div
+                    key={plan.id}
+                    {...revealUp}
+                    viewport={{ once: true, margin: '-80px' }}
+                    transition={{ duration: 0.45, delay: 0.04 }}
+                  >
+                    <ParallaxCard className="rounded-[28px] border border-[#c79b4b] bg-[#12100c] p-7 shadow-[0_18px_70px_rgba(199,155,75,0.08)] hover:shadow-[0_30px_100px_rgba(199,155,75,0.16)]">
+                      {cardContent}
+                    </ParallaxCard>
+                  </motion.div>
+                ) : (
+                  <motion.article
+                    key={plan.id}
+                    {...revealUp}
+                    whileHover={liftCard}
+                    viewport={{ once: true, margin: '-80px' }}
+                    transition={{ duration: 0.45 }}
+                    className="group rounded-[28px] border border-[#1d1813] bg-[#0f0d0a] p-7 transition-colors duration-200 hover:border-[#3a2c18] hover:shadow-[0_22px_70px_rgba(0,0,0,0.22)]"
+                  >
+                    {cardContent}
+                  </motion.article>
+                )
               )
             })}
           </div>
@@ -293,20 +401,24 @@ const Index = () => {
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-8 text-[#aa9f90] sm:text-base">
             O plano mais completo para quem quer agenda, presença digital e operação no mesmo lugar, sem montar um quebra-cabeça de ferramentas.
           </p>
-          <ul className="mx-auto mt-8 max-w-xl space-y-3 rounded-[26px] border border-[#342817] bg-[linear-gradient(180deg,#18130d_0%,#100d09_100%)] p-7 text-left shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
-            {[
-              'Acesso completo à plataforma',
-              'Site genérico no ar e agenda no mesmo fluxo',
-              'Estratégia de fidelização de clientes',
-              'Suporte prioritário',
-              'Atualizações gratuitas',
-            ].map((item) => (
-              <li key={item} className="flex gap-3 text-sm leading-7 text-[#d7cdc0]">
-                <span className="text-[#b7da72]">✔</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mx-auto mt-8 max-w-xl">
+            <ParallaxCard className="rounded-[26px] border border-[#342817] bg-[linear-gradient(180deg,#18130d_0%,#100d09_100%)] p-7 text-left shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+              <ul className="space-y-3">
+                {[
+                  'Acesso completo à plataforma',
+                  'Site genérico no ar e agenda no mesmo fluxo',
+                  'Estratégia de fidelização de clientes',
+                  'Suporte prioritário',
+                  'Atualizações gratuitas',
+                ].map((item) => (
+                  <li key={item} className="flex gap-3 text-sm leading-7 text-[#d7cdc0]">
+                    <span className="text-[#b7da72]">✔</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </ParallaxCard>
+          </div>
           <Button asChild className="liquid-glass-button mt-8 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
             <Link to="/registrar?plano=pro">
               Quero os bônus agora
@@ -323,12 +435,19 @@ const Index = () => {
           </h2>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {setupSteps.map((step, index) => (
-              <div key={step} className="rounded-[24px] border border-[#2d2318] bg-[linear-gradient(180deg,#15110d_0%,#0f0d0a_100%)] px-5 py-7 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#d1aa58] text-sm font-semibold text-[#120d08]">
+              <motion.div
+                key={step}
+                {...revealUp}
+                whileHover={liftCard}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.45, delay: index * 0.05 }}
+                className="group rounded-[24px] border border-[#2d2318] bg-[linear-gradient(180deg,#15110d_0%,#0f0d0a_100%)] px-5 py-7 shadow-[0_20px_50px_rgba(0,0,0,0.18)] transition-colors duration-200 hover:border-[#c79b4b]"
+              >
+                <motion.div whileHover={iconFloat} className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#d1aa58] text-sm font-semibold text-[#120d08] shadow-[0_0_0_0_rgba(209,170,88,0)] transition-shadow duration-200 group-hover:shadow-[0_0_0_8px_rgba(209,170,88,0.10)]">
                   {index + 1}
-                </div>
+                </motion.div>
                 <p className="mt-4 text-sm leading-7 text-[#e0d6c7]">{step}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
           <p className="mt-6 text-xs text-[#756d60]">Sem técnico. Sem complicação. Só você e seu celular.</p>
@@ -351,17 +470,17 @@ const Index = () => {
             {testimonials.map((item, index) => (
               <motion.article
                 key={item.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                {...revealUp}
+                whileHover={liftCard}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="rounded-[28px] border border-[#2a2117] bg-[linear-gradient(180deg,#16120d_0%,#0f0d0a_100%)] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)]"
+                className="group rounded-[28px] border border-[#2a2117] bg-[linear-gradient(180deg,#16120d_0%,#0f0d0a_100%)] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)] transition-colors duration-200 hover:border-[#c79b4b]"
               >
                 <div className="flex items-center justify-between">
-                  <p className="font-heading text-[2.4rem] leading-none text-[#c79b4b]">“</p>
-                  <div className="rounded-full border border-[#3a2c18] bg-[#17120d] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-[#c79b4b]">
+                  <motion.p whileHover={{ rotate: -6, scale: 1.08 }} className="font-heading text-[2.4rem] leading-none text-[#c79b4b]">“</motion.p>
+                  <motion.div whileHover={{ scale: 1.05 }} className="rounded-full border border-[#3a2c18] bg-[#17120d] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-[#c79b4b]">
                     cliente real
-                  </div>
+                  </motion.div>
                 </div>
                 <p className="mt-4 text-[15px] leading-8 text-[#ece1d0]">
                   {item.quote}
@@ -390,15 +509,15 @@ const Index = () => {
             {resultCards.map((item, index) => (
               <motion.article
                 key={item.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                {...revealUp}
+                whileHover={liftCard}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="rounded-[28px] border border-[#2a2117] bg-[linear-gradient(180deg,#17120d_0%,#100d09_100%)] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)]"
+                className="group rounded-[28px] border border-[#2a2117] bg-[linear-gradient(180deg,#17120d_0%,#100d09_100%)] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)] transition-colors duration-200 hover:border-[#c79b4b]"
               >
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#3a2c18] bg-[#17120d] text-[#d5aa55] shadow-[0_0_0_6px_rgba(199,155,75,0.05)]">
+                <motion.div whileHover={{ scale: 1.08, rotate: 10 }} className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#3a2c18] bg-[#17120d] text-[#d5aa55] shadow-[0_0_0_6px_rgba(199,155,75,0.05)]">
                   ✂
-                </div>
+                </motion.div>
                 <p className="mt-5 font-heading text-[1.55rem] tracking-[-0.04em] text-[#f3eadb]">{item.name}</p>
                 <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-[#b08c4b]">{item.city}</p>
                 <p className="mt-5 text-[15px] leading-8 text-[#e2d7c7]">{item.result}</p>
@@ -413,13 +532,13 @@ const Index = () => {
           {faqs.map((faq, index) => (
             <motion.article
               key={faq.question}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              {...revealUp}
+              whileHover={liftCard}
               viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.45, delay: index * 0.05 }}
-              className="rounded-[28px] border border-[#2b2117] bg-[linear-gradient(180deg,#15110d_0%,#0f0d0a_100%)] p-7 shadow-[0_22px_60px_rgba(0,0,0,0.22)]"
+              className="group rounded-[28px] border border-[#2b2117] bg-[linear-gradient(180deg,#15110d_0%,#0f0d0a_100%)] p-7 shadow-[0_22px_60px_rgba(0,0,0,0.22)] transition-colors duration-200 hover:border-[#c79b4b]"
             >
-              <div className="mb-4 h-px w-14 bg-[linear-gradient(90deg,#c79b4b,transparent)]" />
+              <motion.div whileHover={{ width: 76 }} className="mb-4 h-px w-14 bg-[linear-gradient(90deg,#c79b4b,transparent)] transition-all duration-200" />
               <h3 className="font-heading text-[1.95rem] leading-[0.95] tracking-[-0.04em] text-[#f8eedf]">
                 {faq.question}
               </h3>
@@ -441,22 +560,24 @@ const Index = () => {
             Uma promessa direta, um preço claro e um caminho curto para a decisão. Sem rodeio, sem fricção e sem deixar o dono adivinhar o próximo passo.
           </p>
 
-          <div className="mx-auto mt-10 max-w-3xl rounded-[30px] border border-[#3a2d1b] bg-[linear-gradient(180deg,#17120d_0%,#0f0d0a_100%)] px-7 py-7 text-left shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-[#bf9447]">por que isso converte</p>
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
-                <p className="font-heading text-[1.7rem] text-[#fff0d8]">Preço claro</p>
-                <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem esconder valor e sem pedir contato para descobrir quanto custa.</p>
+          <div className="mx-auto mt-10 max-w-3xl">
+            <ParallaxCard className="rounded-[30px] border border-[#3a2d1b] bg-[linear-gradient(180deg,#17120d_0%,#0f0d0a_100%)] px-7 py-7 text-left shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#bf9447]">por que isso converte</p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                  <p className="font-heading text-[1.7rem] text-[#fff0d8]">Preço claro</p>
+                  <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem esconder valor e sem pedir contato para descobrir quanto custa.</p>
+                </div>
+                <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                  <p className="font-heading text-[1.7rem] text-[#fff0d8]">Oferta simples</p>
+                  <p className="mt-2 text-sm leading-7 text-[#a89d8d]">O dono entende rápido o que entra: agenda, site e operação no mesmo produto.</p>
+                </div>
+                <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
+                  <p className="font-heading text-[1.7rem] text-[#fff0d8]">Risco baixo</p>
+                  <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem fidelidade, sem contrato travado e com caminho curto para testar.</p>
+                </div>
               </div>
-              <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
-                <p className="font-heading text-[1.7rem] text-[#fff0d8]">Oferta simples</p>
-                <p className="mt-2 text-sm leading-7 text-[#a89d8d]">O dono entende rápido o que entra: agenda, site e operação no mesmo produto.</p>
-              </div>
-              <div className="rounded-[20px] border border-[#2c2217] bg-[#120f0b] p-4">
-                <p className="font-heading text-[1.7rem] text-[#fff0d8]">Risco baixo</p>
-                <p className="mt-2 text-sm leading-7 text-[#a89d8d]">Sem fidelidade, sem contrato travado e com caminho curto para testar.</p>
-              </div>
-            </div>
+            </ParallaxCard>
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
