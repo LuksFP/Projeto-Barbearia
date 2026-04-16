@@ -1,8 +1,7 @@
-// Substitui: saasAccountService.ts (localStorage + in-memory)
 // Auth delegado ao Supabase Auth — este repo só gerencia o perfil da conta SaaS
 import { supabase } from '@/lib/supabase'
-import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
-import type { SaasSignupInput, SaasLoginInput, SaasSession, SaasPlan } from '@/types/saas'
+import type { Tables } from '@/types/database'
+import type { SaasSignupInput, SaasLoginInput, SaasSession } from '@/types/saas'
 
 export type SaasAccountRow = Tables<'saas_accounts'>
 
@@ -28,82 +27,58 @@ export const saasAccountRepository = {
     const slug = slugify(input.barbershopName)
     const embedKey = generateEmbedKey(slug)
 
-    // Delega para Edge Function auth-register que faz o signup de forma atômica:
-    // se o RPC falhar, ela deleta o auth user para não deixar órfãos.
+    // 1. EF faz createUser + RPC atomicamente (sem signInWithPassword)
     const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-register`
     const res = await fetch(fnUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email:           input.email,
-        password:        input.password,
-        ownerName:       input.ownerName,
-        barbershopName:  input.barbershopName,
-        barbershopSlug:  slug,
+        email:          input.email,
+        password:       input.password,
+        ownerName:      input.ownerName,
+        barbershopName: input.barbershopName,
+        barbershopSlug: slug,
         embedKey,
       }),
     })
 
-    const body = await res.json() as { error?: string; access_token?: string | null; refresh_token?: string | null; account?: SaasAccountRow }
-
-    if (!res.ok) {
-      throw new Error(body.error ?? 'Erro ao criar conta.')
-    }
-
+    const body = await res.json() as { error?: string; success?: boolean; account?: SaasAccountRow }
+    if (!res.ok) throw new Error(body.error ?? 'Erro ao criar conta.')
     if (!body.account) throw new Error('Conta criada mas perfil não encontrado.')
 
-    // setSession é necessário mas já temos os dados da conta — resolve em paralelo se possível
-    if (body.access_token && body.refresh_token) {
-      await supabase.auth.setSession({
-        access_token:  body.access_token,
-        refresh_token: body.refresh_token,
-      })
-    }
+    // 2. Login direto no Supabase (sem EF) — mais rápido
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
+    })
+    if (signInError) throw signInError
 
     return {
       account: { ...mapAccount(body.account), email: input.email },
-      accessToken: body.access_token ?? null,
+      accessToken: signInData.session?.access_token ?? null,
     }
   },
 
   async login(input: SaasLoginInput): Promise<SaasSession> {
-    // Login via Edge Function para rate limiting (5 falhas/email, 10/IP em 15 min)
-    const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-login`
-    const res = await fetch(fnUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: input.email, password: input.password }),
+    // Login direto no Supabase — sem EF intermediária para eliminar latência
+    // O Supabase Auth já tem rate limiting nativo
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
     })
 
-    if (res.status === 429) {
-      const body = await res.json() as { error: string }
-      throw new Error(body.error)
+    if (error) {
+      if (error.status === 429) throw new Error('Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.')
+      throw new Error('Email ou senha incorretos.')
     }
-    if (!res.ok) {
-      const body = await res.json() as { error: string }
-      throw new Error(body.error ?? 'Erro ao fazer login.')
-    }
+    if (!data.user) throw new Error('Login inválido.')
 
-    const { access_token, refresh_token } = await res.json() as {
-      access_token: string
-      refresh_token: string
-    }
-
-    // Decodifica o JWT para obter user_id sem uma chamada extra ao Supabase
-    const payload = JSON.parse(atob(access_token.split('.')[1])) as { sub: string; email: string }
-
-    // Roda setSession e getByUserId em paralelo para economizar ~500ms
-    const [{ error: sessionError }, account] = await Promise.all([
-      supabase.auth.setSession({ access_token, refresh_token }),
-      saasAccountRepository.getByUserId(payload.sub),
-    ])
-
-    if (sessionError) throw sessionError
+    const account = await saasAccountRepository.getByUserId(data.user.id)
     if (!account) throw new Error('Conta SaaS não encontrada')
 
     return {
-      account: { ...mapAccount(account), email: payload.email ?? input.email },
-      accessToken: access_token,
+      account: { ...mapAccount(account), email: data.user.email ?? input.email },
+      accessToken: data.session?.access_token ?? null,
     }
   },
 
@@ -128,13 +103,11 @@ export const saasAccountRepository = {
     const account = await saasAccountRepository.getByUserId(session.user.id)
     if (!account) return null
 
-    // email vive em auth.users — injetado aqui para não desnormalizar o schema
     return {
       account: { ...mapAccount(account), email: session.user.email ?? '' },
       accessToken: session.access_token,
     }
   },
-
 }
 
 function mapAccount(row: SaasAccountRow): SaasAccountRow {
