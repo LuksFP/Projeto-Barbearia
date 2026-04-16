@@ -14,7 +14,7 @@ import { supabase } from '@/lib/supabase'
 const Pagamento = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { account } = useSaasAccount()
+  const { account, accessToken: ctxToken } = useSaasAccount()
   const plano = (searchParams.get('plano') ?? account?.plan ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
   const [error, setError] = useState('')
@@ -28,11 +28,11 @@ const Pagamento = () => {
 
   // Prefetch do checkout URL assim que a página carrega
   useEffect(() => {
-    if (!account) return
+    if (!account || !ctxToken) return
     const prefetch = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        const accessToken = session?.access_token ?? null
+        // Usa token do contexto diretamente — evita race condition com getSession()
+        const accessToken = ctxToken
         if (!accessToken) { setPrefetching(false); return }
 
         const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
@@ -56,7 +56,7 @@ const Pagamento = () => {
       }
     }
     prefetch()
-  }, [account, plano])
+  }, [account, ctxToken, plano])
 
   if (!account) return null
 
@@ -71,8 +71,7 @@ const Pagamento = () => {
       }
 
       // Fallback: busca na hora se prefetch falhou
-      const { data: { session } } = await supabase.auth.getSession()
-      const accessToken = session?.access_token ?? null
+      const accessToken = ctxToken ?? (await supabase.auth.getSession()).data.session?.access_token ?? null
       if (!accessToken) throw new Error('Sessão expirada. Faça login novamente.')
 
       const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
