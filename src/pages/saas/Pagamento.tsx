@@ -19,10 +19,44 @@ const Pagamento = () => {
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
+  const [prefetching, setPrefetching] = useState(true)
 
   useEffect(() => {
     if (!account) navigate('/registrar', { replace: true })
   }, [account, navigate])
+
+  // Prefetch do checkout URL assim que a página carrega
+  useEffect(() => {
+    if (!account) return
+    const prefetch = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const accessToken = session?.access_token ?? null
+        if (!accessToken) { setPrefetching(false); return }
+
+        const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
+        const res = await fetch(fnUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({
+            plan: plano,
+            successUrl: `${window.location.origin}/dashboard?checkout=success`,
+            cancelUrl: `${window.location.origin}/pagamento?plano=${plano}`,
+          }),
+        })
+        if (res.ok) {
+          const { url } = await res.json() as { url: string }
+          setCheckoutUrl(url)
+        }
+      } catch {
+        // silencioso — se falhar, o handleCheckout tenta de novo
+      } finally {
+        setPrefetching(false)
+      }
+    }
+    prefetch()
+  }, [account, plano])
 
   if (!account) return null
 
@@ -30,9 +64,13 @@ const Pagamento = () => {
     setError('')
     setLoading(true)
     try {
-      // Busca sessão fresca — getSession() auto-refresha o token se necessário.
-      // Não depende do accessToken do contexto, que pode ser null logo após signup
-      // quando o Supabase exige confirmação de email.
+      // Se o prefetch já resolveu, redireciona imediatamente
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl
+        return
+      }
+
+      // Fallback: busca na hora se prefetch falhou
       const { data: { session } } = await supabase.auth.getSession()
       const accessToken = session?.access_token ?? null
       if (!accessToken) throw new Error('Sessão expirada. Faça login novamente.')
@@ -40,10 +78,7 @@ const Pagamento = () => {
       const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
       const res = await fetch(fnUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({
           plan: plano,
           successUrl: `${window.location.origin}/dashboard?checkout=success`,
@@ -150,8 +185,9 @@ const Pagamento = () => {
             ) : (
               <>
                 <Lock className="w-4 h-4" />
-                Ir para o Stripe — R$ {planConfig.price.toFixed(2).replace('.', ',')}/mês
-                <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                {prefetching ? 'Preparando...' : `Ir para o Stripe — R$ ${planConfig.price.toFixed(2).replace('.', ',')}/mês`}
+                {!prefetching && <ExternalLink className="w-3.5 h-3.5 opacity-60" />}
+                {prefetching && <div className="w-3.5 h-3.5 rounded-full border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] animate-spin" />}
               </>
             )}
           </button>
