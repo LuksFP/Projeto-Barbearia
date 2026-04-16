@@ -54,6 +54,10 @@ const Registrar = () => {
       setError('Preencha todos os campos.')
       return
     }
+    if (form.barbershopName.replace(/[^a-z0-9]/gi, '').length < 3) {
+      setError('Nome da barbearia muito curto. Use pelo menos 3 letras ou números.')
+      return
+    }
     if (!isPasswordStrong) {
       setError('Senha não atende aos requisitos de segurança.')
       return

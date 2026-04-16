@@ -47,6 +47,7 @@ export const saasAccountRepository = {
 
     if (rpcError) {
       if (rpcError.code === '23505') throw new Error('Já existe uma conta com esse email.')
+      if (rpcError.message?.includes('barbershops_slug_format')) throw new Error('Nome da barbearia muito curto ou inválido. Use pelo menos 3 letras.')
       throw new Error(rpcError.message ?? 'Erro ao criar conta.')
     }
 
