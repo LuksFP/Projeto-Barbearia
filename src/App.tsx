@@ -21,6 +21,8 @@ import BemVindo from "./pages/saas/BemVindo";
 import EntrarSaas from "./pages/saas/EntrarSaas";
 import EsqueciSenha from "./pages/saas/EsqueciSenha";
 import NovaSenha from "./pages/saas/NovaSenha";
+import AuthCallback from "./pages/saas/AuthCallback";
+import CompletarRegistro from "./pages/saas/CompletarRegistro";
 
 // Layouts — 3 áreas distintas do produto
 import LandingLayout from "@/layouts/LandingLayout";
@@ -111,6 +113,8 @@ const App = () => (
                         <Route path="/entrar" element={<EntrarSaas />} />
                         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
                         <Route path="/nova-senha" element={<NovaSenha />} />
+                        <Route path="/auth/callback" element={<AuthCallback />} />
+                        <Route path="/registrar/completar" element={<CompletarRegistro />} />
                         <Route path="/demo/:plan" element={<Demo />} />
                         <Route path="/aceitar-convite" element={<AceitarConvite />} />
 
