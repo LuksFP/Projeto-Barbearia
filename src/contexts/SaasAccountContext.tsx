@@ -53,18 +53,13 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
-    saasAccountRepository.getSession().then((session) => {
-      if (session) {
-        setAccount(session.account as unknown as SaasAccount)
-        setAccessToken(session.accessToken)
-      }
-      setIsLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // onAuthStateChange dispara INITIAL_SESSION no mount — elimina a necessidade
+    // de chamar getSession() separadamente, evitando conflito de lock do Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
         setAccount(null)
         setAccessToken(null)
+        setIsLoading(false)
         return
       }
       const row = await saasAccountRepository.getByUserId(session.user.id)
@@ -72,6 +67,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
         setAccount({ ...mapRowToAccount(row), email: session.user.email ?? '' })
         setAccessToken(session.access_token)
       }
+      setIsLoading(false)
     })
 
     return () => subscription.unsubscribe()
