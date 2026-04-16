@@ -52,9 +52,9 @@ export const saasAccountRepository = {
 
     if (!body.account) throw new Error('Conta criada mas perfil não encontrado.')
 
-    // Dispara setSession em background — não bloqueia a navegação
+    // setSession é necessário mas já temos os dados da conta — resolve em paralelo se possível
     if (body.access_token && body.refresh_token) {
-      supabase.auth.setSession({
+      await supabase.auth.setSession({
         access_token:  body.access_token,
         refresh_token: body.refresh_token,
       })
@@ -89,13 +89,16 @@ export const saasAccountRepository = {
       refresh_token: string
     }
 
-    // Decodifica o JWT para obter user_id sem aguardar setSession
+    // Decodifica o JWT para obter user_id sem uma chamada extra ao Supabase
     const payload = JSON.parse(atob(access_token.split('.')[1])) as { sub: string; email: string }
 
-    // Dispara setSession em background — não bloqueia o login
-    supabase.auth.setSession({ access_token, refresh_token })
+    // Roda setSession e getByUserId em paralelo para economizar ~500ms
+    const [{ error: sessionError }, account] = await Promise.all([
+      supabase.auth.setSession({ access_token, refresh_token }),
+      saasAccountRepository.getByUserId(payload.sub),
+    ])
 
-    const account = await saasAccountRepository.getByUserId(payload.sub)
+    if (sessionError) throw sessionError
     if (!account) throw new Error('Conta SaaS não encontrada')
 
     return {
