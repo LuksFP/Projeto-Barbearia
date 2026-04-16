@@ -43,7 +43,6 @@ export const saasAccountRepository = {
       p_barb_name:  input.barbershopName,
       p_barb_slug:  slug,
       p_embed_key:  embedKey,
-      p_plan:       input.plan,
     } as never)
 
     if (rpcError) {
