@@ -2,7 +2,7 @@
 // Separado do auth de clientes da barbearia (AuthContext)
 
 export type SaasPlan = 'basic' | 'pro' | 'premium'
-export type SaasPlanStatus = 'active' | 'trial' | 'past_due' | 'cancelled'
+export type SaasPlanStatus = 'pending' | 'active' | 'trial' | 'past_due' | 'cancelled'
 
 export interface SaasAccount {
   id: string

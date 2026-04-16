@@ -11,6 +11,7 @@ import { motion } from 'framer-motion'
 import { isDemoMode } from '@/lib/demo'
 
 const STATUS_CONFIG = {
+  pending:  { label: 'Aguardando pagamento', color: 'text-amber-300', bg: 'bg-amber-500/10 border-amber-500/20', icon: Clock },
   active:   { label: 'Ativo',        color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
   trial:    { label: 'Trial',         color: 'text-amber-400',  bg: 'bg-amber-400/10 border-amber-400/20',  icon: Clock },
   past_due: { label: 'Pagamento pendente', color: 'text-red-400', bg: 'bg-red-400/10 border-red-400/20', icon: AlertTriangle },
@@ -108,6 +109,15 @@ const DashboardAssinatura = () => {
             {statusCfg.label}
           </div>
         </div>
+
+        {account.planStatus === 'pending' && (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/[0.06] border border-amber-500/20">
+            <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+            <p className="text-amber-300/90 text-sm font-body">
+              Seu cadastro foi criado, mas o acesso so sera liberado apos a confirmacao do pagamento.
+            </p>
+          </div>
+        )}
 
         {/* Trial warning */}
         {account.planStatus === 'trial' && daysLeft !== null && (

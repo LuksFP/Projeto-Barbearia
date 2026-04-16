@@ -11,7 +11,7 @@ interface SaasAccountContextType {
   hasActivePlan: boolean
   isLoading: boolean
   signup: (data: SaasSignupInput) => Promise<void>
-  login: (email: string, password: string) => Promise<boolean | 'blocked'>
+  login: (email: string, password: string) => Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] }>
   logout: () => Promise<void>
   refreshAccount: () => Promise<void>
 }
@@ -83,7 +83,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(session.accessToken)
   }
 
-  const login = async (email: string, password: string): Promise<boolean | 'blocked'> => {
+  const login = async (email: string, password: string): Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] }> => {
     // Intercepta credenciais demo antes de chamar o Supabase
     const demoPlan = matchDemoCredentials(email, password)
     if (demoPlan) {
@@ -98,6 +98,9 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       const session = await saasAccountRepository.login(credentials)
       setAccount(session.account as unknown as SaasAccount)
       setAccessToken(session.accessToken)
+      if (session.account.planStatus !== 'active') {
+        return { status: 'payment_required', plan: session.account.plan }
+      }
       return true
     } catch (err: unknown) {
       // Diferencia bloqueio de rate limit de credencial errada
@@ -125,7 +128,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const hasActivePlan = account?.planStatus === 'active' || account?.planStatus === 'trial'
+  const hasActivePlan = account?.planStatus === 'active'
 
   return (
     <SaasAccountContext.Provider value={{

@@ -14,10 +14,9 @@ import { supabase } from '@/lib/supabase'
 const Pagamento = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const plano = (searchParams.get('plano') ?? 'pro') as SaasPlan
-  const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
-
   const { account } = useSaasAccount()
+  const plano = (searchParams.get('plano') ?? account?.plan ?? 'pro') as SaasPlan
+  const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 

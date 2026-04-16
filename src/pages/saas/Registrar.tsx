@@ -33,10 +33,13 @@ const Registrar = () => {
 
   const isPasswordStrong = passwordRules.every(r => r.ok)
 
-  // Já logado e com plano pago → vai direto pro dashboard
-  // Não redireciona se plan === null (trial recém-criado aguardando pagamento)
   if (isLoggedIn && hasActivePlan && account?.plan) {
     navigate('/dashboard', { replace: true })
+    return null
+  }
+
+  if (isLoggedIn && !hasActivePlan) {
+    navigate(`/pagamento?plano=${account?.plan ?? plano}`, { replace: true })
     return null
   }
 
@@ -142,7 +145,7 @@ const Registrar = () => {
 
             <h1 className="font-heading text-3xl tracking-wide text-white mb-2">CRIAR CONTA</h1>
             <p className="text-white/40 text-sm font-body mb-8">
-              Você completa o pagamento no próximo passo.
+              Sua conta fica pendente ate a confirmacao do pagamento no proximo passo.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -244,7 +247,7 @@ const Registrar = () => {
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold font-body text-sm tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
-                {loading ? 'Criando conta...' : 'Continuar para pagamento →'}
+                {loading ? 'Criando conta...' : 'Criar conta e ir para pagamento →'}
               </button>
             </form>
 

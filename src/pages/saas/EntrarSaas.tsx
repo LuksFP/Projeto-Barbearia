@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 
 const EntrarSaas = () => {
   const navigate = useNavigate()
-  const { login, isLoggedIn, hasActivePlan } = useSaasAccount()
+  const { login, isLoggedIn, hasActivePlan, account } = useSaasAccount()
   const [searchParams] = useSearchParams()
   const senhaAlterada = searchParams.get('senha') === 'alterada'
 
@@ -21,6 +21,11 @@ const EntrarSaas = () => {
     return null
   }
 
+  if (isLoggedIn && !hasActivePlan) {
+    navigate(`/pagamento?plano=${account?.plan ?? 'pro'}`, { replace: true })
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -30,6 +35,8 @@ const EntrarSaas = () => {
     setLoading(false)
     if (result === true) {
       navigate('/dashboard')
+    } else if (typeof result === 'object' && result.status === 'payment_required') {
+      navigate(`/pagamento?plano=${result.plan ?? 'pro'}`)
     } else if (result === 'blocked') {
       setError('Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.')
     } else {

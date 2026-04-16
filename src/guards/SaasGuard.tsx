@@ -5,12 +5,6 @@ import { useSaasAccount } from '@/contexts/SaasAccountContext'
 const POLL_INTERVAL_MS = 2000
 const POLL_TIMEOUT_MS  = 30000
 
-function trialDaysLeft(trialEndsAt: string | null): number | null {
-  if (!trialEndsAt) return null
-  const diff = new Date(trialEndsAt).getTime() - Date.now()
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
-}
-
 const SaasGuard = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, hasActivePlan, isLoading, account, refreshAccount } = useSaasAccount()
   const location = useLocation()
@@ -89,33 +83,15 @@ const SaasGuard = ({ children }: { children: React.ReactNode }) => {
     )
   }
 
-  // Trial expirado → redireciona para planos
-  if (account?.planStatus === 'trial' && account.trialEndsAt) {
-    const daysLeft = trialDaysLeft(account.trialEndsAt)
-    if (daysLeft !== null && daysLeft <= 0) {
-      return <Navigate to="/planos?trial=expired" replace />
-    }
-  }
-
   if (!hasActivePlan) {
+    if (account?.planStatus === 'pending') {
+      return <Navigate to={`/pagamento?plano=${account.plan ?? 'pro'}`} state={{ from: location }} replace />
+    }
     return <Navigate to="/planos" state={{ from: location }} replace />
   }
 
-  // Banner de aviso de trial próximo do vencimento
-  const daysLeft = account?.planStatus === 'trial'
-    ? trialDaysLeft(account.trialEndsAt ?? null)
-    : null
-
   return (
     <>
-      {daysLeft !== null && daysLeft <= 3 && daysLeft > 0 && (
-        <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-[#0a0a0a] text-center text-xs font-semibold font-body py-1.5 px-4">
-          Seu trial expira em {daysLeft} dia{daysLeft !== 1 ? 's' : ''}.{' '}
-          <a href="/planos" className="underline hover:no-underline">
-            Assinar agora →
-          </a>
-        </div>
-      )}
       {children}
     </>
   )
