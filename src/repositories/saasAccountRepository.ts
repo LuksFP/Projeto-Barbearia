@@ -25,48 +25,49 @@ export function slugify(text: string): string {
 
 export const saasAccountRepository = {
   async signup(input: SaasSignupInput): Promise<SaasSession> {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: input.email,
-      password: input.password,
-    })
-    if (authError) throw authError
-    if (!authData.user) throw new Error('Usuário não criado')
-
     const slug = slugify(input.barbershopName)
     const embedKey = generateEmbedKey(slug)
 
-    // Usa RPC atômica: cria saas_account + barbershop em uma transação.
-    // Se falhar, não deixa auth user órfão (o Supabase Auth limpará via cron).
-    const { data: account, error: rpcError } = await supabase.rpc('create_saas_account' as never, {
-      p_user_id:    authData.user.id,
-      p_owner_name: input.ownerName,
-      p_barb_name:  input.barbershopName,
-      p_barb_slug:  slug,
-      p_embed_key:  embedKey,
-    } as never)
+    // Delega para Edge Function auth-register que faz o signup de forma atômica:
+    // se o RPC falhar, ela deleta o auth user para não deixar órfãos.
+    const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-register`
+    const res = await fetch(fnUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email:           input.email,
+        password:        input.password,
+        ownerName:       input.ownerName,
+        barbershopName:  input.barbershopName,
+        barbershopSlug:  slug,
+        embedKey,
+      }),
+    })
 
-    if (rpcError) {
-      if (rpcError.code === '23505') throw new Error('Já existe uma conta com esse email.')
-      if (rpcError.message?.includes('barbershops_slug_format')) throw new Error('Nome da barbearia muito curto ou inválido. Use pelo menos 3 letras.')
-      throw new Error(rpcError.message ?? 'Erro ao criar conta.')
+    const body = await res.json() as { error?: string; access_token?: string | null; refresh_token?: string | null }
+
+    if (!res.ok) {
+      throw new Error(body.error ?? 'Erro ao criar conta.')
     }
 
-    // signUp() retorna session null quando confirmação de email está ativa no projeto.
-    // Fallback: faz login imediato para garantir que a sessão existe antes de ir ao checkout.
-    let session = authData.session
-    if (!session) {
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: input.email,
-        password: input.password,
+    // Restaura sessão no cliente Supabase se disponível
+    if (body.access_token && body.refresh_token) {
+      await supabase.auth.setSession({
+        access_token:  body.access_token,
+        refresh_token: body.refresh_token,
       })
-      if (!signInError && signInData.session) {
-        session = signInData.session
-      }
     }
+
+    // Busca os dados da conta recém-criada
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Conta criada mas não foi possível iniciar sessão. Faça login.')
+
+    const account = await saasAccountRepository.getByUserId(session.user.id)
+    if (!account) throw new Error('Conta criada mas perfil não encontrado.')
 
     return {
-      account: mapAccount(account as SaasAccountRow),
-      accessToken: session?.access_token ?? null,
+      account: { ...mapAccount(account), email: session.user.email ?? '' },
+      accessToken: session.access_token,
     }
   },
 
