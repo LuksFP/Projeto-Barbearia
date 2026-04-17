@@ -1,5 +1,6 @@
 // Auth delegado ao Supabase Auth — este repo só gerencia o perfil da conta SaaS
 import { supabase } from '@/lib/supabase'
+import { getAuthErrorMessage } from '@/lib/authErrors'
 import type { Tables } from '@/types/database'
 import type { SaasAccount, SaasSignupInput, SaasLoginInput, SaasSession } from '@/types/saas'
 
@@ -24,53 +25,75 @@ export function slugify(text: string): string {
 
 export const saasAccountRepository = {
   async signup(input: SaasSignupInput): Promise<SaasSession> {
+    let authData: { user?: { id: string } | null; session: { access_token: string } | null } | null = null
+    try {
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: input.email,
+        password: input.password,
+      })
+      if (authError) throw authError
+      authData = data
+    } catch (error) {
+      throw new Error(getAuthErrorMessage(error))
+    }
+
+    if (!authData?.user) throw new Error('Usuário não criado')
+
     const slug = slugify(input.barbershopName)
     const embedKey = generateEmbedKey(slug)
 
-    // 1. EF faz createUser + RPC atomicamente (sem signInWithPassword)
-    const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-register`
-    const res = await fetch(fnUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email:          input.email,
-        password:       input.password,
-        ownerName:      input.ownerName,
-        barbershopName: input.barbershopName,
-        barbershopSlug: slug,
-        embedKey,
-      }),
-    })
+    let account: SaasAccountRow | null = null
+    try {
+      const { data } = await supabase.rpc('create_saas_account' as never, {
+        p_user_id: authData.user.id,
+        p_owner_name: input.ownerName,
+        p_barb_name: input.barbershopName,
+        p_barb_slug: slug,
+        p_embed_key: embedKey,
+      } as never)
+      account = data as SaasAccountRow | null
+    } catch (error) {
+      throw new Error(getAuthErrorMessage(error))
+    }
 
-    const body = await res.json() as { error?: string; success?: boolean; account?: SaasAccountRow }
-    if (!res.ok) throw new Error(body.error ?? 'Erro ao criar conta.')
-    if (!body.account) throw new Error('Conta criada mas perfil não encontrado.')
+    if (!account) throw new Error('Erro ao criar conta.')
 
-    // 2. Login direto no Supabase (sem EF) — mais rápido
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email: input.email,
-      password: input.password,
-    })
-    if (signInError) throw signInError
+    let session = authData.session
+    if (!session) {
+      try {
+        const { data: signInData } = await supabase.auth.signInWithPassword({
+          email: input.email,
+          password: input.password,
+        })
+        if (signInData.session) {
+          session = signInData.session
+        }
+      } catch (error) {
+        throw new Error(getAuthErrorMessage(error))
+      }
+    }
 
     return {
-      account: mapAccount(body.account, input.email),
-      accessToken: signInData.session?.access_token ?? null,
+      account: mapAccount(account, input.email),
+      accessToken: session?.access_token ?? null,
     }
   },
 
-  async login(input: SaasLoginInput): Promise<void> {
-    // signInWithPassword dispara onAuthStateChange (SIGNED_IN) que carrega o account.
-    // Não buscamos o account aqui para não serializar duas chamadas de rede —
-    // o context já faz isso via onAuthStateChange, economizando ~200 ms visíveis.
-    const { error } = await supabase.auth.signInWithPassword({
-      email: input.email,
-      password: input.password,
-    })
+  async login(input: SaasLoginInput): Promise<SaasSession> {
+    let data: { session: { access_token: string } | null } | null = null
+    try {
+      ({ data } = await supabase.auth.signInWithPassword({
+        email: input.email,
+        password: input.password,
+      }))
+    } catch (error) {
+      throw new Error(getAuthErrorMessage(error))
+    }
+    if (!data?.session) throw new Error('Login inválido')
 
-    if (error) {
-      if (error.status === 429) throw new Error('Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.')
-      throw new Error('Email ou senha incorretos.')
+    return {
+      account: null as never,
+      accessToken: data.session.access_token,
     }
   },
 

@@ -11,7 +11,7 @@ interface SaasAccountContextType {
   hasActivePlan: boolean
   isLoading: boolean
   signup: (data: SaasSignupInput) => Promise<void>
-  login: (email: string, password: string) => Promise<boolean | 'blocked'>
+  login: (email: string, password: string) => Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] } | { status: 'error'; message: string }>
   logout: () => Promise<void>
   refreshAccount: () => Promise<void>
 }
@@ -53,13 +53,13 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
-    // onAuthStateChange dispara INITIAL_SESSION no mount — elimina a necessidade
-    // de chamar getSession() separadamente, evitando conflito de lock do Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    let initialized = false
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session) {
         setAccount(null)
         setAccessToken(null)
-        setIsLoading(false)
+        if (!initialized) { initialized = true; setIsLoading(false) }
         return
       }
       const row = await saasAccountRepository.getByUserId(session.user.id)
@@ -67,7 +67,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
         setAccount(mapRowToAccount(row, session.user.email ?? ''))
         setAccessToken(session.access_token)
       }
-      setIsLoading(false)
+      if (!initialized) { initialized = true; setIsLoading(false) }
     })
 
     return () => subscription.unsubscribe()
@@ -79,7 +79,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(session.accessToken)
   }
 
-  const login = async (email: string, password: string): Promise<boolean | 'blocked'> => {
+  const login = async (email: string, password: string): Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] } | { status: 'error'; message: string }> => {
     // Intercepta credenciais demo antes de chamar o Supabase
     const demoPlan = matchDemoCredentials(email, password)
     if (demoPlan) {
@@ -89,14 +89,17 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       return true
     }
 
+    const credentials = { email, password }
     try {
-      // Apenas autentica — onAuthStateChange (SIGNED_IN) carrega o account em paralelo.
-      // SaasGuard redireciona para /pagamento se o plano não estiver ativo.
-      await saasAccountRepository.login({ email, password })
+      const session = await saasAccountRepository.login(credentials)
+      setAccessToken(session.accessToken)
       return true
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes('Muitas tentativas')) return 'blocked'
-      return false
+      return {
+        status: 'error',
+        message: err instanceof Error ? err.message : 'Erro inesperado. Tente novamente.',
+      }
     }
   }
 

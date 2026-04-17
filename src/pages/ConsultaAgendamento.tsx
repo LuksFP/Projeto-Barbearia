@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,10 +22,12 @@ type AptDisplay = {
   barber_name: string
   rating: number | null
   review: string | null
+  payment_status?: string | null
 }
 
 const ConsultaAgendamento = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [appointments, setAppointments] = useState<AptDisplay[]>([]);
@@ -34,22 +37,22 @@ const ConsultaAgendamento = () => {
   const [review, setReview] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email && !phone) {
-      toast({
-        title: 'Campo obrigatório',
-        description: 'Informe o email ou telefone para consultar.',
-        variant: 'destructive',
-      });
+  const runSearch = async (emailValue: string, phoneValue: string, showEmptyToast = true) => {
+    if (!emailValue && !phoneValue) {
+      if (showEmptyToast) {
+        toast({
+          title: 'Campo obrigatório',
+          description: 'Informe o email ou telefone para consultar.',
+          variant: 'destructive',
+        });
+      }
       return;
     }
 
     try {
       const { data, error } = await supabasePublic.rpc('search_appointments_by_contact', {
-        p_email: email || null,
-        p_phone: phone || null,
+        p_email: emailValue || null,
+        p_phone: phoneValue || null,
       });
 
       if (error) throw error;
@@ -74,8 +77,39 @@ const ConsultaAgendamento = () => {
     }
   };
 
+  useEffect(() => {
+    const initialEmail = searchParams.get('email') ?? '';
+    const initialPhone = searchParams.get('phone') ?? '';
+    const payment = searchParams.get('payment');
+
+    if (!initialEmail && !initialPhone) return;
+
+    setEmail(initialEmail);
+    setPhone(initialPhone);
+    void runSearch(initialEmail, initialPhone, false);
+
+    if (payment === 'success') {
+      toast({
+        title: 'Pagamento confirmado',
+        description: 'Seu agendamento está sendo confirmado.',
+      });
+    }
+  }, [searchParams, toast]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await runSearch(email, phone);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'pending':
+        return (
+          <Badge className="bg-amber-500/20 text-amber-600 gap-1">
+            <AlertCircle className="w-3 h-3" />
+            Aguardando confirmação
+          </Badge>
+        );
       case 'scheduled':
       case 'confirmed':
         return (

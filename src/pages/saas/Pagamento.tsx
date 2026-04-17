@@ -2,61 +2,45 @@
 // O pagamento é processado 100% pelo Stripe Checkout (redirect).
 // Este componente apenas inicia a sessão de checkout via backend.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Lock, ExternalLink } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { SAAS_PLANS } from '@/types/saas'
 import type { SaasPlan } from '@/types/saas'
 import { motion } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
 
 const Pagamento = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { account, accessToken: ctxToken } = useSaasAccount()
+  const { account, accessToken } = useSaasAccount()
   const plano = (searchParams.get('plano') ?? account?.plan ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
-  const [prefetching, setPrefetching] = useState(true)
+  const prefetchedUrl = useRef<string | null>(null)
 
   useEffect(() => {
     if (!account) navigate('/registrar', { replace: true })
   }, [account, navigate])
 
-  // Prefetch do checkout URL assim que a página carrega
+  // Prefetch checkout URL no mount para que o redirect seja imediato ao clicar
   useEffect(() => {
-    if (!account || !ctxToken) return
-    const prefetch = async () => {
-      try {
-        // Usa token do contexto diretamente — evita race condition com getSession()
-        const accessToken = ctxToken
-        if (!accessToken) { setPrefetching(false); return }
-
-        const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
-        const res = await fetch(fnUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({
-            plan: plano,
-            successUrl: `${window.location.origin}/dashboard?checkout=success`,
-            cancelUrl: `${window.location.origin}/pagamento?plano=${plano}`,
-          }),
-        })
-        if (res.ok) {
-          const { url } = await res.json() as { url: string }
-          setCheckoutUrl(url)
-        }
-      } catch {
-        // silencioso — se falhar, o handleCheckout tenta de novo
-      } finally {
-        setPrefetching(false)
-      }
-    }
-    prefetch()
-  }, [account, ctxToken, plano])
+    if (!account || !accessToken) return
+    const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
+    fetch(fnUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        plan: plano,
+        successUrl: `${window.location.origin}/dashboard?checkout=success`,
+        cancelUrl: `${window.location.origin}/pagamento?plano=${plano}`,
+      }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { url: string } | null) => { if (data?.url) prefetchedUrl.current = data.url })
+      .catch(() => {})
+  }, [account, accessToken, plano])
 
   if (!account) return null
 
@@ -64,20 +48,20 @@ const Pagamento = () => {
     setError('')
     setLoading(true)
     try {
-      // Se o prefetch já resolveu, redireciona imediatamente
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl
+      if (prefetchedUrl.current) {
+        window.location.href = prefetchedUrl.current
         return
       }
 
-      // Fallback: busca na hora se prefetch falhou
-      const accessToken = ctxToken ?? (await supabase.auth.getSession()).data.session?.access_token ?? null
       if (!accessToken) throw new Error('Sessão expirada. Faça login novamente.')
 
       const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
       const res = await fetch(fnUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           plan: plano,
           successUrl: `${window.location.origin}/dashboard?checkout=success`,
@@ -184,9 +168,8 @@ const Pagamento = () => {
             ) : (
               <>
                 <Lock className="w-4 h-4" />
-                {prefetching ? 'Preparando...' : `Ir para o Stripe — R$ ${planConfig.price.toFixed(2).replace('.', ',')}/mês`}
-                {!prefetching && <ExternalLink className="w-3.5 h-3.5 opacity-60" />}
-                {prefetching && <div className="w-3.5 h-3.5 rounded-full border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] animate-spin" />}
+                Ir para o Stripe — R$ {planConfig.price.toFixed(2).replace('.', ',')}/mês
+                <ExternalLink className="w-3.5 h-3.5 opacity-60" />
               </>
             )}
           </button>

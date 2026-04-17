@@ -3,6 +3,7 @@ import {
   Clock, CheckCircle2, AlertCircle, Globe, Link2,
   ExternalLink, PartyPopper, DollarSign,
 } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { useSearchParams, useNavigate } from 'react-router-dom'
@@ -210,7 +211,7 @@ const DashboardOverview = () => {
     appointmentRepository
       .getMonthlyRevenue(barbershop.id)
       .then(setFinancialMonths)
-      .catch(console.error)
+      .catch(() => toast({ title: 'Erro ao carregar dados financeiros', variant: 'destructive' }))
   }, [barbershop?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const vipCount  = clients.filter(c => c.membershipType === 'vip').length

@@ -6,6 +6,7 @@ import { mapAppointment } from '@/contexts/TenantContext'
 import { isDemoMode } from '@/lib/demo'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
+import { toast } from '@/hooks/use-toast'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
@@ -97,7 +98,7 @@ const DashboardAgenda = () => {
     appointmentRepository
       .listByBarbershop(barbershop.id, selectedDate)
       .then(rows => setAppointments(rows.map(mapAppointment)))
-      .catch(console.error)
+      .catch(() => toast({ title: 'Erro ao carregar agendamentos', variant: 'destructive' }))
       .finally(() => setLoading(false))
   }, [barbershop?.id, selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -114,8 +115,8 @@ const DashboardAgenda = () => {
       setAppointments(prev =>
         prev.map(a => a.id === apt.id ? mapAppointment(updated) : a)
       )
-    } catch (err) {
-      console.error('Failed to update status:', err)
+    } catch {
+      toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
     } finally {
       setUpdatingId(null)
     }
@@ -147,8 +148,8 @@ const DashboardAgenda = () => {
       }
       setModalOpen(false)
       setForm({ clientName: '', clientPhone: '', serviceName: '', barberName: '', date: '', time: '', price: '' })
-    } catch (err) {
-      console.error('Failed to create appointment:', err)
+    } catch {
+      toast({ title: 'Erro ao criar agendamento', variant: 'destructive' })
     } finally {
       setSaving(false)
     }

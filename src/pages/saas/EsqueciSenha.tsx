@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { getAuthErrorMessage } from '@/lib/authErrors'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const EsqueciSenha = () => {
@@ -17,16 +18,22 @@ const EsqueciSenha = () => {
     setLoading(true)
     setError('')
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/nova-senha`,
-    })
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/nova-senha`,
+      })
+
+      if (resetError) {
+        // Não revelamos se o email existe ou não (segurança)
+        console.error('reset error:', resetError)
+      }
+    } catch (error) {
+      setError(getAuthErrorMessage(error))
+      setLoading(false)
+      return
+    }
 
     setLoading(false)
-
-    if (resetError) {
-      // Não revelamos se o email existe ou não (segurança)
-      console.error('reset error:', resetError)
-    }
 
     // Sempre mostra sucesso — evita enumeração de emails
     setSent(true)

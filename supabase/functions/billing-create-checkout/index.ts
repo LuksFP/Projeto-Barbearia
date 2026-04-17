@@ -51,9 +51,16 @@ Deno.serve(async (req) => {
   if (!successUrl || !cancelUrl) return err('successUrl and cancelUrl required')
 
   // Valida origens para evitar open redirect
-  const ALLOWED_ORIGINS = ['https://barberos.io', 'http://localhost:5173', 'http://localhost:4173']
   const isAllowedUrl = (url: string) => {
-    try { return ALLOWED_ORIGINS.includes(new URL(url).origin) } catch { return false }
+    try {
+      const origin = new URL(url).origin
+      return (
+        origin === 'https://barberos.io' ||
+        origin.endsWith('.vercel.app') ||
+        origin === 'http://localhost:5173' ||
+        origin === 'http://localhost:4173'
+      )
+    } catch { return false }
   }
   if (!isAllowedUrl(successUrl) || !isAllowedUrl(cancelUrl)) {
     return err('URL de redirecionamento inválida', 400)

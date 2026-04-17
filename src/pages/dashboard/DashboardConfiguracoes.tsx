@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info } from 'lucide-react'
-import { getDefaultCancellationPolicy } from '@/lib/demo'
+import { getDefaultCancellationPolicy, isDemoMode } from '@/lib/demo'
 import type { CancellationPolicy } from '@/types/tenant'
+import { toast } from '@/hooks/use-toast'
 
 // ─── Componentes de layout ────────────────────────────────────────────────────
 
@@ -209,7 +210,7 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
         <button
           onClick={onSave}
           disabled={saving}
-          className="px-5 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="px-5 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? 'Salvando…' : 'Salvar política'}
         </button>
@@ -222,28 +223,31 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
 
 const DashboardConfiguracoes = () => {
   const { barbershop, userRole, updateBarbershop } = useTenant()
-  const [policy, setPolicy] = useState<CancellationPolicy>(getDefaultCancellationPolicy)
+  const [policy, setPolicy] = useState<CancellationPolicy>(() =>
+    barbershop?.cancellationPolicy ?? getDefaultCancellationPolicy()
+  )
   const [policySaved, setPolicySaved] = useState(false)
-  const [policySaving, setPolicySaving] = useState(false)
-
-  useEffect(() => {
-    if (barbershop?.cancellationPolicy) {
-      setPolicy(barbershop.cancellationPolicy)
-    }
-  }, [barbershop?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [saving, setSaving] = useState(false)
 
   if (!barbershop) return null
 
   const canEdit = userRole === 'owner' || userRole === 'admin'
 
   const handleSavePolicy = async () => {
-    setPolicySaving(true)
+    if (isDemoMode()) {
+      setPolicySaved(true)
+      setTimeout(() => setPolicySaved(false), 3000)
+      return
+    }
+    setSaving(true)
     try {
       await updateBarbershop({ cancellationPolicy: policy })
       setPolicySaved(true)
       setTimeout(() => setPolicySaved(false), 3000)
+    } catch {
+      toast({ title: 'Erro ao salvar política', variant: 'destructive' })
     } finally {
-      setPolicySaving(false)
+      setSaving(false)
     }
   }
 
@@ -305,7 +309,7 @@ const DashboardConfiguracoes = () => {
             onChange={setPolicy}
             onSave={handleSavePolicy}
             saved={policySaved}
-            saving={policySaving}
+            saving={saving}
           />
         ) : (
           <div className="space-y-3">

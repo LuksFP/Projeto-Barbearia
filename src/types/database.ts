@@ -27,11 +27,16 @@ export type Database = {
           id: string
           membership_type: string | null
           price: number | null
+          payment_method: string | null
+          payment_status: string | null
           rating: number | null
           review: string | null
+          paid_at: string | null
           service_category: string | null
           service_id: string | null
           service_name: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           status: string
           time: string
           user_id: string | null
@@ -48,11 +53,16 @@ export type Database = {
           id?: string
           membership_type?: string | null
           price?: number | null
+          payment_method?: string | null
+          payment_status?: string | null
           rating?: number | null
           review?: string | null
+          paid_at?: string | null
           service_category?: string | null
           service_id?: string | null
           service_name: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           status?: string
           time: string
           user_id?: string | null
@@ -69,11 +79,16 @@ export type Database = {
           id?: string
           membership_type?: string | null
           price?: number | null
+          payment_method?: string | null
+          payment_status?: string | null
           rating?: number | null
           review?: string | null
+          paid_at?: string | null
           service_category?: string | null
           service_id?: string | null
           service_name?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           status?: string
           time?: string
           user_id?: string | null
