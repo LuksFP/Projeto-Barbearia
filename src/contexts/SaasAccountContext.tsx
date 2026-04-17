@@ -53,18 +53,13 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
-    saasAccountRepository.getSession().then((session) => {
-      if (session) {
-        setAccount(session.account as unknown as SaasAccount)
-        setAccessToken(session.accessToken)
-      }
-      setIsLoading(false)
-    })
+    let initialized = false
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session) {
         setAccount(null)
         setAccessToken(null)
+        if (!initialized) { initialized = true; setIsLoading(false) }
         return
       }
       const row = await saasAccountRepository.getByUserId(session.user.id)
@@ -72,6 +67,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
         setAccount({ ...mapRowToAccount(row), email: session.user.email ?? '' })
         setAccessToken(session.access_token)
       }
+      if (!initialized) { initialized = true; setIsLoading(false) }
     })
 
     return () => subscription.unsubscribe()
@@ -96,14 +92,10 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     const credentials: SaasLoginInput = { email, password }
     try {
       const session = await saasAccountRepository.login(credentials)
-      setAccount(session.account as unknown as SaasAccount)
       setAccessToken(session.accessToken)
-      if (session.account.planStatus !== 'active') {
-        return { status: 'payment_required', plan: session.account.plan }
-      }
+      // onAuthStateChange carrega a conta; SaasGuard redireciona se plano inativo
       return true
     } catch (err: unknown) {
-      // Diferencia bloqueio de rate limit de credencial errada
       if (err instanceof Error && err.message.includes('Muitas tentativas')) return 'blocked'
       return false
     }

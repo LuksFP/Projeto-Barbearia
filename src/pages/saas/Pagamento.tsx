@@ -2,27 +2,45 @@
 // O pagamento é processado 100% pelo Stripe Checkout (redirect).
 // Este componente apenas inicia a sessão de checkout via backend.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Lock, ExternalLink } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { SAAS_PLANS } from '@/types/saas'
 import type { SaasPlan } from '@/types/saas'
 import { motion } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
 
 const Pagamento = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { account } = useSaasAccount()
+  const { account, accessToken } = useSaasAccount()
   const plano = (searchParams.get('plano') ?? account?.plan ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const prefetchedUrl = useRef<string | null>(null)
 
   useEffect(() => {
     if (!account) navigate('/registrar', { replace: true })
   }, [account, navigate])
+
+  // Prefetch checkout URL no mount para que o redirect seja imediato ao clicar
+  useEffect(() => {
+    if (!account || !accessToken) return
+    const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
+    fetch(fnUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        plan: plano,
+        successUrl: `${window.location.origin}/dashboard?checkout=success`,
+        cancelUrl: `${window.location.origin}/pagamento?plano=${plano}`,
+      }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { url: string } | null) => { if (data?.url) prefetchedUrl.current = data.url })
+      .catch(() => {})
+  }, [account, accessToken, plano])
 
   if (!account) return null
 
@@ -30,11 +48,11 @@ const Pagamento = () => {
     setError('')
     setLoading(true)
     try {
-      // Busca sessão fresca — getSession() auto-refresha o token se necessário.
-      // Não depende do accessToken do contexto, que pode ser null logo após signup
-      // quando o Supabase exige confirmação de email.
-      const { data: { session } } = await supabase.auth.getSession()
-      const accessToken = session?.access_token ?? null
+      if (prefetchedUrl.current) {
+        window.location.href = prefetchedUrl.current
+        return
+      }
+
       if (!accessToken) throw new Error('Sessão expirada. Faça login novamente.')
 
       const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`

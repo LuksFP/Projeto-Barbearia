@@ -43,7 +43,6 @@ export const saasAccountRepository = {
       p_barb_name:  input.barbershopName,
       p_barb_slug:  slug,
       p_embed_key:  embedKey,
-      p_plan:       input.plan,
     } as never)
 
     if (rpcError) {
@@ -71,39 +70,21 @@ export const saasAccountRepository = {
   },
 
   async login(input: SaasLoginInput): Promise<SaasSession> {
-    // Login via Edge Function para rate limiting (5 falhas/email, 10/IP em 15 min)
-    const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-login`
-    const res = await fetch(fnUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: input.email, password: input.password }),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
     })
 
-    if (res.status === 429) {
-      const body = await res.json() as { error: string }
-      throw new Error(body.error)
+    if (error) {
+      if (error.status === 429) throw new Error('Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.')
+      throw new Error('Email ou senha incorretos.')
     }
-    if (!res.ok) {
-      const body = await res.json() as { error: string }
-      throw new Error(body.error ?? 'Erro ao fazer login.')
-    }
+    if (!data.session) throw new Error('Login inválido')
 
-    const { access_token, refresh_token } = await res.json() as {
-      access_token: string
-      refresh_token: string
-    }
-
-    // Restaura a sessão no cliente Supabase para que auth.getSession() funcione
-    const { data, error } = await supabase.auth.setSession({ access_token, refresh_token })
-    if (error) throw error
-    if (!data.user) throw new Error('Login inválido')
-
-    const account = await saasAccountRepository.getByUserId(data.user.id)
-    if (!account) throw new Error('Conta SaaS não encontrada')
-
+    // Retorna imediatamente — onAuthStateChange no SaasAccountContext carrega a conta
     return {
-      account: { ...mapAccount(account), email: data.user.email ?? '' },
-      accessToken: data.session?.access_token ?? null,
+      account: null as never,
+      accessToken: data.session.access_token,
     }
   },
 
