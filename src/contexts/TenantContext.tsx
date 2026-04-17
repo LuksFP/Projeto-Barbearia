@@ -66,11 +66,12 @@ function mapBarbershop(row: BarbershopRow): Barbershop {
     accentColor: row.accent_color,
     logoText: row.logo_text,
     coverImage: row.cover_image ?? undefined,
-    plan: 'pro' as Barbershop['plan'], // resolvido via saas_account.plan
+    plan: 'pro' as Barbershop['plan'],
     active: row.active,
     siteType: row.site_type as Barbershop['siteType'],
     customDomain: row.custom_domain ?? '',
     embedKey: row.embed_key,
+    cancellationPolicy: (row as any).cancellation_policy ?? null,
   }
 }
 
@@ -227,23 +228,24 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
   const updateBarbershop = useCallback(async (updates: Partial<Barbershop>) => {
     if (!barbershop) return
-    const row = await barbershopRepository.update(barbershop.id, {
-      name: updates.name,
-      tagline: updates.tagline,
-      description: updates.description,
-      phone: updates.phone,
-      whatsapp: updates.whatsapp,
-      address: updates.address,
-      city: updates.city,
-      state: updates.state,
-      instagram: updates.instagram,
-      primary_color: updates.primaryColor,
-      accent_color: updates.accentColor,
-      logo_text: updates.logoText,
-      cover_image: updates.coverImage,
-      site_type: updates.siteType,
-      custom_domain: updates.customDomain,
-    })
+    const payload: Record<string, unknown> = {}
+    if (updates.name !== undefined) payload.name = updates.name
+    if (updates.tagline !== undefined) payload.tagline = updates.tagline
+    if (updates.description !== undefined) payload.description = updates.description
+    if (updates.phone !== undefined) payload.phone = updates.phone
+    if (updates.whatsapp !== undefined) payload.whatsapp = updates.whatsapp
+    if (updates.address !== undefined) payload.address = updates.address
+    if (updates.city !== undefined) payload.city = updates.city
+    if (updates.state !== undefined) payload.state = updates.state
+    if (updates.instagram !== undefined) payload.instagram = updates.instagram
+    if (updates.primaryColor !== undefined) payload.primary_color = updates.primaryColor
+    if (updates.accentColor !== undefined) payload.accent_color = updates.accentColor
+    if (updates.logoText !== undefined) payload.logo_text = updates.logoText
+    if (updates.coverImage !== undefined) payload.cover_image = updates.coverImage
+    if (updates.siteType !== undefined) payload.site_type = updates.siteType
+    if (updates.customDomain !== undefined) payload.custom_domain = updates.customDomain
+    if (updates.cancellationPolicy !== undefined) payload.cancellation_policy = updates.cancellationPolicy
+    const row = await barbershopRepository.update(barbershop.id, payload as any)
     setBarbershop(mapBarbershop(row))
   }, [barbershop])
 

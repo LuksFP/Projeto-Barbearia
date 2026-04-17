@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
+import { toast } from '@/hooks/use-toast'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
@@ -112,7 +113,7 @@ const DashboardFinanceiro = () => {
         setTotalCount(d.totalCount)
         setAvgTicket(d.avgTicket)
       })
-      .catch(console.error)
+      .catch(() => toast({ title: 'Erro ao carregar financeiro', variant: 'destructive' }))
       .finally(() => setLoading(false))
   }, [barbershop?.id, period]) // eslint-disable-line react-hooks/exhaustive-deps
 
