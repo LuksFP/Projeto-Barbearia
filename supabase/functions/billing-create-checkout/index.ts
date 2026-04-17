@@ -72,12 +72,22 @@ Deno.serve(async (req) => {
   let customerId = account.stripe_customer_id as string | null
 
   if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name: account.owner_name as string,
-      metadata: { saas_account_id: account.id as string },
+    // Busca customer existente por metadata antes de criar (evita duplicatas em race condition)
+    const existing = await stripe.customers.search({
+      query: `metadata['saas_account_id']:'${account.id as string}'`,
+      limit: 1,
     })
-    customerId = customer.id
+
+    if (existing.data.length > 0) {
+      customerId = existing.data[0].id
+    } else {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: account.owner_name as string,
+        metadata: { saas_account_id: account.id as string },
+      })
+      customerId = customer.id
+    }
 
     // Persiste o customer_id imediatamente
     await supabase

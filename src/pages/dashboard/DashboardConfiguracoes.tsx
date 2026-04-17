@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info } from 'lucide-react'
 import { getDefaultCancellationPolicy } from '@/lib/demo'
@@ -61,9 +61,10 @@ interface CancellationFormProps {
   onChange: (p: CancellationPolicy) => void
   onSave: () => void
   saved: boolean
+  saving?: boolean
 }
 
-const CancellationForm = ({ policy, onChange, onSave, saved }: CancellationFormProps) => {
+const CancellationForm = ({ policy, onChange, onSave, saved, saving }: CancellationFormProps) => {
   const set = <K extends keyof CancellationPolicy>(key: K, val: CancellationPolicy[K]) =>
     onChange({ ...policy, [key]: val })
 
@@ -207,9 +208,10 @@ const CancellationForm = ({ policy, onChange, onSave, saved }: CancellationFormP
         )}
         <button
           onClick={onSave}
-          className="px-5 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
+          disabled={saving}
+          className="px-5 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Salvar política
+          {saving ? 'Salvando…' : 'Salvar política'}
         </button>
       </div>
     </div>
@@ -219,18 +221,30 @@ const CancellationForm = ({ policy, onChange, onSave, saved }: CancellationFormP
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 const DashboardConfiguracoes = () => {
-  const { barbershop, userRole } = useTenant()
+  const { barbershop, userRole, updateBarbershop } = useTenant()
   const [policy, setPolicy] = useState<CancellationPolicy>(getDefaultCancellationPolicy)
   const [policySaved, setPolicySaved] = useState(false)
+  const [policySaving, setPolicySaving] = useState(false)
+
+  useEffect(() => {
+    if (barbershop?.cancellationPolicy) {
+      setPolicy(barbershop.cancellationPolicy)
+    }
+  }, [barbershop?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!barbershop) return null
 
   const canEdit = userRole === 'owner' || userRole === 'admin'
 
-  const handleSavePolicy = () => {
-    // TODO: persistir no Supabase
-    setPolicySaved(true)
-    setTimeout(() => setPolicySaved(false), 3000)
+  const handleSavePolicy = async () => {
+    setPolicySaving(true)
+    try {
+      await updateBarbershop({ cancellationPolicy: policy })
+      setPolicySaved(true)
+      setTimeout(() => setPolicySaved(false), 3000)
+    } finally {
+      setPolicySaving(false)
+    }
   }
 
   return (
@@ -291,6 +305,7 @@ const DashboardConfiguracoes = () => {
             onChange={setPolicy}
             onSave={handleSavePolicy}
             saved={policySaved}
+            saving={policySaving}
           />
         ) : (
           <div className="space-y-3">

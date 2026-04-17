@@ -1,7 +1,7 @@
 // Auth delegado ao Supabase Auth — este repo só gerencia o perfil da conta SaaS
 import { supabase } from '@/lib/supabase'
 import type { Tables } from '@/types/database'
-import type { SaasSignupInput, SaasLoginInput, SaasSession } from '@/types/saas'
+import type { SaasAccount, SaasSignupInput, SaasLoginInput, SaasSession } from '@/types/saas'
 
 export type SaasAccountRow = Tables<'saas_accounts'>
 
@@ -54,7 +54,7 @@ export const saasAccountRepository = {
     if (signInError) throw signInError
 
     return {
-      account: { ...mapAccount(body.account), email: input.email },
+      account: mapAccount(body.account, input.email),
       accessToken: signInData.session?.access_token ?? null,
     }
   },
@@ -96,12 +96,23 @@ export const saasAccountRepository = {
     if (!account) return null
 
     return {
-      account: { ...mapAccount(account), email: session.user.email ?? '' },
+      account: mapAccount(account, session.user.email ?? ''),
       accessToken: session.access_token,
     }
   },
 }
 
-function mapAccount(row: SaasAccountRow): SaasAccountRow {
-  return row
+function mapAccount(row: SaasAccountRow, email: string): SaasAccount {
+  return {
+    id: row.id,
+    ownerName: row.owner_name,
+    email,
+    barbershopName: row.barbershop_name,
+    barbershopSlug: row.barbershop_slug,
+    plan: row.plan as SaasAccount['plan'],
+    planStatus: row.plan_status as SaasAccount['planStatus'],
+    planStartedAt: row.plan_started_at,
+    trialEndsAt: row.trial_ends_at ?? null,
+    createdAt: row.created_at,
+  }
 }

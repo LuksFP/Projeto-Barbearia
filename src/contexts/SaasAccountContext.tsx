@@ -24,11 +24,11 @@ export const useSaasAccount = () => {
   return ctx
 }
 
-function mapRowToAccount(row: ReturnType<typeof saasAccountRepository.getByUserId> extends Promise<infer T> ? NonNullable<T> : never): SaasAccount {
+function mapRowToAccount(row: NonNullable<Awaited<ReturnType<typeof saasAccountRepository.getByUserId>>>, email: string): SaasAccount {
   return {
     id: row.id,
     ownerName: row.owner_name,
-    email: '',
+    email,
     barbershopName: row.barbershop_name,
     barbershopSlug: row.barbershop_slug,
     plan: row.plan as SaasAccount['plan'],
@@ -64,7 +64,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       }
       const row = await saasAccountRepository.getByUserId(session.user.id)
       if (row) {
-        setAccount({ ...mapRowToAccount(row), email: session.user.email ?? '' })
+        setAccount(mapRowToAccount(row, session.user.email ?? ''))
         setAccessToken(session.access_token)
       }
       setIsLoading(false)
@@ -75,7 +75,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (data: SaasSignupInput): Promise<void> => {
     const session = await saasAccountRepository.signup(data)
-    setAccount(session.account as unknown as SaasAccount)
+    setAccount(session.account)
     setAccessToken(session.accessToken)
   }
 
@@ -114,7 +114,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
   const refreshAccount = async (): Promise<void> => {
     const session = await saasAccountRepository.getSession()
     if (session) {
-      setAccount(session.account as unknown as SaasAccount)
+      setAccount(session.account)
       setAccessToken(session.accessToken)
     }
   }

@@ -74,7 +74,27 @@ const BookingSection = ({
     setBookError('')
 
     const barberObj = selectedBarber === 'any' ? null : selectedBarber
+
     try {
+      // Verifica conflito de horário para barbeiro específico
+      if (barberObj) {
+        const { data: conflict } = await supabasePublic
+          .from('appointments')
+          .select('id')
+          .eq('barbershop_id', barbershop.id)
+          .eq('barber_id', barberObj.id)
+          .eq('date', selectedDate)
+          .eq('time', selectedTime)
+          .in('status', ['scheduled', 'confirmed'])
+          .maybeSingle()
+
+        if (conflict) {
+          setBookError('Este horário já está reservado para o barbeiro selecionado. Escolha outro horário ou barbeiro.')
+          setSubmitting(false)
+          return
+        }
+      }
+
       const { error } = await supabasePublic.from('appointments').insert({
         barbershop_id: barbershop.id,
         service_id: selectedService.id,

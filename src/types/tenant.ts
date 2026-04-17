@@ -24,6 +24,7 @@ export interface Barbershop {
   siteType: 'generic' | 'external'
   customDomain?: string
   embedKey?: string             // chave read-only para o widget embed
+  cancellationPolicy?: CancellationPolicy
 }
 
 export interface BarbershopMember {

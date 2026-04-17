@@ -204,6 +204,7 @@ export type Database = {
           accent_color: string
           active: boolean
           address: string
+          cancellation_policy: Json | null
           city: string
           cover_image: string | null
           created_at: string
@@ -227,6 +228,7 @@ export type Database = {
           accent_color?: string
           active?: boolean
           address?: string
+          cancellation_policy?: Json | null
           city?: string
           cover_image?: string | null
           created_at?: string
@@ -250,6 +252,7 @@ export type Database = {
           accent_color?: string
           active?: boolean
           address?: string
+          cancellation_policy?: Json | null
           city?: string
           cover_image?: string | null
           created_at?: string

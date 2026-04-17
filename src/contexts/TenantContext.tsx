@@ -71,6 +71,7 @@ function mapBarbershop(row: BarbershopRow): Barbershop {
     siteType: row.site_type as Barbershop['siteType'],
     customDomain: row.custom_domain ?? '',
     embedKey: row.embed_key,
+    cancellationPolicy: row.cancellation_policy as Barbershop['cancellationPolicy'] ?? undefined,
   }
 }
 
@@ -243,6 +244,9 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       cover_image: updates.coverImage,
       site_type: updates.siteType,
       custom_domain: updates.customDomain,
+      ...(updates.cancellationPolicy !== undefined && {
+        cancellation_policy: updates.cancellationPolicy,
+      }),
     })
     setBarbershop(mapBarbershop(row))
   }, [barbershop])
