@@ -29,24 +29,26 @@ Deno.serve(async (req) => {
   if (authErr || !user) return err('Unauthorized', 401)
 
   // ── Body ──────────────────────────────────────────────────────────────────
-  const ALLOWED_RETURN_ORIGINS = ['https://barberos.io', 'http://localhost:5173', 'http://localhost:4173']
-  const DEFAULT_RETURN_URL = 'https://barberos.io/dashboard/assinatura'
+  const APP_URL = Deno.env.get('APP_URL') ?? 'https://barberos.io'
+  const DEFAULT_RETURN_URL = `${APP_URL}/dashboard/assinatura`
+
+  const isAllowedOrigin = (url: string) => {
+    try {
+      const origin = new URL(url).origin
+      return (
+        origin === 'https://barberos.io' ||
+        origin.endsWith('.vercel.app') ||
+        origin === 'http://localhost:5173' ||
+        origin === 'http://localhost:4173'
+      )
+    } catch { return false }
+  }
 
   let returnUrl: string
   try {
     const body = await req.json() as { returnUrl?: string }
     const candidate = body.returnUrl ?? ''
-    if (candidate) {
-      try {
-        const parsed = new URL(candidate)
-        const origin = parsed.origin
-        returnUrl = ALLOWED_RETURN_ORIGINS.includes(origin) ? candidate : DEFAULT_RETURN_URL
-      } catch {
-        returnUrl = DEFAULT_RETURN_URL
-      }
-    } else {
-      returnUrl = DEFAULT_RETURN_URL
-    }
+    returnUrl = (candidate && isAllowedOrigin(candidate)) ? candidate : DEFAULT_RETURN_URL
   } catch {
     returnUrl = DEFAULT_RETURN_URL
   }
