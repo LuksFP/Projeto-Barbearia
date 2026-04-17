@@ -1,10 +1,11 @@
-// Página de aceitação de convite de barbeiro
+// PÃ¡gina de aceitaÃ§Ã£o de convite de barbeiro
 // Acessada via link no email: /aceitar-convite?token=xxx&email=yyy&name=zzz&barbershop=www
 
 import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Scissors, Eye, EyeOff, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { getAuthErrorMessage } from '@/lib/authErrors'
 import { motion } from 'framer-motion'
 
 type Step = 'form' | 'loading' | 'success' | 'error'
@@ -15,10 +16,10 @@ const AceitarConvite = () => {
   const [params] = useSearchParams()
   const navigate = useNavigate()
 
-  const token       = params.get('token') ?? ''
-  const emailParam  = params.get('email') ?? ''
-  const nameParam   = params.get('name') ?? ''
-  const barbershop  = params.get('barbershop') ?? 'sua barbearia'
+  const token = params.get('token') ?? ''
+  const emailParam = params.get('email') ?? ''
+  const nameParam = params.get('name') ?? ''
+  const barbershop = params.get('barbershop') ?? 'sua barbearia'
 
   const [step, setStep] = useState<Step>('form')
   const [password, setPassword] = useState('')
@@ -50,19 +51,15 @@ const AceitarConvite = () => {
     setError('')
 
     try {
-      // 1. Cria a conta no Supabase Auth
-      const { data: authData, error: signUpErr } = await supabase.auth.signUp({
+      const { data: authData } = await supabase.auth.signUp({
         email: emailParam,
         password,
       })
 
-      if (signUpErr) throw new Error(signUpErr.message)
       if (!authData.session) {
-        // Email confirmation required — edge case, mas tratamos
         throw new Error('Confirme seu email antes de continuar.')
       }
 
-      // 2. Chama accept-invite com o JWT do usuário recém-criado
       const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/accept-invite`
       const res = await fetch(fnUrl, {
         method: 'POST',
@@ -80,7 +77,7 @@ const AceitarConvite = () => {
 
       setStep('success')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro inesperado. Tente novamente.')
+      setError(getAuthErrorMessage(err))
       setStep('form')
     }
   }
@@ -119,7 +116,6 @@ const AceitarConvite = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm"
       >
-        {/* Logo */}
         <div className="flex items-center gap-2 mb-8">
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
             <Scissors className="w-4 h-4 text-amber-400" />

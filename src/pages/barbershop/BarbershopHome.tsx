@@ -5,7 +5,6 @@ import { useOutletContext } from 'react-router-dom'
 import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, Check, ChevronLeft, Loader2, CheckCircle2, User, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
-import { supabasePublic } from '@/lib/supabase-public'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 
 const fadeUp = {
@@ -75,46 +74,38 @@ const BookingSection = ({
 
     const barberObj = selectedBarber === 'any' ? null : selectedBarber
     try {
-      const { error } = await supabasePublic.from('appointments').insert({
-        barbershop_id: barbershop.id,
-        service_id: selectedService.id,
-        service_name: selectedService.name,
-        service_category: selectedService.category,
-        price: Number(selectedService.price),
-        barber_id: barberObj?.id ?? null,
-        barber_name: barberObj?.name ?? 'A definir',
-        date: selectedDate,
-        time: selectedTime,
-        client_name: clientName,
-        client_phone: clientPhone,
-        client_email: clientEmail || null,
-        status: 'scheduled',
+      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-create-checkout`
+      const successUrl = `${window.location.origin}/consulta-agendamento?payment=success&phone=${encodeURIComponent(clientPhone)}${clientEmail ? `&email=${encodeURIComponent(clientEmail)}` : ''}`
+      const cancelUrl = `${window.location.origin}/b/${barbershop.slug}?payment=cancelled#agendar`
+
+      const res = await fetch(fnUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          barbershopSlug: barbershop.slug,
+          serviceId: selectedService.id,
+          barberId: barberObj?.id ?? null,
+          date: selectedDate,
+          time: selectedTime,
+          clientName,
+          clientPhone,
+          clientEmail: clientEmail || null,
+          successUrl,
+          cancelUrl,
+        }),
       })
 
-      if (error) throw error
-      setStep('done')
-
-      // Envia email de confirmação ao cliente se ele forneceu email (fire-and-forget)
-      if (clientEmail) {
-        const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`
-        fetch(fnUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'booking_confirmation',
-            to: clientEmail,
-            clientName,
-            barbershopName: barbershop.name,
-            serviceName: selectedService.name,
-            barberName: barberObj?.name ?? 'A definir',
-            date: selectedDate,
-            time: selectedTime,
-            barbershopSlug: barbershop.slug,
-          }),
-        }).catch(() => {/* email é best-effort */})
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({} as { error?: string }))
+        throw new Error(body.error ?? 'Não foi possível iniciar o pagamento.')
       }
+
+      const data = await res.json() as { url?: string }
+      if (!data.url) throw new Error('Checkout sem URL retornada.')
+
+      window.location.href = data.url
     } catch {
-      setBookError('Não foi possível confirmar o agendamento. Tente novamente.')
+      setBookError('Não foi possível iniciar o pagamento. Tente novamente.')
     } finally {
       setSubmitting(false)
     }
@@ -434,9 +425,9 @@ const BookingSection = ({
               style={{ backgroundColor: primary, color: '#0a0a0a' }}
             >
               {submitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Confirmando…</>
+                <><Loader2 className="w-4 h-4 animate-spin" />Processando…</>
               ) : (
-                <>Confirmar Agendamento <ChevronRight className="w-4 h-4" /></>
+                <>Agendar e pagar <ChevronRight className="w-4 h-4" /></>
               )}
             </button>
           </div>

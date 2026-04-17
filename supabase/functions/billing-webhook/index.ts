@@ -54,46 +54,100 @@ Deno.serve(async (req) => {
     // Pagamento concluído → ativa o plano
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
-      if (session.mode !== 'subscription') break
+      if (session.mode === 'subscription') {
+        const accountId = session.client_reference_id
+        const plan      = session.metadata?.plan
+        const subId     = session.subscription as string
 
-      const accountId = session.client_reference_id
-      const plan      = session.metadata?.plan
-      const subId     = session.subscription as string
+        if (!accountId || !plan) {
+          console.error('Missing client_reference_id or plan metadata')
+          break
+        }
 
-      if (!accountId || !plan) {
-        console.error('Missing client_reference_id or plan metadata')
+        const { error } = await supabase
+          .from('saas_accounts')
+          .update({
+            plan,
+            plan_status: 'active',
+            plan_started_at: new Date().toISOString(),
+            stripe_subscription_id: subId,
+          })
+          .eq('id', accountId)
+
+        if (error) {
+          console.error('activate plan error:', error)
+          break
+        }
+        console.log(`Plan ${plan} activated for account ${accountId}`)
+
+        // Email de boas-vindas
+        const { data: acc } = await supabase
+          .from('saas_accounts')
+          .select('owner_name')
+          .eq('id', accountId)
+          .maybeSingle()
+
+        const emailTo = (session.customer_details?.email) as string | undefined
+        if (emailTo && acc?.owner_name) {
+          await supabase.functions.invoke('send-email', {
+            body: { type: 'welcome', to: emailTo, ownerName: acc.owner_name, plan },
+          }).catch(e => console.error('welcome email failed:', e))
+        }
         break
       }
 
-      const { error } = await supabase
-        .from('saas_accounts')
-        .update({
-          plan,
-          plan_status: 'active',
-          plan_started_at: new Date().toISOString(),
-          stripe_subscription_id: subId,
-        })
-        .eq('id', accountId)
+      if (session.mode === 'payment') {
+        const appointmentId = session.metadata?.appointment_id
+        if (!appointmentId) {
+          console.error('Missing appointment_id metadata')
+          break
+        }
 
-      if (error) {
-        console.error('activate plan error:', error)
+        if (session.payment_status !== 'paid') {
+          console.log(`Skipping booking confirmation for unpaid session ${session.id}`)
+          break
+        }
+
+        const paymentIntentId = typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : null
+
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({
+            status: 'confirmed',
+            payment_status: 'paid',
+            payment_method: 'stripe',
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: paymentIntentId,
+            paid_at: new Date().toISOString(),
+          })
+          .eq('id', appointmentId)
+
+        if (updateError) {
+          console.error('booking payment update error:', updateError)
+          break
+        }
+
+        const clientEmail = session.metadata?.client_email || session.customer_details?.email
+        if (clientEmail) {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'booking_confirmation',
+              to: clientEmail,
+              clientName: session.metadata?.client_name ?? '',
+              barbershopName: session.metadata?.barbershop_name ?? 'BarberOS',
+              serviceName: session.metadata?.service_name ?? '',
+              barberName: session.metadata?.barber_name ?? 'A definir',
+              date: session.metadata?.date ?? '',
+              time: session.metadata?.time ?? '',
+              barbershopSlug: session.metadata?.barbershop_slug ?? '',
+            },
+          }).catch(e => console.error('booking confirmation email failed:', e))
+        }
         break
       }
-      console.log(`Plan ${plan} activated for account ${accountId}`)
 
-      // Email de boas-vindas
-      const { data: acc } = await supabase
-        .from('saas_accounts')
-        .select('owner_name')
-        .eq('id', accountId)
-        .maybeSingle()
-
-      const emailTo = (session.customer_details?.email) as string | undefined
-      if (emailTo && acc?.owner_name) {
-        await supabase.functions.invoke('send-email', {
-          body: { type: 'welcome', to: emailTo, ownerName: acc.owner_name, plan },
-        }).catch(e => console.error('welcome email failed:', e))
-      }
       break
     }
 
@@ -173,6 +227,25 @@ Deno.serve(async (req) => {
           body: { type: 'cancellation', to: emailTo, ownerName: account.owner_name },
         }).catch(e => console.error('cancellation email error:', e))
       }
+      break
+    }
+
+    case 'checkout.session.expired': {
+      const session = event.data.object as Stripe.Checkout.Session
+      if (session.mode !== 'payment') break
+
+      const appointmentId = session.metadata?.appointment_id
+      if (!appointmentId) break
+
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          status: 'cancelled',
+          payment_status: 'cancelled',
+        })
+        .eq('id', appointmentId)
+
+      if (error) console.error('booking expired update error:', error)
       break
     }
 

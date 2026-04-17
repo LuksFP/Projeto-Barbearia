@@ -11,7 +11,7 @@ interface SaasAccountContextType {
   hasActivePlan: boolean
   isLoading: boolean
   signup: (data: SaasSignupInput) => Promise<void>
-  login: (email: string, password: string) => Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] }>
+  login: (email: string, password: string) => Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] } | { status: 'error'; message: string }>
   logout: () => Promise<void>
   refreshAccount: () => Promise<void>
 }
@@ -79,7 +79,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(session.accessToken)
   }
 
-  const login = async (email: string, password: string): Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] }> => {
+  const login = async (email: string, password: string): Promise<boolean | 'blocked' | { status: 'payment_required'; plan: SaasAccount['plan'] } | { status: 'error'; message: string }> => {
     // Intercepta credenciais demo antes de chamar o Supabase
     const demoPlan = matchDemoCredentials(email, password)
     if (demoPlan) {
@@ -97,7 +97,10 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       return true
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes('Muitas tentativas')) return 'blocked'
-      return false
+      return {
+        status: 'error',
+        message: err instanceof Error ? err.message : 'Erro inesperado. Tente novamente.',
+      }
     }
   }
 
