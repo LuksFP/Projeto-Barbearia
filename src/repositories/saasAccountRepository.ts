@@ -28,10 +28,12 @@ export const saasAccountRepository = {
   async signup(input: SaasSignupInput): Promise<SaasSession> {
     let authData: { user?: { id: string } | null; session: { access_token: string } | null } | null = null
     try {
-      ({ data: authData } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email: input.email,
         password: input.password,
-      }))
+      })
+      if (authError) throw authError
+      authData = data
     } catch (error) {
       throw new Error(getAuthErrorMessage(error))
     }
