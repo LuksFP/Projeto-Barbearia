@@ -15,6 +15,7 @@ interface EmailPayload {
 }
 
 const FROM = Deno.env.get('EMAIL_FROM') ?? 'BarberOS <noreply@barberos.io>'
+const APP_URL = (Deno.env.get('APP_URL') ?? 'https://barberos-pied.vercel.app').replace(/\/$/, '')
 
 async function sendEmail(payload: EmailPayload): Promise<void> {
   const res = await fetch('https://api.resend.com/emails', {
@@ -49,7 +50,7 @@ function templateWelcome(ownerName: string, plan: string): string {
         Seu plano <strong style="color:#f59e0b">${planLabel[plan] ?? plan}</strong> está ativo.
         Acesse o painel para configurar sua barbearia.
       </p>
-      <a href="https://barberos.io/dashboard"
+      <a href="${APP_URL}/dashboard"
          style="display:inline-block;margin-top:24px;padding:12px 24px;background:#f59e0b;color:#0a0a0a;border-radius:8px;font-weight:600;text-decoration:none">
         Acessar o painel →
       </a>
@@ -69,7 +70,7 @@ function templatePaymentFailed(ownerName: string): string {
         Olá ${ownerName}, não conseguimos processar o pagamento da sua assinatura.
         Por favor, atualize seu método de pagamento para continuar usando o BarberOS.
       </p>
-      <a href="https://barberos.io/dashboard/configuracoes"
+      <a href="${APP_URL}/dashboard/configuracoes"
          style="display:inline-block;margin-top:24px;padding:12px 24px;background:#f87171;color:#fff;border-radius:8px;font-weight:600;text-decoration:none">
         Atualizar pagamento →
       </a>
@@ -86,7 +87,7 @@ function templateCancellation(ownerName: string): string {
         Olá ${ownerName}, sua assinatura foi cancelada. Você pode reativar a qualquer momento.
         Seus dados ficam guardados por 30 dias.
       </p>
-      <a href="https://barberos.io/planos"
+      <a href="${APP_URL}/planos"
          style="display:inline-block;margin-top:24px;padding:12px 24px;background:#f59e0b;color:#0a0a0a;border-radius:8px;font-weight:600;text-decoration:none">
         Reativar assinatura →
       </a>

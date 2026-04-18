@@ -157,7 +157,7 @@ export const useTenant = () => {
 }
 
 export const TenantProvider = ({ children }: { children: ReactNode }) => {
-  const { account } = useSaasAccount()
+  const { account, accessToken } = useSaasAccount()
 
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null)
   const [services, setServices] = useState<BarbershopService[]>([])
@@ -185,7 +185,18 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
     const slug = account?.barbershopSlug
     if (!slug) {
+      setBarbershop(null)
+      setServices([])
+      setBarbers([])
+      setMemberships([])
+      setAppointments([])
+      setClients([])
       setIsLoading(false)
+      return
+    }
+
+    if (!accessToken) {
+      setIsLoading(true)
       return
     }
 
@@ -217,7 +228,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         setUserRole(memberRow ? (memberRow.role as BarbershopRole) : 'owner')
       }).finally(() => setIsLoading(false))
     })
-  }, [account?.barbershopSlug])
+  }, [account?.barbershopSlug, accessToken])
 
   // Injeta o plan real da conta SaaS no objeto barbershop (não é coluna do barbershops table)
   useEffect(() => {

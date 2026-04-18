@@ -1,4 +1,4 @@
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +27,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
     return this.props.children
   }
 }
+
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -37,56 +38,60 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { SaasAccountProvider } from "@/contexts/SaasAccountContext";
 import SaasGuard from "@/guards/SaasGuard";
 
-// ── Fluxo de assinatura SaaS ──────────────────────────────────────────────
-import Planos from "./pages/saas/Planos";
-import Registrar from "./pages/saas/Registrar";
-import Pagamento from "./pages/saas/Pagamento";
-import BemVindo from "./pages/saas/BemVindo";
-import EntrarSaas from "./pages/saas/EntrarSaas";
-import EsqueciSenha from "./pages/saas/EsqueciSenha";
-import NovaSenha from "./pages/saas/NovaSenha";
-import AuthCallback from "./pages/saas/AuthCallback";
-import CompletarRegistro from "./pages/saas/CompletarRegistro";
-
-// Layouts — 3 áreas distintas do produto
+// Layouts — carregados imediatamente (pequenos, usados em toda navegação)
 import LandingLayout from "@/layouts/LandingLayout";
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
-// ── Landing do SaaS (existente — não mexer) ───────────────────────────────
-import Index from "./pages/Index";
-import Sobre from "./pages/Sobre";
-import Cortes from "./pages/Cortes";
-import TiposCabelo from "./pages/TiposCabelo";
-import CabeloLiso from "./pages/CabeloLiso";
-import CabeloOndulado from "./pages/CabeloOndulado";
-import CabeloCrespo from "./pages/CabeloCrespo";
-import Profile from "./pages/Profile";
-import Admin from "./pages/Admin";
-import Agendamento from "./pages/Agendamento";
-import AgendamentoVisitante from "./pages/AgendamentoVisitante";
-import ConsultaAgendamento from "./pages/ConsultaAgendamento";
-import Depoimentos from "./pages/Depoimentos";
-import Fidelidade from "./pages/Fidelidade";
-import Assinatura from "./pages/Assinatura";
-import NotFound from "./pages/NotFound";
+// ── Eager: fluxo SaaS crítico (carregado imediatamente) ───────────────────────
+import Planos          from "./pages/saas/Planos";
+import Registrar       from "./pages/saas/Registrar";
+import Pagamento       from "./pages/saas/Pagamento";
+import EntrarSaas      from "./pages/saas/EntrarSaas";
+import EsqueciSenha    from "./pages/saas/EsqueciSenha";
+import NovaSenha       from "./pages/saas/NovaSenha";
+import AuthCallback    from "./pages/saas/AuthCallback";
+import BemVindo        from "./pages/saas/BemVindo";
+import CompletarRegistro from "./pages/saas/CompletarRegistro";
+import NotFound        from "./pages/NotFound";
+import AceitarConvite  from "./pages/AceitarConvite";
 
-// ── Site público da barbearia (/b/:slug) ──────────────────────────────────
-import BarbershopHome from "./pages/barbershop/BarbershopHome";
-import Demo from "./pages/Demo";
+// ── Lazy: dashboard (grande, só acessa quem tem plano ativo) ──────────────────
+const DashboardOverview      = lazy(() => import("./pages/dashboard/DashboardOverview"));
+const DashboardAgenda        = lazy(() => import("./pages/dashboard/DashboardAgenda"));
+const DashboardEquipe        = lazy(() => import("./pages/dashboard/DashboardEquipe"));
+const DashboardClientes      = lazy(() => import("./pages/dashboard/DashboardClientes"));
+const DashboardServicos      = lazy(() => import("./pages/dashboard/DashboardServicos"));
+const DashboardClube         = lazy(() => import("./pages/dashboard/DashboardClube"));
+const DashboardConfiguracoes = lazy(() => import("./pages/dashboard/DashboardConfiguracoes"));
+const DashboardAssinatura    = lazy(() => import("./pages/dashboard/DashboardAssinatura"));
+const DashboardFinanceiro    = lazy(() => import("./pages/dashboard/DashboardFinanceiro"));
+const DashboardPersonalizar  = lazy(() => import("./pages/dashboard/DashboardPersonalizar"));
 
-// ── Dashboard da barbearia (/dashboard/*) ─────────────────────────────────
-import DashboardOverview from "./pages/dashboard/DashboardOverview";
-import DashboardAgenda from "./pages/dashboard/DashboardAgenda";
-import DashboardEquipe from "./pages/dashboard/DashboardEquipe";
-import DashboardClientes from "./pages/dashboard/DashboardClientes";
-import DashboardServicos from "./pages/dashboard/DashboardServicos";
-import DashboardClube from "./pages/dashboard/DashboardClube";
-import DashboardConfiguracoes from "./pages/dashboard/DashboardConfiguracoes";
-import DashboardAssinatura from "./pages/dashboard/DashboardAssinatura";
-import DashboardFinanceiro from "./pages/dashboard/DashboardFinanceiro";
-import AceitarConvite from "./pages/AceitarConvite";
-import DashboardPersonalizar from "./pages/dashboard/DashboardPersonalizar";
+// ── Lazy: landing e site público (raro acessar) ───────────────────────────────
+const Index               = lazy(() => import("./pages/Index"));
+const Sobre               = lazy(() => import("./pages/Sobre"));
+const Cortes              = lazy(() => import("./pages/Cortes"));
+const TiposCabelo         = lazy(() => import("./pages/TiposCabelo"));
+const CabeloLiso          = lazy(() => import("./pages/CabeloLiso"));
+const CabeloOndulado      = lazy(() => import("./pages/CabeloOndulado"));
+const CabeloCrespo        = lazy(() => import("./pages/CabeloCrespo"));
+const Profile             = lazy(() => import("./pages/Profile"));
+const Admin               = lazy(() => import("./pages/Admin"));
+const Agendamento         = lazy(() => import("./pages/Agendamento"));
+const AgendamentoVisitante = lazy(() => import("./pages/AgendamentoVisitante"));
+const ConsultaAgendamento = lazy(() => import("./pages/ConsultaAgendamento"));
+const Depoimentos         = lazy(() => import("./pages/Depoimentos"));
+const Fidelidade          = lazy(() => import("./pages/Fidelidade"));
+const Assinatura          = lazy(() => import("./pages/Assinatura"));
+const Demo                = lazy(() => import("./pages/Demo"));
+const BarbershopHome      = lazy(() => import("./pages/barbershop/BarbershopHome"));
+
+const PageLoader = () => (
+  <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-amber-500/30 border-t-amber-500 animate-spin" />
+  </div>
+)
 
 const queryClient = new QueryClient();
 
@@ -105,8 +110,9 @@ const App = () => (
                 <LoyaltyProvider>
                   <CartProvider>
                     <TenantProvider>
+                      <Suspense fallback={<PageLoader />}>
                       <Routes>
-                        {/* ── Landing do SaaS ── Header + Footer do projeto */}
+                        {/* ── Landing do SaaS ── */}
                         <Route element={<LandingLayout />}>
                           <Route path="/" element={<Index />} />
                           <Route path="/sobre" element={<Sobre />} />
@@ -130,7 +136,7 @@ const App = () => (
                           <Route path="/assinatura" element={<Assinatura />} />
                         </Route>
 
-                        {/* ── Fluxo de assinatura SaaS ── sem Header/Footer da landing */}
+                        {/* ── Fluxo SaaS ── */}
                         <Route path="/planos" element={<Planos />} />
                         <Route path="/registrar" element={<Registrar />} />
                         <Route path="/pagamento" element={<Pagamento />} />
@@ -143,12 +149,12 @@ const App = () => (
                         <Route path="/demo/:plan" element={<Demo />} />
                         <Route path="/aceitar-convite" element={<AceitarConvite />} />
 
-                        {/* ── Site público da barbearia ── branding da casa */}
+                        {/* ── Site público da barbearia ── */}
                         <Route path="/b/:slug" element={<PublicSiteLayout />}>
                           <Route index element={<BarbershopHome />} />
                         </Route>
 
-                        {/* ── Dashboard da barbearia ── protegido pelo SaasGuard */}
+                        {/* ── Dashboard ── protegido */}
                         <Route path="/dashboard" element={
                           <SaasGuard><DashboardLayout /></SaasGuard>
                         }>
@@ -166,6 +172,7 @@ const App = () => (
 
                         <Route path="*" element={<NotFound />} />
                       </Routes>
+                      </Suspense>
                     </TenantProvider>
                   </CartProvider>
                 </LoyaltyProvider>

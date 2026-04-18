@@ -6,14 +6,20 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Lock, ExternalLink } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
+import { supabase } from '@/lib/supabase'
 import { SAAS_PLANS } from '@/types/saas'
 import type { SaasPlan } from '@/types/saas'
 import { motion } from 'framer-motion'
 
+async function getFreshToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? null
+}
+
 const Pagamento = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { account, accessToken } = useSaasAccount()
+  const { account } = useSaasAccount()
   const plano = (searchParams.get('plano') ?? account?.plan ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
   const [error, setError] = useState('')
@@ -26,21 +32,24 @@ const Pagamento = () => {
 
   // Prefetch checkout URL no mount para que o redirect seja imediato ao clicar
   useEffect(() => {
-    if (!account || !accessToken) return
+    if (!account) return
     const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
-    fetch(fnUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify({
-        plan: plano,
-        successUrl: `${window.location.origin}/dashboard?checkout=success`,
-        cancelUrl: `${window.location.origin}/pagamento?plano=${plano}`,
-      }),
+    getFreshToken().then(token => {
+      if (!token) return
+      fetch(fnUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          plan: plano,
+          successUrl: `${window.location.origin}/dashboard?checkout=success`,
+          cancelUrl: `${window.location.origin}/pagamento?plano=${plano}`,
+        }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then((data: { url: string } | null) => { if (data?.url) prefetchedUrl.current = data.url })
+        .catch(() => {})
     })
-      .then(r => r.ok ? r.json() : null)
-      .then((data: { url: string } | null) => { if (data?.url) prefetchedUrl.current = data.url })
-      .catch(() => {})
-  }, [account, accessToken, plano])
+  }, [account, plano])
 
   if (!account) return null
 
@@ -53,14 +62,15 @@ const Pagamento = () => {
         return
       }
 
-      if (!accessToken) throw new Error('Sessão expirada. Faça login novamente.')
+      const token = await getFreshToken()
+      if (!token) throw new Error('Sessão expirada. Faça login novamente.')
 
       const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
       const res = await fetch(fnUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           plan: plano,

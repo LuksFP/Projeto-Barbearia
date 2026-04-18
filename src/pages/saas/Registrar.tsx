@@ -35,7 +35,7 @@ const Registrar = () => {
 
   const isPasswordStrong = passwordRules.every(r => r.ok)
 
-  if (isLoggedIn && hasActivePlan && account?.plan) {
+  if (isLoggedIn && hasActivePlan) {
     navigate('/dashboard', { replace: true })
     return null
   }
