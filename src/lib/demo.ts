@@ -56,6 +56,7 @@ const DEMO_ACCOUNTS: Record<DemoPlan, SaasAccount> = {
     planStatus: 'active',
     planStartedAt: '2026-01-01T00:00:00Z',
     trialEndsAt: null,
+    cancelAt: null,
     createdAt: '2026-01-01T00:00:00Z',
   },
   pro: {
@@ -70,6 +71,7 @@ const DEMO_ACCOUNTS: Record<DemoPlan, SaasAccount> = {
     planStatus: 'active',
     planStartedAt: '2026-01-01T00:00:00Z',
     trialEndsAt: null,
+    cancelAt: null,
     createdAt: '2026-01-01T00:00:00Z',
   },
   premium: {
@@ -84,6 +86,7 @@ const DEMO_ACCOUNTS: Record<DemoPlan, SaasAccount> = {
     planStatus: 'active',
     planStartedAt: '2026-01-01T00:00:00Z',
     trialEndsAt: null,
+    cancelAt: null,
     createdAt: '2026-01-01T00:00:00Z',
   },
 }

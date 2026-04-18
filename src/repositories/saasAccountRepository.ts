@@ -129,6 +129,7 @@ function mapAccount(row: SaasAccountRow, email: string): SaasAccount {
     planStatus: row.plan_status as SaasAccount['planStatus'],
     planStartedAt: row.plan_started_at,
     trialEndsAt: row.trial_ends_at ?? null,
+    cancelAt: row.cancel_at ?? null,
     createdAt: row.created_at,
   }
 }

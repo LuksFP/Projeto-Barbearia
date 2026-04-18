@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
             unit_amount: amount,
             product_data: {
               name: `${service.name} - ${barbershop.name}`,
-              description: service.description ?? undefined,
+              description: service.description || undefined,
             },
           },
         },
@@ -205,7 +205,7 @@ Deno.serve(async (req) => {
       appointmentId: appointment.id,
     })
   } catch (error) {
-    console.error('booking checkout error:', error)
+    console.error('booking checkout error:', JSON.stringify(error), error instanceof Error ? error.message : error)
     await supabase
       .from('appointments')
       .update({

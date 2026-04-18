@@ -37,6 +37,7 @@ function mapRowToAccount(row: NonNullable<Awaited<ReturnType<typeof saasAccountR
     planStatus: row.plan_status as SaasAccount['planStatus'],
     planStartedAt: row.plan_started_at,
     trialEndsAt: row.trial_ends_at ?? null,
+    cancelAt: row.cancel_at ?? null,
     createdAt: row.created_at,
   }
 }
@@ -127,7 +128,12 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  // 'cancelling' = cancelamento agendado mas ainda com acesso até cancel_at
   const hasActivePlan = account?.planStatus === 'active'
+    || account?.planStatus === 'trial'
+    || (account?.planStatus === 'cancelling'
+        && !!account?.cancelAt
+        && new Date(account.cancelAt) > new Date())
 
   return (
     <SaasAccountContext.Provider value={{

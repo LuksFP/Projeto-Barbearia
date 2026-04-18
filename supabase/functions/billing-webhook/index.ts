@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       break
     }
 
-    // Assinatura atualizada (upgrade, downgrade, renew, past_due…)
+    // Assinatura atualizada (upgrade, downgrade, renew, past_due, cancelamento agendado…)
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription
       const accountId = sub.metadata?.saas_account_id
@@ -159,10 +159,22 @@ Deno.serve(async (req) => {
 
       if (!accountId) break
 
-      const update: Record<string, string | null> = {
-        plan_status: toPlanStatus(sub.status),
+      const update: Record<string, string | null> = {}
+
+      if (sub.cancel_at_period_end) {
+        // Cancelamento agendado — mantém acesso até o fim do período
+        update.plan_status = 'cancelling'
+        update.cancel_at   = sub.cancel_at
+          ? new Date(sub.cancel_at * 1000).toISOString()
+          : sub.current_period_end
+            ? new Date(sub.current_period_end * 1000).toISOString()
+            : null
+      } else {
+        // Cancelamento revertido ou status normal
+        update.plan_status = toPlanStatus(sub.status)
+        update.cancel_at   = null
       }
-      // Se o plano mudou via upgrade/downgrade, atualiza
+
       if (plan) update.plan = plan
 
       const { error } = await supabase

@@ -451,6 +451,7 @@ export type Database = {
           barbershop_id: string | null
           barbershop_name: string
           barbershop_slug: string
+          cancel_at: string | null
           created_at: string
           id: string
           owner_name: string
@@ -466,6 +467,7 @@ export type Database = {
           barbershop_id?: string | null
           barbershop_name: string
           barbershop_slug: string
+          cancel_at?: string | null
           created_at?: string
           id?: string
           owner_name: string
@@ -481,6 +483,7 @@ export type Database = {
           barbershop_id?: string | null
           barbershop_name?: string
           barbershop_slug?: string
+          cancel_at?: string | null
           created_at?: string
           id?: string
           owner_name?: string

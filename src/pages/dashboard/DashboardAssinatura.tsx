@@ -11,11 +11,12 @@ import { motion } from 'framer-motion'
 import { isDemoMode } from '@/lib/demo'
 
 const STATUS_CONFIG = {
-  pending:  { label: 'Aguardando pagamento', color: 'text-amber-300', bg: 'bg-amber-500/10 border-amber-500/20', icon: Clock },
-  active:   { label: 'Ativo',        color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
-  trial:    { label: 'Trial',         color: 'text-amber-400',  bg: 'bg-amber-400/10 border-amber-400/20',  icon: Clock },
-  past_due: { label: 'Pagamento pendente', color: 'text-red-400', bg: 'bg-red-400/10 border-red-400/20', icon: AlertTriangle },
-  cancelled:{ label: 'Cancelado',     color: 'text-white/40',   bg: 'bg-white/5 border-white/10',        icon: XCircle },
+  pending:    { label: 'Aguardando pagamento',  color: 'text-amber-300',   bg: 'bg-amber-500/10 border-amber-500/20',   icon: Clock },
+  active:     { label: 'Ativo',                 color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
+  trial:      { label: 'Trial',                 color: 'text-amber-400',   bg: 'bg-amber-400/10 border-amber-400/20',   icon: Clock },
+  past_due:   { label: 'Pagamento pendente',    color: 'text-red-400',     bg: 'bg-red-400/10 border-red-400/20',       icon: AlertTriangle },
+  cancelling: { label: 'Cancelamento agendado', color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/20', icon: AlertTriangle },
+  cancelled:  { label: 'Cancelado',             color: 'text-white/40',    bg: 'bg-white/5 border-white/10',            icon: XCircle },
 }
 
 function formatDate(iso: string | null): string {
@@ -131,6 +132,16 @@ const DashboardAssinatura = () => {
           </div>
         )}
 
+        {/* Cancelling warning */}
+        {account.planStatus === 'cancelling' && account.cancelAt && (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-500/[0.06] border border-orange-500/20">
+            <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+            <p className="text-orange-300/90 text-sm font-body">
+              Seu plano foi cancelado mas permanece ativo até <strong>{formatDate(account.cancelAt)}</strong>. Após essa data o acesso será bloqueado.
+            </p>
+          </div>
+        )}
+
         {/* Past due warning */}
         {account.planStatus === 'past_due' && (
           <div className="flex items-center gap-3 p-3 rounded-xl bg-red-500/[0.06] border border-red-500/20">
@@ -149,6 +160,15 @@ const DashboardAssinatura = () => {
             </p>
             <p className="text-white text-sm font-body">{formatDate(account.planStartedAt)}</p>
           </div>
+          {account.planStatus === 'cancelling' && account.cancelAt && (
+            <div className="p-4 rounded-xl bg-[#0f0f0f] border border-orange-500/20">
+              <p className="text-white/30 text-xs font-body mb-1 flex items-center gap-1.5">
+                <XCircle className="w-3 h-3 text-orange-400" />
+                Acesso até
+              </p>
+              <p className="text-orange-300 text-sm font-body">{formatDate(account.cancelAt)}</p>
+            </div>
+          )}
           {account.planStatus === 'trial' && account.trialEndsAt && (
             <div className="p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
               <p className="text-white/30 text-xs font-body mb-1 flex items-center gap-1.5">
