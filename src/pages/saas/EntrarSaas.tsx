@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 
 const EntrarSaas = () => {
   const navigate = useNavigate()
-  const { login, isLoggedIn, hasActivePlan, account } = useSaasAccount()
+  const { login } = useSaasAccount()
   const [searchParams] = useSearchParams()
   const senhaAlterada = searchParams.get('senha') === 'alterada'
 
@@ -17,16 +17,6 @@ const EntrarSaas = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  if (isLoggedIn && hasActivePlan) {
-    navigate('/dashboard', { replace: true })
-    return null
-  }
-
-  if (isLoggedIn && !hasActivePlan) {
-    navigate(`/pagamento?plano=${account?.plan ?? 'pro'}`, { replace: true })
-    return null
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
