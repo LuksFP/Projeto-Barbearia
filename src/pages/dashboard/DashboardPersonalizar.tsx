@@ -176,7 +176,7 @@ const services = await BarberOS.getServices()
 const team = await BarberOS.getTeam()`
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-5xl">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -244,180 +244,174 @@ const team = await BarberOS.getTeam()`
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
-            className="space-y-6"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
           >
-            {/* Cores */}
-            <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-5">
-              <h2 className="text-white font-semibold font-body flex items-center gap-2">
-                <Palette className="w-4 h-4 text-amber-400" />
-                Cores
-              </h2>
+            {/* Coluna esquerda */}
+            <div className="space-y-6">
+              {/* Cores */}
+              <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-5">
+                <h2 className="text-white font-semibold font-body flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-amber-400" />
+                  Cores
+                </h2>
 
-              <div>
-                <p className="text-white/30 text-xs font-body mb-3">Paletas prontas</p>
-                <div className="flex gap-2 flex-wrap">
-                  {COLOR_PRESETS.map(preset => (
-                    <button
-                      key={preset.label}
-                      onClick={() => setDraft(p => ({ ...p, primaryColor: preset.primary, accentColor: preset.accent }))}
-                      title={preset.label}
-                      className="group relative flex flex-col items-center gap-1.5"
-                    >
-                      <div
-                        className="w-10 h-10 rounded-xl border-2 transition-all"
-                        style={{
-                          background: `linear-gradient(135deg, ${preset.primary}, ${preset.accent})`,
-                          borderColor:
-                            draft.primaryColor === preset.primary
-                              ? preset.primary
-                              : 'transparent',
-                        }}
+                <div>
+                  <p className="text-white/30 text-xs font-body mb-3">Paletas prontas</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {COLOR_PRESETS.map(preset => (
+                      <button
+                        key={preset.label}
+                        onClick={() => setDraft(p => ({ ...p!, primaryColor: preset.primary, accentColor: preset.accent }))}
+                        title={preset.label}
+                        className="group relative flex flex-col items-center gap-1.5"
                       >
-                        {draft.primaryColor === preset.primary && (
-                          <Check className="w-3.5 h-3.5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                        )}
-                      </div>
-                      <span className="text-white/30 text-xs font-body group-hover:text-white/60 transition-colors">
-                        {preset.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
-                    Cor principal
-                  </label>
-                  <button
-                    onClick={() => primaryRef.current?.click()}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#333] transition-colors"
-                  >
-                    <div
-                      className="w-6 h-6 rounded-lg shrink-0"
-                      style={{ backgroundColor: draft.primaryColor }}
-                    />
-                    <span className="text-white/60 text-sm font-mono font-body">{draft.primaryColor}</span>
-                  </button>
-                  <input
-                    ref={primaryRef}
-                    type="color"
-                    value={draft.primaryColor}
-                    onChange={e => handleField('primaryColor', e.target.value)}
-                    className="sr-only"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
-                    Cor de destaque
-                  </label>
-                  <button
-                    onClick={() => accentRef.current?.click()}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#333] transition-colors"
-                  >
-                    <div
-                      className="w-6 h-6 rounded-lg shrink-0"
-                      style={{ backgroundColor: draft.accentColor }}
-                    />
-                    <span className="text-white/60 text-sm font-mono font-body">{draft.accentColor}</span>
-                  </button>
-                  <input
-                    ref={accentRef}
-                    type="color"
-                    value={draft.accentColor}
-                    onChange={e => handleField('accentColor', e.target.value)}
-                    className="sr-only"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Logo */}
-            <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-4">
-              <h2 className="text-white font-semibold font-body flex items-center gap-2">
-                <Image className="w-4 h-4 text-amber-400" />
-                Logo
-              </h2>
-              <Field
-                label="Texto do logo"
-                name="logoText"
-                value={draft.logoText}
-                onChange={handleField}
-                placeholder="CORVO"
-                hint="até 8 caracteres"
-              />
-
-              <div className="mt-2 p-4 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: draft.primaryColor + '22', border: `1px solid ${draft.primaryColor}44` }}
-                >
-                  <span style={{ color: draft.primaryColor }} className="text-xs font-heading">✂</span>
-                </div>
-                <span
-                  className="font-heading text-xl tracking-wider"
-                  style={{ color: draft.primaryColor }}
-                >
-                  {draft.logoText || 'LOGO'}
-                </span>
-              </div>
-            </div>
-
-            {/* Foto de capa */}
-            <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-4">
-              <h2 className="text-white font-semibold font-body flex items-center gap-2">
-                <Upload className="w-4 h-4 text-amber-400" />
-                Foto de capa
-              </h2>
-
-              {draft.coverImage ? (
-                <div className="relative group rounded-xl overflow-hidden border border-[#252525]">
-                  <img
-                    src={draft.coverImage}
-                    alt="Capa da barbearia"
-                    className="w-full h-36 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      onClick={() => coverInputRef.current?.click()}
-                      disabled={uploadingCover}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-body hover:bg-white/20 transition-all"
-                    >
-                      {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Trocar imagem
-                    </button>
+                        <div
+                          className="w-10 h-10 rounded-xl border-2 transition-all"
+                          style={{
+                            background: `linear-gradient(135deg, ${preset.primary}, ${preset.accent})`,
+                            borderColor: draft.primaryColor === preset.primary ? preset.primary : 'transparent',
+                          }}
+                        >
+                          {draft.primaryColor === preset.primary && (
+                            <Check className="w-3.5 h-3.5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
+                        <span className="text-white/30 text-xs font-body group-hover:text-white/60 transition-colors">
+                          {preset.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ) : (
-                <button
-                  onClick={() => coverInputRef.current?.click()}
-                  disabled={uploadingCover}
-                  className="w-full h-28 rounded-xl border-2 border-dashed border-[#2a2a2a] hover:border-amber-500/40 flex flex-col items-center justify-center gap-2 text-white/30 hover:text-white/60 transition-all"
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
+                      Cor principal
+                    </label>
+                    <button
+                      onClick={() => primaryRef.current?.click()}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#333] transition-colors"
+                    >
+                      <div className="w-6 h-6 rounded-lg shrink-0" style={{ backgroundColor: draft.primaryColor }} />
+                      <span className="text-white/60 text-sm font-mono font-body">{draft.primaryColor}</span>
+                    </button>
+                    <input ref={primaryRef} type="color" value={draft.primaryColor} onChange={e => handleField('primaryColor', e.target.value)} className="sr-only" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
+                      Cor de destaque
+                    </label>
+                    <button
+                      onClick={() => accentRef.current?.click()}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#333] transition-colors"
+                    >
+                      <div className="w-6 h-6 rounded-lg shrink-0" style={{ backgroundColor: draft.accentColor }} />
+                      <span className="text-white/60 text-sm font-mono font-body">{draft.accentColor}</span>
+                    </button>
+                    <input ref={accentRef} type="color" value={draft.accentColor} onChange={e => handleField('accentColor', e.target.value)} className="sr-only" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Logo */}
+              <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-4">
+                <h2 className="text-white font-semibold font-body flex items-center gap-2">
+                  <Image className="w-4 h-4 text-amber-400" />
+                  Logo
+                </h2>
+                <Field label="Texto do logo" name="logoText" value={draft.logoText} onChange={handleField} placeholder="CORVO" hint="até 8 caracteres" />
+              </div>
+            </div>
+
+            {/* Coluna direita */}
+            <div className="space-y-6">
+              {/* Preview live */}
+              <div className="p-6 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f] space-y-4">
+                <h2 className="text-white/50 text-xs font-semibold font-body tracking-wide uppercase">Prévia</h2>
+
+                {/* Header simulado */}
+                <div
+                  className="rounded-xl overflow-hidden border"
+                  style={{ borderColor: draft.primaryColor + '22' }}
                 >
-                  {uploadingCover ? (
-                    <><Loader2 className="w-6 h-6 animate-spin" /><span className="text-xs font-body">Enviando...</span></>
-                  ) : (
-                    <><Upload className="w-6 h-6" /><span className="text-xs font-body">Clique para enviar JPG, PNG ou WebP (máx. 5 MB)</span></>
-                  )}
-                </button>
-              )}
+                  <div
+                    className="h-24 flex items-center justify-center"
+                    style={{ background: `linear-gradient(135deg, ${draft.primaryColor}18, ${draft.accentColor}10)` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: draft.primaryColor + '22', border: `1px solid ${draft.primaryColor}44` }}
+                      >
+                        <span style={{ color: draft.primaryColor }} className="text-sm font-heading">✂</span>
+                      </div>
+                      <span className="font-heading text-2xl tracking-wider" style={{ color: draft.primaryColor }}>
+                        {draft.logoText || 'LOGO'}
+                      </span>
+                    </div>
+                  </div>
 
-              {uploadError && (
-                <p className="text-red-400 text-xs font-body">{uploadError}</p>
-              )}
+                  {/* Botão CTA simulado */}
+                  <div className="px-4 py-3 flex items-center justify-between bg-[#141414]">
+                    <span className="text-white/40 text-xs font-body">barberos.io/b/{barbershop.slug}</span>
+                    <div
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold font-body"
+                      style={{ backgroundColor: draft.primaryColor, color: '#0a0a0a' }}
+                    >
+                      Agendar
+                    </div>
+                  </div>
+                </div>
 
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleCoverUpload}
-                className="sr-only"
-              />
+                {/* Gradiente de cor */}
+                <div
+                  className="h-2 rounded-full"
+                  style={{ background: `linear-gradient(90deg, ${draft.primaryColor}, ${draft.accentColor})` }}
+                />
+                <p className="text-white/20 text-xs font-body text-center">Atualiza em tempo real</p>
+              </div>
 
-              <p className="text-white/25 text-xs font-body">
-                Exibida no hero do seu site público. Recomendado: 1920×600 px.
-              </p>
+              {/* Foto de capa */}
+              <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-4">
+                <h2 className="text-white font-semibold font-body flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-amber-400" />
+                  Foto de capa
+                </h2>
+
+                {draft.coverImage ? (
+                  <div className="relative group rounded-xl overflow-hidden border border-[#252525]">
+                    <img src={draft.coverImage} alt="Capa da barbearia" className="w-full h-36 object-cover" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button
+                        onClick={() => coverInputRef.current?.click()}
+                        disabled={uploadingCover}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-body hover:bg-white/20 transition-all"
+                      >
+                        {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Trocar imagem
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={uploadingCover}
+                    className="w-full h-28 rounded-xl border-2 border-dashed border-[#2a2a2a] hover:border-amber-500/40 flex flex-col items-center justify-center gap-2 text-white/30 hover:text-white/60 transition-all"
+                  >
+                    {uploadingCover ? (
+                      <><Loader2 className="w-6 h-6 animate-spin" /><span className="text-xs font-body">Enviando...</span></>
+                    ) : (
+                      <><Upload className="w-6 h-6" /><span className="text-xs font-body">Clique para enviar JPG, PNG ou WebP (máx. 5 MB)</span></>
+                    )}
+                  </button>
+                )}
+
+                {uploadError && <p className="text-red-400 text-xs font-body">{uploadError}</p>}
+
+                <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleCoverUpload} className="sr-only" />
+                <p className="text-white/25 text-xs font-body">Recomendado: 1920×600 px.</p>
+              </div>
             </div>
           </motion.div>
         )}
