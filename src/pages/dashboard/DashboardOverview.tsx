@@ -194,11 +194,11 @@ const DashboardOverview = () => {
   const [financialMonths, setFinancialMonths] = useState<MonthRevenue[]>([])
 
   useEffect(() => {
-    if (!showSuccess || account?.planStatus !== 'active') return
+    if (!showSuccess) return
     navigate('/dashboard', { replace: true })
     const t = setTimeout(() => setShowSuccess(false), 6000)
     return () => clearTimeout(t)
-  }, [account?.planStatus, navigate, showSuccess])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Dados financeiros: demo usa mock, real busca do Supabase
   useEffect(() => {

@@ -44,16 +44,14 @@ export const saasAccountRepository = {
 
     let account: SaasAccountRow | null = null
     try {
-      const { data, error: rpcError } = await supabase.rpc('create_saas_account' as never, {
+      const { data } = await supabase.rpc('create_saas_account' as never, {
         p_user_id: authData.user.id,
         p_owner_name: input.ownerName,
         p_barb_name: input.barbershopName,
         p_barb_slug: slug,
         p_embed_key: embedKey,
       } as never)
-      if (rpcError) throw rpcError
-      // PostgREST pode retornar array ou objeto dependendo da versão
-      account = (Array.isArray(data) ? data[0] : data) as SaasAccountRow | null
+      account = data as SaasAccountRow | null
     } catch (error) {
       throw new Error(getAuthErrorMessage(error))
     }
@@ -82,7 +80,7 @@ export const saasAccountRepository = {
   },
 
   async login(input: SaasLoginInput): Promise<SaasSession> {
-    let data: { session: { access_token: string } | null; user?: { id: string; email?: string | null } | null } | null = null
+    let data: { session: { access_token: string } | null } | null = null
     try {
       ({ data } = await supabase.auth.signInWithPassword({
         email: input.email,
@@ -93,14 +91,8 @@ export const saasAccountRepository = {
     }
     if (!data?.session) throw new Error('Login inválido')
 
-    const userId = data.user?.id ?? null
-    if (!userId) throw new Error('Sessão inválida')
-
-    const account = await saasAccountRepository.getByUserId(userId)
-    if (!account) throw new Error('Conta da barbearia não encontrada')
-
     return {
-      account: mapAccount(account, data.user?.email ?? input.email),
+      account: null as never,
       accessToken: data.session.access_token,
     }
   },

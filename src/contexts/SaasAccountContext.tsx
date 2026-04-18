@@ -17,26 +17,6 @@ interface SaasAccountContextType {
 }
 
 const SaasAccountContext = createContext<SaasAccountContextType | undefined>(undefined)
-const SAAS_ACCOUNT_CACHE_KEY = 'barberos_saas_account'
-
-function readCachedAccount(): SaasAccount | null {
-  try {
-    const raw = localStorage.getItem(SAAS_ACCOUNT_CACHE_KEY)
-    if (!raw) return null
-    return JSON.parse(raw) as SaasAccount
-  } catch {
-    localStorage.removeItem(SAAS_ACCOUNT_CACHE_KEY)
-    return null
-  }
-}
-
-function writeCachedAccount(account: SaasAccount | null) {
-  if (!account) {
-    localStorage.removeItem(SAAS_ACCOUNT_CACHE_KEY)
-    return
-  }
-  localStorage.setItem(SAAS_ACCOUNT_CACHE_KEY, JSON.stringify(account))
-}
 
 export const useSaasAccount = () => {
   const ctx = useContext(SaasAccountContext)
@@ -60,14 +40,9 @@ function mapRowToAccount(row: NonNullable<Awaited<ReturnType<typeof saasAccountR
 }
 
 export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
-  const [account, setAccount] = useState<SaasAccount | null>(() => readCachedAccount())
+  const [account, setAccount] = useState<SaasAccount | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    if (isDemoMode()) return
-    writeCachedAccount(account)
-  }, [account])
 
   useEffect(() => {
     // Demo mode — injeta conta fake da sessionStorage sem tocar no Supabase
@@ -78,51 +53,24 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
-    let done = false
-    // Garante que isLoading sempre resolve, mesmo se getSession travar
-    const failsafe = setTimeout(() => { if (!done) { done = true; setIsLoading(false) } }, 3000)
+    let initialized = false
 
-    const resolve = () => { if (!done) { done = true; clearTimeout(failsafe); setIsLoading(false) } }
-
-    supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
-        if (!session) {
-          setAccount(null)
-          setAccessToken(null)
-          resolve()
-          return
-        }
-
-        setAccessToken(session.access_token)
-        const row = await saasAccountRepository.getByUserId(session.user.id)
-        if (row) {
-          setAccount(mapRowToAccount(row, session.user.email ?? ''))
-        } else {
-          setAccount(null)
-        }
-        resolve()
-      })
-      .catch(resolve) // token inválido / usuário deletado → libera o loading
-
-    // onAuthStateChange mantém o estado sincronizado após login/logout/refresh
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session) {
         setAccount(null)
         setAccessToken(null)
-        resolve()
+        if (!initialized) { initialized = true; setIsLoading(false) }
         return
       }
-      setAccessToken(session.access_token)
       const row = await saasAccountRepository.getByUserId(session.user.id)
       if (row) {
         setAccount(mapRowToAccount(row, session.user.email ?? ''))
-      } else {
-        setAccount(null)
+        setAccessToken(session.access_token)
       }
-      resolve()
+      if (!initialized) { initialized = true; setIsLoading(false) }
     })
 
-    return () => { clearTimeout(failsafe); subscription.unsubscribe() }
+    return () => subscription.unsubscribe()
   }, [])
 
   const signup = async (data: SaasSignupInput): Promise<void> => {
@@ -144,7 +92,6 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     const credentials = { email, password }
     try {
       const session = await saasAccountRepository.login(credentials)
-      setAccount(session.account)
       setAccessToken(session.accessToken)
       return true
     } catch (err: unknown) {
@@ -172,11 +119,7 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     if (session) {
       setAccount(session.account)
       setAccessToken(session.accessToken)
-      return
     }
-
-    setAccount(null)
-    setAccessToken(null)
   }
 
   const hasActivePlan = account?.planStatus === 'active'
