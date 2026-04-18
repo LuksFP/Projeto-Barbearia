@@ -21,10 +21,10 @@ const Pagamento = () => {
   const prefetchedUrl = useRef<string | null>(null)
   const prefetchPromise = useRef<Promise<string | null> | null>(null)
 
-  // Só redireciona após contexto terminar de carregar — evita redirect prematuro pós-signup
+  // Só redireciona se não há sessão nem conta — evita redirect no intervalo pós-login
   useEffect(() => {
-    if (!isLoading && !account) navigate('/registrar', { replace: true })
-  }, [account, isLoading, navigate])
+    if (!isLoading && !account && !accessToken) navigate('/registrar', { replace: true })
+  }, [account, accessToken, isLoading, navigate])
 
   // Prefetch checkout URL no mount — guarda a Promise para o clique poder aguardá-la
   useEffect(() => {
