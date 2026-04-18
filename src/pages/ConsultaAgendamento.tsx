@@ -1,17 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { Search, Calendar, Clock, Scissors, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { supabasePublic } from '@/lib/supabase-public';
+import { useEffect, useState } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { supabasePublic } from '@/lib/supabase-public'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, Calendar, Clock, Scissors, CheckCircle2, XCircle, AlertCircle, Star, ArrowLeft, Loader2 } from 'lucide-react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 type AptDisplay = {
   id: string
@@ -23,349 +16,297 @@ type AptDisplay = {
   rating: number | null
   review: string | null
   payment_status?: string | null
+  barbershop_id?: string
+}
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const map: Record<string, { label: string; color: string }> = {
+    pending:   { label: 'Aguardando confirmação', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    scheduled: { label: 'Agendado',               color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+    confirmed: { label: 'Confirmado',              color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+    done:      { label: 'Concluído',               color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    completed: { label: 'Concluído',               color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    cancelled: { label: 'Cancelado',               color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  }
+  const s = map[status] ?? { label: status, color: 'text-white/40 bg-white/5 border-white/10' }
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-body font-medium ${s.color}`}>
+      {s.label}
+    </span>
+  )
+}
+
+const PaymentBadge = ({ status }: { status?: string | null }) => {
+  if (!status || status === 'unpaid') return null
+  const map: Record<string, { label: string; color: string }> = {
+    paid:      { label: 'Pago',           color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    pending:   { label: 'Pagamento pendente', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    failed:    { label: 'Pagamento falhou',   color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+    cancelled: { label: 'Pagamento cancelado', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  }
+  const s = map[status]
+  if (!s) return null
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-body font-medium ${s.color}`}>
+      {s.label}
+    </span>
+  )
 }
 
 const ConsultaAgendamento = () => {
-  const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [appointments, setAppointments] = useState<AptDisplay[]>([]);
-  const [searched, setSearched] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [rating, setRating] = useState(0);
-  const [review, setReview] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchParams] = useSearchParams()
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [appointments, setAppointments] = useState<AptDisplay[]>([])
+  const [searched, setSearched] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [ratingId, setRatingId] = useState<string | null>(null)
+  const [rating, setRating] = useState(0)
+  const [review, setReview] = useState('')
+  const [submittingRating, setSubmittingRating] = useState(false)
+  const paymentResult = searchParams.get('payment')
 
-  const runSearch = async (emailValue: string, phoneValue: string, showEmptyToast = true) => {
-    if (!emailValue && !phoneValue) {
-      if (showEmptyToast) {
-        toast({
-          title: 'Campo obrigatório',
-          description: 'Informe o email ou telefone para consultar.',
-          variant: 'destructive',
-        });
-      }
-      return;
-    }
-
+  const runSearch = async (e?: string, p?: string, showError = true) => {
+    const em = e ?? email
+    const ph = p ?? phone
+    if (!em && !ph) { if (showError) setError('Informe email ou telefone.'); return }
+    setLoading(true)
+    setError('')
     try {
-      const { data, error } = await supabasePublic.rpc('search_appointments_by_contact', {
-        p_email: emailValue || null,
-        p_phone: phoneValue || null,
-      });
-
-      if (error) throw error;
-
-      const found = (data ?? []) as AptDisplay[];
-      setAppointments(found);
-      setSearched(true);
-
-      if (found.length === 0) {
-        toast({
-          title: 'Nenhum agendamento encontrado',
-          description: 'Verifique os dados informados e tente novamente.',
-        });
-      }
-    } catch (error) {
-      console.error('Failed to search appointments:', error);
-      toast({
-        title: 'Erro na busca',
-        description: 'Ocorreu um erro ao buscar os agendamentos.',
-        variant: 'destructive',
-      });
+      const { data, error: err } = await supabasePublic.rpc('search_appointments_by_contact', {
+        p_email: em || null,
+        p_phone: ph || null,
+      })
+      if (err) throw err
+      setAppointments((data ?? []) as AptDisplay[])
+      setSearched(true)
+    } catch {
+      setError('Erro ao buscar agendamentos. Tente novamente.')
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    const initialEmail = searchParams.get('email') ?? '';
-    const initialPhone = searchParams.get('phone') ?? '';
-    const payment = searchParams.get('payment');
-
-    if (!initialEmail && !initialPhone) return;
-
-    setEmail(initialEmail);
-    setPhone(initialPhone);
-    void runSearch(initialEmail, initialPhone, false);
-
-    if (payment === 'success') {
-      toast({
-        title: 'Pagamento confirmado',
-        description: 'Seu agendamento está sendo confirmado.',
-      });
-    }
-  }, [searchParams, toast]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await runSearch(email, phone);
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return (
-          <Badge className="bg-amber-500/20 text-amber-600 gap-1">
-            <AlertCircle className="w-3 h-3" />
-            Aguardando confirmação
-          </Badge>
-        );
-      case 'scheduled':
-      case 'confirmed':
-        return (
-          <Badge className="bg-blue-500/20 text-blue-600 gap-1">
-            <AlertCircle className="w-3 h-3" />
-            {status === 'confirmed' ? 'Confirmado' : 'Agendado'}
-          </Badge>
-        );
-      case 'done':
-      case 'completed':
-        return (
-          <Badge className="bg-green-500/20 text-green-600 gap-1">
-            <CheckCircle className="w-3 h-3" />
-            Concluído
-          </Badge>
-        );
-      case 'cancelled':
-        return (
-          <Badge className="bg-red-500/20 text-red-600 gap-1">
-            <XCircle className="w-3 h-3" />
-            Cancelado
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
+    const initialEmail = searchParams.get('email') ?? ''
+    const initialPhone = searchParams.get('phone') ?? ''
+    if (!initialEmail && !initialPhone) return
+    setEmail(initialEmail)
+    setPhone(initialPhone)
+    void runSearch(initialEmail, initialPhone, false)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmitRating = async () => {
-    if (!selectedId || rating === 0) {
-      toast({
-        title: 'Avaliação obrigatória',
-        description: 'Por favor, selecione uma nota.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    if (!ratingId || rating === 0) return
+    setSubmittingRating(true)
     try {
-      const { error } = await supabasePublic
+      await supabasePublic
         .from('appointments')
         .update({ rating, review: review || null })
-        .eq('id', selectedId);
-
-      if (error) throw error;
-
-      setAppointments((prev) =>
-        prev.map((apt) =>
-          apt.id === selectedId ? { ...apt, rating, review: review || null } : apt
-        )
-      );
-
-      toast({
-        title: 'Avaliação enviada!',
-        description: 'Obrigado pelo seu feedback.',
-      });
-
-      setDialogOpen(false);
-      setRating(0);
-      setReview('');
-      setSelectedId(null);
-    } catch (error) {
-      console.error('Failed to submit rating:', error);
-      toast({
-        title: 'Erro ao enviar avaliação',
-        description: 'Ocorreu um erro inesperado.',
-        variant: 'destructive',
-      });
+        .eq('id', ratingId)
+      setAppointments(prev => prev.map(a => a.id === ratingId ? { ...a, rating, review: review || null } : a))
+      setRatingId(null)
+      setRating(0)
+      setReview('')
+    } finally {
+      setSubmittingRating(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="mb-8 text-center">
-          <h1 className="font-heading text-5xl mb-4">
-            <span className="text-primary">CONSULTAR</span> AGENDAMENTO
-          </h1>
-          <p className="text-muted-foreground font-body text-lg">
-            Informe seu email ou telefone para ver seus agendamentos
-          </p>
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      {/* Header */}
+      <div className="border-b border-white/5">
+        <div className="max-w-2xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 text-white/40 hover:text-white text-sm font-body transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Início
+          </Link>
+          <span className="font-heading text-lg text-amber-400 tracking-wider">BARBEROS</span>
+          <div className="w-16" />
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        {/* Banner pagamento */}
+        <AnimatePresence>
+          {paymentResult === 'success' && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-8"
+            >
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div>
+                <p className="text-emerald-400 text-sm font-semibold font-body">Pagamento confirmado!</p>
+                <p className="text-emerald-400/60 text-xs font-body">Seu agendamento foi registrado. Veja os detalhes abaixo.</p>
+              </div>
+            </motion.div>
+          )}
+          {paymentResult === 'cancelled' && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 mb-8"
+            >
+              <XCircle className="w-5 h-5 text-red-400 shrink-0" />
+              <p className="text-red-400 text-sm font-body">Pagamento cancelado. Tente agendar novamente.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <h1 className="font-heading text-3xl tracking-wide text-white mb-2">MEUS AGENDAMENTOS</h1>
+        <p className="text-white/40 text-sm font-body mb-8">Informe email ou telefone para consultar.</p>
+
+        {/* Formulário de busca */}
+        <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && runSearch()}
+                placeholder="seu@email.com"
+                className="w-full px-4 py-3 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-white placeholder:text-white/20 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">Telefone</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && runSearch()}
+                placeholder="(11) 99999-9999"
+                className="w-full px-4 py-3 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-white placeholder:text-white/20 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors"
+              />
+            </div>
+          </div>
+          {error && <p className="text-red-400 text-xs font-body mb-3">{error}</p>}
+          <button
+            onClick={() => runSearch()}
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold font-body text-sm tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {loading ? 'Buscando…' : 'Buscar agendamentos'}
+          </button>
         </div>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="font-heading text-2xl flex items-center gap-2">
-              <Search className="w-6 h-6 text-primary" />
-              Buscar Agendamentos
-            </CardTitle>
-            <CardDescription>
-              Use o email ou telefone que você informou ao agendar
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSearch} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="(00) 00000-0000"
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full font-heading">
-                Buscar Agendamentos
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
+        {/* Resultados */}
         {searched && (
-          <div className="space-y-4">
-            {appointments.length > 0 ? (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            {appointments.length === 0 ? (
+              <div className="p-8 rounded-xl bg-[#141414] border border-[#252525] text-center">
+                <AlertCircle className="w-8 h-8 text-white/20 mx-auto mb-3" />
+                <p className="text-white/40 text-sm font-body">Nenhum agendamento encontrado.</p>
+              </div>
+            ) : (
               <>
-                <h2 className="font-heading text-2xl">
-                  Encontrados: {appointments.length} agendamento(s)
-                </h2>
-                {appointments.map((apt) => (
-                  <Card key={apt.id}>
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Scissors className="w-5 h-5 text-primary" />
-                            <span className="font-heading text-xl">{apt.service_name}</span>
-                            {getStatusBadge(apt.status)}
-                          </div>
-                          <div className="flex items-center gap-4 text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {format(new Date(apt.date + 'T12:00'), "d 'de' MMMM 'de' yyyy", {
-                                locale: ptBR,
-                              })}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {apt.time}
-                            </span>
-                          </div>
-                          {apt.rating !== null && apt.rating > 0 && (
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm text-muted-foreground">Sua avaliação:</span>
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`w-4 h-4 ${
-                                    star <= apt.rating!
-                                      ? 'text-primary fill-primary'
-                                      : 'text-muted-foreground'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {(apt.status === 'completed' || apt.status === 'done') && !apt.rating && (
-                          <Dialog
-                            open={dialogOpen && selectedId === apt.id}
-                            onOpenChange={(open) => {
-                              setDialogOpen(open);
-                              if (open) {
-                                setSelectedId(apt.id);
-                              } else {
-                                setSelectedId(null);
-                                setRating(0);
-                                setReview('');
-                              }
-                            }}
-                          >
-                            <DialogTrigger asChild>
-                              <Button variant="outline" className="gap-2">
-                                <Star className="w-4 h-4" />
-                                Avaliar
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle className="font-heading text-2xl">
-                                  Avaliar Atendimento
-                                </DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-6 py-4">
-                                <div>
-                                  <Label className="mb-3 block">Sua nota</Label>
-                                  <div className="flex gap-2">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <button
-                                        key={star}
-                                        type="button"
-                                        onClick={() => setRating(star)}
-                                        className="transition-transform hover:scale-110"
-                                      >
-                                        <Star
-                                          className={`w-8 h-8 ${
-                                            star <= rating
-                                              ? 'text-primary fill-primary'
-                                              : 'text-muted-foreground'
-                                          }`}
-                                        />
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <Label htmlFor="review">Comentário (opcional)</Label>
-                                  <Textarea
-                                    id="review"
-                                    value={review}
-                                    onChange={(e) => setReview(e.target.value)}
-                                    placeholder="Conte-nos como foi sua experiência..."
-                                    rows={4}
-                                  />
-                                </div>
-                                <Button
-                                  onClick={handleSubmitRating}
-                                  className="w-full font-heading"
-                                >
-                                  Enviar Avaliação
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        )}
+                <p className="text-white/40 text-xs font-body">{appointments.length} agendamento(s) encontrado(s)</p>
+                {appointments.map(apt => (
+                  <motion.div
+                    key={apt.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 rounded-xl bg-[#141414] border border-[#252525] space-y-4"
+                  >
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Scissors className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span className="text-white font-semibold font-body">{apt.service_name}</span>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <StatusBadge status={apt.status} />
+                        <PaymentBadge status={apt.payment_status} />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-6 text-white/40 text-sm font-body flex-wrap">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {format(new Date(apt.date + 'T12:00'), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        {apt.time}
+                      </span>
+                    </div>
+
+                    {/* Avaliação existente */}
+                    {apt.rating !== null && apt.rating > 0 && (
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <span className="text-white/30 text-xs font-body">Sua nota:</span>
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} className={`w-3.5 h-3.5 ${s <= apt.rating! ? 'text-amber-400 fill-amber-400' : 'text-white/20'}`} />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Botão avaliar */}
+                    {(apt.status === 'completed' || apt.status === 'done') && !apt.rating && ratingId !== apt.id && (
+                      <button
+                        onClick={() => { setRatingId(apt.id); setRating(0); setReview('') }}
+                        className="flex items-center gap-1.5 text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors"
+                      >
+                        <Star className="w-3.5 h-3.5" />
+                        Avaliar atendimento
+                      </button>
+                    )}
+
+                    {/* Form avaliação inline */}
+                    <AnimatePresence>
+                      {ratingId === apt.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="border-t border-[#252525] pt-4 space-y-3 overflow-hidden"
+                        >
+                          <div className="flex items-center gap-2">
+                            {[1,2,3,4,5].map(s => (
+                              <button key={s} onClick={() => setRating(s)} className="transition-transform hover:scale-110">
+                                <Star className={`w-6 h-6 ${s <= rating ? 'text-amber-400 fill-amber-400' : 'text-white/20'}`} />
+                              </button>
+                            ))}
+                          </div>
+                          <textarea
+                            value={review}
+                            onChange={e => setReview(e.target.value)}
+                            placeholder="Comentário opcional…"
+                            rows={2}
+                            className="w-full px-3 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-white placeholder:text-white/20 text-sm font-body focus:outline-none focus:border-amber-500/50 resize-none transition-colors"
+                          />
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={handleSubmitRating}
+                              disabled={rating === 0 || submittingRating}
+                              className="px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors disabled:opacity-40"
+                            >
+                              {submittingRating ? 'Enviando…' : 'Enviar avaliação'}
+                            </button>
+                            <button
+                              onClick={() => setRatingId(null)}
+                              className="px-4 py-2 rounded-lg text-white/30 hover:text-white text-sm font-body transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 ))}
               </>
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">
-                    Nenhum agendamento encontrado com os dados informados.
-                  </p>
-                </CardContent>
-              </Card>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ConsultaAgendamento;
+export default ConsultaAgendamento
