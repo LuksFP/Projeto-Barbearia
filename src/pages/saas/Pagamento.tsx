@@ -13,22 +13,24 @@ import { motion } from 'framer-motion'
 const Pagamento = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { account, accessToken } = useSaasAccount()
+  const { account, accessToken, isLoading } = useSaasAccount()
   const plano = (searchParams.get('plano') ?? account?.plan ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const prefetchedUrl = useRef<string | null>(null)
+  const prefetchPromise = useRef<Promise<string | null> | null>(null)
 
+  // Só redireciona após contexto terminar de carregar — evita redirect prematuro pós-signup
   useEffect(() => {
-    if (!account) navigate('/registrar', { replace: true })
-  }, [account, navigate])
+    if (!isLoading && !account) navigate('/registrar', { replace: true })
+  }, [account, isLoading, navigate])
 
-  // Prefetch checkout URL no mount para que o redirect seja imediato ao clicar
+  // Prefetch checkout URL no mount — guarda a Promise para o clique poder aguardá-la
   useEffect(() => {
     if (!account || !accessToken) return
     const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
-    fetch(fnUrl, {
+    prefetchPromise.current = fetch(fnUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
@@ -38,9 +40,19 @@ const Pagamento = () => {
       }),
     })
       .then(r => r.ok ? r.json() : null)
-      .then((data: { url: string } | null) => { if (data?.url) prefetchedUrl.current = data.url })
-      .catch(() => {})
+      .then((data: { url: string } | null) => {
+        const url = data?.url ?? null
+        prefetchedUrl.current = url
+        return url
+      })
+      .catch(() => null)
   }, [account, accessToken, plano])
+
+  if (isLoading) return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-amber-500/30 border-t-amber-500 animate-spin" />
+    </div>
+  )
 
   if (!account) return null
 
@@ -48,8 +60,10 @@ const Pagamento = () => {
     setError('')
     setLoading(true)
     try {
-      if (prefetchedUrl.current) {
-        window.location.href = prefetchedUrl.current
+      // Se o prefetch já terminou usa direto; senão aguarda a Promise em andamento
+      const url = prefetchedUrl.current ?? (prefetchPromise.current ? await prefetchPromise.current : null)
+      if (url) {
+        window.location.href = url
         return
       }
 
@@ -74,8 +88,8 @@ const Pagamento = () => {
         throw new Error(body.error ?? 'Erro ao criar sessão de checkout.')
       }
 
-      const { url } = await res.json() as { url: string }
-      window.location.href = url
+      const { url: checkoutUrl } = await res.json() as { url: string }
+      window.location.href = checkoutUrl
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao iniciar checkout.')
       setLoading(false)

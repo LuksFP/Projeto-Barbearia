@@ -44,9 +44,17 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const DashboardLayout = () => {
-  const { barbershop, tenantUser, userRole } = useTenant()
+  const { barbershop, tenantUser, userRole, isLoading } = useTenant()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-amber-500/30 border-t-amber-500 animate-spin" />
+      </div>
+    )
+  }
 
   if (!barbershop) {
     return (

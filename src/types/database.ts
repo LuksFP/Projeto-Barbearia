@@ -448,6 +448,7 @@ export type Database = {
       }
       saas_accounts: {
         Row: {
+          barbershop_id: string | null
           barbershop_name: string
           barbershop_slug: string
           created_at: string
@@ -462,6 +463,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          barbershop_id?: string | null
           barbershop_name: string
           barbershop_slug: string
           created_at?: string
@@ -476,6 +478,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          barbershop_id?: string | null
           barbershop_name?: string
           barbershop_slug?: string
           created_at?: string

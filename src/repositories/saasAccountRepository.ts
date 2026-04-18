@@ -25,57 +25,48 @@ export function slugify(text: string): string {
 
 export const saasAccountRepository = {
   async signup(input: SaasSignupInput): Promise<SaasSession> {
-    let authData: { user?: { id: string } | null; session: { access_token: string } | null } | null = null
-    try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: input.email,
-        password: input.password,
-      })
-      if (authError) throw authError
-      authData = data
-    } catch (error) {
-      throw new Error(getAuthErrorMessage(error))
-    }
-
-    if (!authData?.user) throw new Error('Usuário não criado')
-
     const slug = slugify(input.barbershopName)
     const embedKey = generateEmbedKey(slug)
 
-    let account: SaasAccountRow | null = null
+    // Usa Edge Function que cria o usuário com email_confirm: true (sem email de confirmação)
+    const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-register`
+    let res: Response
     try {
-      const { data } = await supabase.rpc('create_saas_account' as never, {
-        p_user_id: authData.user.id,
-        p_owner_name: input.ownerName,
-        p_barb_name: input.barbershopName,
-        p_barb_slug: slug,
-        p_embed_key: embedKey,
-      } as never)
-      account = data as SaasAccountRow | null
-    } catch (error) {
-      throw new Error(getAuthErrorMessage(error))
-    }
-
-    if (!account) throw new Error('Erro ao criar conta.')
-
-    let session = authData.session
-    if (!session) {
-      try {
-        const { data: signInData } = await supabase.auth.signInWithPassword({
+      res = await fetch(fnUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email: input.email,
           password: input.password,
-        })
-        if (signInData.session) {
-          session = signInData.session
-        }
-      } catch (error) {
-        throw new Error(getAuthErrorMessage(error))
-      }
+          ownerName: input.ownerName,
+          barbershopName: input.barbershopName,
+          barbershopSlug: slug,
+          embedKey,
+          plan: input.plan ?? 'pro',
+        }),
+      })
+    } catch {
+      throw new Error('Erro de conexão. Verifique sua internet.')
     }
 
+    const data = await res.json() as { access_token?: string; refresh_token?: string; error?: string }
+    if (!res.ok) throw new Error(data.error ?? 'Erro ao criar conta.')
+    if (!data.access_token || !data.refresh_token) {
+      throw new Error('Conta criada mas não foi possível iniciar sessão. Faça login.')
+    }
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    })
+    if (sessionError || !sessionData.session) throw new Error('Erro ao iniciar sessão.')
+
+    const row = await saasAccountRepository.getByUserId(sessionData.session.user.id)
+    if (!row) throw new Error('Conta criada mas não encontrada.')
+
     return {
-      account: mapAccount(account, input.email),
-      accessToken: session?.access_token ?? null,
+      account: mapAccount(row, input.email),
+      accessToken: data.access_token,
     }
   },
 
@@ -128,10 +119,12 @@ export const saasAccountRepository = {
 function mapAccount(row: SaasAccountRow, email: string): SaasAccount {
   return {
     id: row.id,
+    userId: row.user_id,
     ownerName: row.owner_name,
     email,
     barbershopName: row.barbershop_name,
     barbershopSlug: row.barbershop_slug,
+    barbershopId: row.barbershop_id ?? null,
     plan: row.plan as SaasAccount['plan'],
     planStatus: row.plan_status as SaasAccount['planStatus'],
     planStartedAt: row.plan_started_at,

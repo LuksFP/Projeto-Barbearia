@@ -36,7 +36,7 @@ refresh_token_reuse_interval = 10
 verify_jwt = false
 
 [functions.billing-create-checkout]
-verify_jwt = true
+verify_jwt = false
 
 [functions.billing-webhook]
 verify_jwt = false

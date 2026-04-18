@@ -7,6 +7,16 @@ export type BarbershopInsert = TablesInsert<'barbershops'>
 export type BarbershopUpdate = TablesUpdate<'barbershops'>
 
 export const barbershopRepository = {
+  async getById(id: string): Promise<BarbershopRow | null> {
+    const { data, error } = await supabase
+      .from('barbershops')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error) return null
+    return data
+  },
+
   async getBySlug(slug: string): Promise<BarbershopRow | null> {
     const { data, error } = await supabase
       .from('barbershops')

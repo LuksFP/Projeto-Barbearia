@@ -183,41 +183,46 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
-    const slug = account?.barbershopSlug
-    if (!slug) {
+    const barbershopId = account?.barbershopId
+    const userId       = account?.userId
+
+    // Sem barbershop_id ainda (conta legada ou slug-only) — fallback para lookup por slug
+    const resolveId = barbershopId
+      ? Promise.resolve(barbershopId)
+      : barbershopRepository.getBySlug(account?.barbershopSlug ?? '').then(bs => bs?.id ?? null)
+
+    if (!account?.barbershopSlug && !barbershopId) {
       setIsLoading(false)
       return
     }
 
     setIsLoading(true)
 
-    barbershopRepository.getBySlug(slug).then(async (bs) => {
-      if (!bs) { setIsLoading(false); return }
-      setBarbershop(mapBarbershop(bs))
+    const today = new Date().toISOString().split('T')[0]
 
-      const today = new Date().toISOString().split('T')[0]
+    resolveId.then(bsId => {
+      if (!bsId) { setIsLoading(false); return }
 
-      // Carrega dados da barbearia + role real do usuário logado em paralelo
-      const { data: { session } } = await supabase.auth.getSession()
-
+      // Todos os 7 queries em paralelo — elimina roundtrip sequencial
       Promise.all([
-        serviceRepository.listByBarbershop(bs.id),
-        teamRepository.listByBarbershop(bs.id),
-        membershipRepository.listByBarbershop(bs.id),
-        appointmentRepository.listByBarbershop(bs.id, today),
-        clientRepository.listByBarbershop(bs.id),
-        session ? teamRepository.getByUserAndBarbershop(session.user.id, bs.id) : Promise.resolve(null),
-      ]).then(([svcs, team, mems, apts, cls, memberRow]) => {
+        barbershopRepository.getById(bsId),
+        serviceRepository.listByBarbershop(bsId),
+        teamRepository.listByBarbershop(bsId),
+        membershipRepository.listByBarbershop(bsId),
+        appointmentRepository.listByBarbershop(bsId, today),
+        clientRepository.listByBarbershop(bsId),
+        userId ? teamRepository.getByUserAndBarbershop(userId, bsId) : Promise.resolve(null),
+      ]).then(([bs, svcs, team, mems, apts, cls, memberRow]) => {
+        if (bs) setBarbershop(mapBarbershop(bs))
         setServices(svcs.map(mapService))
         setBarbers(team.map(mapBarber))
         setMemberships(mems.map(mapMembership))
         setAppointments(apts.map(mapAppointment))
         setClients(cls.map(mapClient))
-        // memberRow presente = barbeiro/admin/recepcionista. Ausente = owner (dono da conta SaaS)
         setUserRole(memberRow ? (memberRow.role as BarbershopRole) : 'owner')
       }).finally(() => setIsLoading(false))
     })
-  }, [account?.barbershopSlug])
+  }, [account?.barbershopId ?? account?.barbershopSlug])
 
   // Injeta o plan real da conta SaaS no objeto barbershop (não é coluna do barbershops table)
   useEffect(() => {

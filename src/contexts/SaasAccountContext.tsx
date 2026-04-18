@@ -27,10 +27,12 @@ export const useSaasAccount = () => {
 function mapRowToAccount(row: NonNullable<Awaited<ReturnType<typeof saasAccountRepository.getByUserId>>>, email: string): SaasAccount {
   return {
     id: row.id,
+    userId: row.user_id,
     ownerName: row.owner_name,
     email,
     barbershopName: row.barbershop_name,
     barbershopSlug: row.barbershop_slug,
+    barbershopId: row.barbershop_id ?? null,
     plan: row.plan as SaasAccount['plan'],
     planStatus: row.plan_status as SaasAccount['planStatus'],
     planStartedAt: row.plan_started_at,
@@ -55,19 +57,22 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
 
     let initialized = false
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         setAccount(null)
         setAccessToken(null)
         if (!initialized) { initialized = true; setIsLoading(false) }
         return
       }
-      const row = await saasAccountRepository.getByUserId(session.user.id)
-      if (row) {
-        setAccount(mapRowToAccount(row, session.user.email ?? ''))
-        setAccessToken(session.access_token)
-      }
-      if (!initialized) { initialized = true; setIsLoading(false) }
+      // Seta o token imediatamente (síncrono) para components que dependem dele
+      setAccessToken(session.access_token)
+      // Fire-and-forget: não bloqueia o setSession() do Supabase (que awaita este callback)
+      saasAccountRepository.getByUserId(session.user.id).then(row => {
+        if (row) {
+          setAccount(mapRowToAccount(row, session.user.email ?? ''))
+        }
+        if (!initialized) { initialized = true; setIsLoading(false) }
+      })
     })
 
     return () => subscription.unsubscribe()

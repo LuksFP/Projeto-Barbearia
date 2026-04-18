@@ -13,6 +13,7 @@ interface RegisterBody {
   barbershopName: string
   barbershopSlug: string
   embedKey: string
+  plan?: string
 }
 
 Deno.serve(async (req) => {
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
     return err('JSON inválido')
   }
 
-  const { email, password, ownerName, barbershopName, barbershopSlug, embedKey } = body
+  const { email, password, ownerName, barbershopName, barbershopSlug, embedKey, plan = 'pro' } = body
   if (!email || !password || !ownerName || !barbershopName || !barbershopSlug || !embedKey) {
     return err('Todos os campos são obrigatórios')
   }
@@ -56,6 +57,7 @@ Deno.serve(async (req) => {
     p_barb_name:  barbershopName,
     p_barb_slug:  barbershopSlug,
     p_embed_key:  embedKey,
+    p_plan:       plan,
   })
 
   if (rpcError) {

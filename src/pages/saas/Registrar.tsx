@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams, Link, Navigate, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, ArrowLeft, Scissors, Check, X as XIcon } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { supabase } from '@/lib/supabase'
@@ -9,12 +9,17 @@ import type { SaasPlan } from '@/types/saas'
 import { motion } from 'framer-motion'
 
 const Registrar = () => {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const plano = (searchParams.get('plano') ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
 
-  const { signup, isLoggedIn, hasActivePlan, account } = useSaasAccount()
+  const { signup, isLoggedIn, hasActivePlan, account, isLoading } = useSaasAccount()
+
+  // Aquece a edge function assim que a página carrega para evitar cold start no submit
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-register`, { method: 'OPTIONS' }).catch(() => {})
+    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`, { method: 'OPTIONS' }).catch(() => {})
+  }, [])
 
   const [form, setForm] = useState({
     ownerName: '',
@@ -35,14 +40,13 @@ const Registrar = () => {
 
   const isPasswordStrong = passwordRules.every(r => r.ok)
 
-  if (isLoggedIn && hasActivePlan && account?.plan) {
-    navigate('/dashboard', { replace: true })
-    return null
+  // Usa <Navigate> declarativo — só roda após o React commitar o estado do signup,
+  // evitando o race condition de navigate() chamado no meio de um await
+  if (!isLoading && isLoggedIn && hasActivePlan && account?.plan) {
+    return <Navigate to="/dashboard" replace />
   }
-
-  if (isLoggedIn && !hasActivePlan) {
-    navigate(`/pagamento?plano=${account?.plan ?? plano}`, { replace: true })
-    return null
+  if (!isLoading && isLoggedIn && !hasActivePlan) {
+    return <Navigate to={`/pagamento?plano=${account?.plan ?? plano}`} replace />
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,15 +71,15 @@ const Registrar = () => {
     setLoading(true)
     try {
       await signup({ ...form, plan: plano })
-      navigate(`/pagamento?plano=${plano}`)
+      // window.location garante navegação mesmo com race conditions do React Router
+      window.location.replace(`/pagamento?plano=${plano}`)
     } catch (signupError) {
+      setLoading(false)
       setError(
         signupError instanceof Error
           ? signupError.message
           : 'Erro ao criar conta. Tente novamente.',
       )
-    } finally {
-      setLoading(false)
     }
   }
 

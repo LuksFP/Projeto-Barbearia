@@ -6,10 +6,12 @@ export type SaasPlanStatus = 'pending' | 'active' | 'trial' | 'past_due' | 'canc
 
 export interface SaasAccount {
   id: string
+  userId: string
   ownerName: string
   email: string
   barbershopName: string
-  barbershopSlug: string          // link entre conta e barbearia no storage
+  barbershopSlug: string
+  barbershopId: string | null
   plan: SaasPlan | null
   planStatus: SaasPlanStatus | null
   planStartedAt: string | null
