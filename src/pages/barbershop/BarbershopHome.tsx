@@ -6,6 +6,7 @@ import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, C
 import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
+import { supabasePublic } from '@/lib/supabase-public'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -74,38 +75,25 @@ const BookingSection = ({
 
     const barberObj = selectedBarber === 'any' ? null : selectedBarber
     try {
-      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-create-checkout`
-      const successUrl = `${window.location.origin}/consulta-agendamento?payment=success&phone=${encodeURIComponent(clientPhone)}${clientEmail ? `&email=${encodeURIComponent(clientEmail)}` : ''}`
-      const cancelUrl = `${window.location.origin}/b/${barbershop.slug}?payment=cancelled#agendar`
-
-      const res = await fetch(fnUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          barbershopSlug: barbershop.slug,
-          serviceId: selectedService.id,
-          barberId: barberObj?.id ?? null,
-          date: selectedDate,
-          time: selectedTime,
-          clientName,
-          clientPhone,
-          clientEmail: clientEmail || null,
-          successUrl,
-          cancelUrl,
-        }),
+      const { error } = await supabasePublic.from('appointments').insert({
+        barbershop_id: barbershop.id,
+        service_id: selectedService.id,
+        service_name: selectedService.name,
+        service_category: selectedService.category,
+        price: selectedService.price,
+        barber_id: barberObj?.id ?? null,
+        barber_name: barberObj?.name ?? 'A definir',
+        date: selectedDate,
+        time: selectedTime,
+        client_name: clientName,
+        client_phone: clientPhone,
+        client_email: clientEmail || null,
+        status: 'pending',
       })
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({} as { error?: string }))
-        throw new Error(body.error ?? 'Não foi possível iniciar o pagamento.')
-      }
-
-      const data = await res.json() as { url?: string }
-      if (!data.url) throw new Error('Checkout sem URL retornada.')
-
-      window.location.href = data.url
+      if (error) throw error
+      setStep('done')
     } catch {
-      setBookError('Não foi possível iniciar o pagamento. Tente novamente.')
+      setBookError('Não foi possível criar o agendamento. Tente novamente.')
     } finally {
       setSubmitting(false)
     }
@@ -427,7 +415,7 @@ const BookingSection = ({
               {submitting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Processando…</>
               ) : (
-                <>Agendar e pagar <ChevronRight className="w-4 h-4" /></>
+                <>Confirmar agendamento <ChevronRight className="w-4 h-4" /></>
               )}
             </button>
           </div>
