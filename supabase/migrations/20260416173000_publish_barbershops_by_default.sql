@@ -1,0 +1,6 @@
+-- Placeholder mantido apenas para preservar o histórico de migration
+-- que já existe no projeto remoto.
+--
+-- A lógica segura para publicar barbearias por padrão foi movida para uma
+-- migration mais nova e idempotente, sem sobrescrever versões posteriores da
+-- função public.create_saas_account.
