@@ -116,7 +116,7 @@ const DashboardAssinatura = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl mx-auto">
       <div>
         <p className="text-white/30 text-sm font-body mb-1">Conta SaaS</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">ASSINATURA</h1>
