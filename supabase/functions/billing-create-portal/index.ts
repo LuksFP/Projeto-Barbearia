@@ -66,10 +66,17 @@ Deno.serve(async (req) => {
   if (!customerId) return err('Nenhuma assinatura ativa encontrada. Finalize o pagamento primeiro.', 400)
 
   // ── Portal Stripe ─────────────────────────────────────────────────────────
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: returnUrl,
-  })
+  let session: Awaited<ReturnType<typeof stripe.billingPortal.sessions.create>>
+  try {
+    session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Erro ao criar sessão no Stripe.'
+    console.error('billing-create-portal stripe error:', msg)
+    return err(msg, 500)
+  }
 
   return json({ url: session.url })
 })

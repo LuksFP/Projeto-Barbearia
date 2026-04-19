@@ -35,6 +35,8 @@ const DashboardAssinatura = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [portalError, setPortalError] = useState('')
+  const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null)
+  const [upgradeError, setUpgradeError] = useState('')
 
   if (!account) return null
 
@@ -43,6 +45,40 @@ const DashboardAssinatura = () => {
   const StatusIcon = statusCfg.icon
   const daysLeft = trialDaysLeft(account.trialEndsAt)
   const isDemo = isDemoMode()
+
+  const handleUpgrade = async (planId: string) => {
+    if (isDemo) {
+      setUpgradeError('Upgrade não disponível no modo demo.')
+      return
+    }
+    if (!accessToken) {
+      setUpgradeError('Sessão expirada. Faça login novamente.')
+      return
+    }
+    setUpgradeError('')
+    setUpgradeLoading(planId)
+    try {
+      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
+      const res = await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          plan: planId,
+          successUrl: `${window.location.origin}/dashboard/assinatura?upgrade=success`,
+          cancelUrl: `${window.location.origin}/dashboard/assinatura`,
+        }),
+      })
+      const body = await res.json() as { url?: string; error?: string }
+      if (!res.ok) throw new Error(body.error ?? 'Erro ao criar sessão de checkout.')
+      window.location.href = body.url!
+    } catch (e) {
+      setUpgradeError(e instanceof Error ? e.message : 'Erro ao iniciar upgrade.')
+      setUpgradeLoading(null)
+    }
+  }
 
   const handleManageStripe = async () => {
     if (isDemo) {
@@ -249,8 +285,9 @@ const DashboardAssinatura = () => {
             {SAAS_PLANS.filter(p => p.id !== account.plan).map(plan => (
               <button
                 key={plan.id}
-                onClick={() => navigate(`/planos?plano=${plan.id}`)}
-                className="flex items-center justify-between p-4 rounded-xl border border-[#262626] bg-[#0f0f0f] hover:border-amber-500/30 hover:bg-amber-500/[0.03] transition-all group text-left"
+                onClick={() => handleUpgrade(plan.id)}
+                disabled={upgradeLoading === plan.id}
+                className="flex items-center justify-between p-4 rounded-xl border border-[#262626] bg-[#0f0f0f] hover:border-amber-500/30 hover:bg-amber-500/[0.03] transition-all group text-left disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div>
                   <p className="text-white text-sm font-semibold font-body group-hover:text-amber-400 transition-colors">
@@ -263,10 +300,16 @@ const DashboardAssinatura = () => {
                     R$ {plan.price.toFixed(2).replace('.', ',')} / {plan.period}
                   </p>
                 </div>
-                <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-amber-400 transition-colors" />
+                {upgradeLoading === plan.id
+                  ? <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
+                  : <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-amber-400 transition-colors" />
+                }
               </button>
             ))}
           </div>
+          {upgradeError && (
+            <p className="text-red-400 text-xs font-body text-center mt-2">{upgradeError}</p>
+          )}
         </motion.div>
       )}
     </div>
