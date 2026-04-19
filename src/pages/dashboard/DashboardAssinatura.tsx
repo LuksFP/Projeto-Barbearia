@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SAAS_PLANS } from '@/types/saas'
 import {
   CreditCard, Crown, CalendarDays, AlertTriangle,
@@ -31,9 +31,20 @@ function trialDaysLeft(trialEndsAt: string | null): number | null {
 }
 
 const DashboardAssinatura = () => {
-  const { account, accessToken } = useSaasAccount()
+  const { account, accessToken, refreshAccount } = useSaasAccount()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
+  const [justUpgraded, setJustUpgraded] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('upgrade') === 'success') {
+      setJustUpgraded(true)
+      refreshAccount().finally(() => {
+        setSearchParams({}, { replace: true })
+      })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const [portalError, setPortalError] = useState('')
   const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null)
   const [upgradeError, setUpgradeError] = useState('')
@@ -121,6 +132,15 @@ const DashboardAssinatura = () => {
         <p className="text-white/30 text-sm font-body mb-1">Conta SaaS</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">ASSINATURA</h1>
       </div>
+
+      {justUpgraded && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <p className="text-emerald-300 text-sm font-body">
+            Pagamento confirmado! Seu plano foi atualizado. Se ainda aparecer o plano antigo, aguarde alguns segundos e recarregue a página.
+          </p>
+        </div>
+      )}
 
       {/* Card do plano atual */}
       <motion.div
