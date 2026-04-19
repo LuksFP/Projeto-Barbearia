@@ -111,7 +111,7 @@ const ClientDrawer = ({
       </div>
 
       {/* Histórico */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 overflow-y-auto scrollbar-none px-6 py-4">
         <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body mb-4">
           Histórico de agendamentos
         </p>

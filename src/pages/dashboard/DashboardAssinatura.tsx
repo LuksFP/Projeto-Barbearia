@@ -103,8 +103,8 @@ const DashboardAssinatura = () => {
       })
 
       if (!res.ok) {
-        const body = await res.json() as { error?: string }
-        throw new Error(body.error ?? 'Erro ao acessar portal de pagamento.')
+        const body = await res.json().catch(() => ({})) as { error?: string; message?: string }
+        throw new Error(body.error ?? body.message ?? 'Erro ao acessar portal de pagamento.')
       }
 
       const { url } = await res.json() as { url: string }

@@ -284,7 +284,7 @@ const DashboardEquipe = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.97 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 p-6 overflow-y-auto max-h-[90vh]"
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 p-6 overflow-y-auto scrollbar-none max-h-[90vh]"
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-heading text-xl tracking-wide text-white">CONVIDAR MEMBRO</h2>
@@ -408,7 +408,7 @@ const DashboardEquipe = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.97 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 p-6 overflow-y-auto max-h-[90vh]"
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 p-6 overflow-y-auto scrollbar-none max-h-[90vh]"
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-heading text-xl tracking-wide text-white">EDITAR MEMBRO</h2>

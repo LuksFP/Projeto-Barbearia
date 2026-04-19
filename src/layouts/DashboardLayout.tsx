@@ -83,7 +83,7 @@ const DashboardLayout = () => {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar-none">
         {navItems.map(item => (
           <NavLink
             key={item.to}
@@ -181,7 +181,7 @@ const DashboardLayout = () => {
         </div>
 
         {/* Página */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto scrollbar-none p-6">
           <Outlet />
         </main>
       </div>
