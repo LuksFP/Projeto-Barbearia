@@ -1,0 +1,246 @@
+BarberOS — SaaS de Gestão de Barbearias
+Funcionalidades Completas
+========================================
+
+ESTRUTURA DO PRODUTO (3 áreas)
+- Landing SaaS (/) — marketing e conversão
+- Site público da barbearia (/b/:slug) — página pública para clientes finais
+- Dashboard de operação (/dashboard/*) — painel protegido para o dono/equipe
+
+
+========================================
+LANDING SAAS (Página de marketing)
+========================================
+- Apresentação do produto com seções de hero, features e preços
+- Página de Planos com tabela comparativa (Starter / Pro / Enterprise)
+- Página de Demo interativa
+- Página de Depoimentos de clientes
+- Autenticação SaaS completa:
+  - Registro de novo usuário
+  - Login com email e senha
+  - Esqueci minha senha / Nova senha
+  - Callback OAuth
+  - Completar registro (dados da barbearia após signup)
+  - Página de Boas-vindas pós-registro
+  - Página de Pagamento (Stripe Checkout)
+
+
+========================================
+SITE PÚBLICO DA BARBEARIA (/b/:slug)
+========================================
+- Página pública customizável por barbearia (multi-tenant)
+- Exibe nome, logo, capa, cores primárias e descrição da barbearia
+- Catálogo de serviços com preço e duração
+- Agendamento online para clientes:
+  - Seleção de serviço, barbeiro, data e horário
+  - Formulário com nome, telefone e email
+  - Agendamento como visitante (sem login obrigatório)
+  - Email de confirmação automático para o cliente (via Resend)
+- Política de cancelamento configurável pelo dono
+- Consulta de agendamento pelo cliente
+- Página de perfil do cliente
+
+
+========================================
+DASHBOARD — OVERVIEW
+========================================
+- Cards de métricas do mês atual:
+  - Total de agendamentos
+  - Faturamento do mês
+  - Novos clientes
+  - Taxa de conclusão
+- Variação percentual vs mês anterior em todos os cards
+- Comparativo financeiro mensal com projeção do mês em curso
+- Gráfico de barras por categoria de serviço (Corte, Barba, Combo, Coloração)
+- Lista dos últimos agendamentos com status em tempo real
+- Link rápido para o site público da barbearia
+- Cópia do link do site com um clique
+- Indicador do plano ativo (Trial / Starter / Pro)
+
+
+========================================
+DASHBOARD — AGENDA
+========================================
+- Visualização semanal com navegação por semana (← →)
+- Grade de horários das 09:00 às 18:00 em slots de 30 minutos
+- Destaque automático do dia atual
+- Filtro de agendamentos por dia da semana
+- Cards de agendamento com:
+  - Nome e telefone do cliente
+  - Serviço e barbeiro
+  - Horário e status
+- Fluxo de status:
+  - Pendente → Confirmar ou Cancelar
+  - Confirmado → Concluir ou Cancelar
+  - Concluído e Cancelado (estados finais)
+- Criação manual de agendamento pelo painel:
+  - Nome, telefone, serviço, barbeiro, data e horário
+- Animações de transição entre estados
+
+
+========================================
+DASHBOARD — SERVIÇOS
+========================================
+- Listagem de todos os serviços da barbearia
+- Cadastro de novo serviço com:
+  - Nome, descrição, preço e duração (min)
+  - Categoria (Corte, Barba, Combo, Coloração, Sobrancelha, Tratamento, Outro)
+  - Categoria personalizada quando "Outro"
+- Edição inline de serviços existentes
+- Exclusão de serviço com confirmação
+- Badges coloridos por categoria
+- Validação de formulário em tempo real
+
+
+========================================
+DASHBOARD — EQUIPE
+========================================
+- Listagem de barbeiros com avatar, nome, especialidade e cargo
+- Cargos: Barbeiro, Recepcionista, Administrador
+- Convite de novo membro por email:
+  - Envia email de convite via Supabase Edge Function
+  - Link de aceite leva para página /aceitar-convite
+- Página de aceitar convite:
+  - Exibe dados do convite
+  - Permite criar conta ou vincular a conta existente
+- Edição de barbeiro (nome, especialidade, bio, cargo)
+- Upload de foto/avatar do barbeiro (Supabase Storage)
+- Exclusão de membro da equipe
+- Limite de membros por plano (SaaS Guard)
+
+
+========================================
+DASHBOARD — CLIENTES
+========================================
+- Listagem de todos os clientes com busca em tempo real
+- Busca por nome, email ou telefone
+- Card de cliente com nome, email, telefone e número de visitas
+- Perfil detalhado do cliente em painel lateral (drawer):
+  - Initials avatar gerado automaticamente
+  - Total gasto na barbearia
+  - Histórico completo de agendamentos
+  - Status de cada visita (Pendente, Confirmado, Concluído, Cancelado)
+  - Data e valor de cada serviço
+
+
+========================================
+DASHBOARD — FINANCEIRO
+========================================
+- Seleção de período: últimos 3, 6 ou 12 meses
+- Cards de resumo do período:
+  - Faturamento total com variação %
+  - Total de atendimentos
+  - Ticket médio
+- Gráfico de barras de faturamento mensal (Recharts)
+  - Tooltip com valor exato ao hover
+  - Cores por mês
+- Breakdown por categoria de serviço:
+  - Valor e percentual de cada categoria
+  - Barra de progresso visual por categoria
+- Exportação de relatório em CSV com todos os meses
+
+
+========================================
+DASHBOARD — CLUBE (Planos de Fidelidade)
+========================================
+- Criação de planos de assinatura/fidelidade para clientes:
+  - Nome, preço e período (Mensal, Trimestral, Anual)
+  - Lista de benefícios personalizados
+  - Escopo: barbearia inteira ou barbeiro específico
+- Edição e exclusão de planos
+- Visualização de membros ativos por plano
+- Cards com resumo de receita e membros por plano
+
+
+========================================
+DASHBOARD — PERSONALIZAR
+========================================
+Aba Branding:
+  - Upload de imagem de capa (banner da barbearia)
+  - Seleção de cor primária via presets ou hex customizado
+  - Presets: Âmbar, Vinho, Esmeralda, Índigo, Cobre, Branco
+  - Preview em tempo real das cores
+
+Aba Conteúdo:
+  - Nome da barbearia
+  - Descrição/bio
+  - Slogan
+
+Aba Contato:
+  - Telefone de contato
+  - Endereço
+  - Link do Instagram
+
+Aba Site:
+  - URL pública da barbearia (/b/slug)
+  - Botão de copiar link
+  - Abertura do site em nova aba
+  - Embed code (iframe) para usar em outros sites
+  - Slug personalizado da barbearia
+
+
+========================================
+DASHBOARD — CONFIGURAÇÕES
+========================================
+- Informações da barbearia (somente leitura, editáveis no Personalizar)
+- Integração com Instagram
+- Política de cancelamento:
+  - Habilitar/desabilitar cancelamento pelo cliente
+  - Janela de antecedência (1h, 2h, 4h, 6h, 12h, 24h, 48h, 3 dias)
+  - Permitir ou não reagendamento
+  - Taxa de cancelamento fora da janela (%)
+- Zona de perigo:
+  - Exclusão de conta com confirmação
+
+
+========================================
+DASHBOARD — ASSINATURA
+========================================
+- Exibição do plano atual (Trial, Starter, Pro, Enterprise)
+- Status da assinatura (Ativo, Trial, Pagamento Pendente, Cancelando, Cancelado)
+- Data de renovação ou encerramento do trial
+- Contador de dias restantes no trial
+- Botão de upgrade para plano superior via Stripe Checkout
+- Acesso ao portal do cliente Stripe (gerenciar cartão, cancelar, etc.)
+- Histórico de status de pagamento
+- Banner de sucesso após upgrade
+
+
+========================================
+AUTENTICAÇÃO & MULTI-TENANT
+========================================
+- Login e registro com email/senha
+- Recuperação de senha por email
+- OAuth callback (Google ou outros providers)
+- Guard SaaS: protege dashboard para usuários autenticados com plano ativo
+- Multi-tenant: cada barbearia é um tenant isolado com slug único
+- Contexto de tenant carregado automaticamente no login
+- Demo mode: visualização do produto sem cadastro
+
+
+========================================
+INFRA & INTEGRAÇÕES
+========================================
+- Supabase Auth (autenticação e sessão)
+- Supabase Database (PostgreSQL, RLS por tenant)
+- Supabase Storage (bucket barbershop-assets: avatars e capas)
+- Supabase Edge Functions:
+  - auth-login
+  - billing-create-checkout (Stripe)
+  - billing-create-portal (Stripe)
+  - billing-webhook (Stripe)
+  - send-email (Resend)
+  - invite-barber
+  - accept-invite
+- Stripe (assinaturas, checkout, portal do cliente, webhooks)
+- Resend (emails transacionais: convite de barbeiro, confirmação de agendamento)
+- Vercel (deploy)
+
+
+========================================
+PLANOS SAAS
+========================================
+- Trial (gratuito por período limitado)
+- Starter — funcionalidades básicas, limite de membros da equipe
+- Pro — sem limites, todas as funcionalidades
+- Enterprise — customizado

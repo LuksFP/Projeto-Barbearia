@@ -129,8 +129,11 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
   }
 
   // 'cancelling' = cancelamento agendado mas ainda com acesso até cancel_at
+  // 'trial' = apenas válido se trialEndsAt ainda não passou
   const hasActivePlan = account?.planStatus === 'active'
-    || account?.planStatus === 'trial'
+    || (account?.planStatus === 'trial'
+        && !!account?.trialEndsAt
+        && new Date(account.trialEndsAt) > new Date())
     || (account?.planStatus === 'cancelling'
         && !!account?.cancelAt
         && new Date(account.cancelAt) > new Date())

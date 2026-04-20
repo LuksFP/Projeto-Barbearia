@@ -93,8 +93,8 @@ const DashboardLayout = () => {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-body transition-all ${
                 isActive
-                  ? 'bg-amber-500/[0.12] text-amber-400 border border-amber-500/25 shadow-[inset_3px_0_0_0_theme(colors.amber.500)]'
-                  : 'text-white/55 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-gradient-to-r from-amber-400/[0.13] to-transparent text-amber-300 font-medium shadow-[inset_3px_0_0_0_#C9A84C]'
+                  : 'text-white/45 hover:text-white/80 hover:bg-white/[0.04]'
               }`
             }
           >

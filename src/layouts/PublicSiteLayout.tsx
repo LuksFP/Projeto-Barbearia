@@ -6,7 +6,7 @@ import { Outlet, Link, useParams } from 'react-router-dom'
 import { Menu, X, Scissors, Phone } from 'lucide-react'
 import { supabasePublic } from '@/lib/supabase-public'
 import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
-import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership } from '@/types/tenant'
+import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership, CancellationPolicy } from '@/types/tenant'
 import type { Tables } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -24,6 +24,7 @@ function mapBarbershop(row: BarbershopRow): Barbershop {
     coverImage: row.cover_image ?? undefined, plan: null,
     active: row.active, siteType: row.site_type as Barbershop['siteType'],
     customDomain: row.custom_domain ?? '', embedKey: row.embed_key,
+    cancellationPolicy: row.cancellation_policy as CancellationPolicy | null ?? null,
   }
 }
 

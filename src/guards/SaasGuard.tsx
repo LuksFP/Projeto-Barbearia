@@ -87,6 +87,10 @@ const SaasGuard = ({ children }: { children: React.ReactNode }) => {
     if (account?.planStatus === 'pending') {
       return <Navigate to={`/pagamento?plano=${account.plan ?? 'pro'}`} state={{ from: location }} replace />
     }
+    // Trial expirado: redireciona para planos com flag para exibir mensagem
+    if (account?.planStatus === 'trial') {
+      return <Navigate to="/planos?trial=expired" state={{ from: location }} replace />
+    }
     return <Navigate to="/planos" state={{ from: location }} replace />
   }
 

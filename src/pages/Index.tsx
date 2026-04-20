@@ -1,9 +1,10 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { ArrowRight, Check } from 'lucide-react'
 import { motion, useMotionTemplate, useMotionValue, useSpring } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { SAAS_PLANS } from '@/types/saas'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
 
 const proofStrip = [
   'Configuração inicial rápida',
@@ -176,6 +177,19 @@ const ParallaxCard = ({
 }
 
 const Index = () => {
+  const navigate = useNavigate()
+  const { isLoggedIn, hasActivePlan } = useSaasAccount()
+
+  const handlePlanCta = (planId: string) => {
+    if (isLoggedIn && hasActivePlan) {
+      navigate('/dashboard')
+    } else if (isLoggedIn && !hasActivePlan) {
+      navigate(`/pagamento?plano=${planId}`)
+    } else {
+      navigate(`/registrar?plano=${planId}`)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#efe6d7]">
       <section className="relative overflow-hidden px-6 pb-24 pt-36 sm:px-8 sm:pb-28 lg:px-12 lg:pt-40">
@@ -236,10 +250,8 @@ const Index = () => {
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <Button asChild className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
-                  <Link to="/registrar?plano=basic">
-                    Quero começar agora
-                  </Link>
+                <Button onClick={() => handlePlanCta('basic')} className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
+                  {isLoggedIn ? 'Acessar dashboard' : 'Quero começar agora'}
                 </Button>
                 <p className="text-[11px] uppercase tracking-[0.22em] text-[#746b5d] sm:text-xs">
                   Sem fidelidade • Cancele quando quiser
@@ -499,9 +511,9 @@ const Index = () => {
                         : 'liquid-glass-button text-[#e7ddcf]'
                     }`}
                   >
-                    <Link to={`/registrar?plano=${plan.id}`}>
-                      {plan.cta}
-                    </Link>
+                    <span onClick={() => handlePlanCta(plan.id)}>
+                      {isLoggedIn ? 'Acessar dashboard' : plan.cta}
+                    </span>
                   </Button>
                 </>
               )
@@ -563,10 +575,8 @@ const Index = () => {
               </ul>
             </ParallaxCard>
           </div>
-          <Button asChild className="liquid-glass-button mt-8 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
-            <Link to="/registrar?plano=pro">
-              Quero os bônus agora
-            </Link>
+          <Button onClick={() => handlePlanCta('pro')} className="liquid-glass-button mt-8 h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:px-10 sm:text-sm">
+            {isLoggedIn ? 'Acessar dashboard' : 'Quero os bônus agora'}
           </Button>
         </div>
       </section>
@@ -734,10 +744,8 @@ const Index = () => {
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button asChild className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:min-w-[250px] sm:px-10 sm:text-sm">
-              <Link to="/registrar?plano=pro">
-                Quero o plano Pro
-              </Link>
+            <Button onClick={() => handlePlanCta('pro')} className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5ead3] sm:h-14 sm:min-w-[250px] sm:px-10 sm:text-sm">
+              {isLoggedIn ? 'Acessar dashboard' : 'Quero o plano Pro'}
             </Button>
 
             <Button asChild variant="ghost" className="liquid-glass-button h-12 rounded-xl px-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#f1e7d8] sm:h-14 sm:min-w-[250px] sm:text-sm">

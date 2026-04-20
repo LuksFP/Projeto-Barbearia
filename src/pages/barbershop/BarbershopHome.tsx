@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, Check, ChevronLeft, Loader2, CheckCircle2, User, Calendar } from 'lucide-react'
+import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, Check, ChevronLeft, Loader2, CheckCircle2, User, Calendar, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
@@ -32,6 +32,13 @@ const TIME_SLOTS = [
 type BookStep = 'service' | 'barber' | 'datetime' | 'contact' | 'done'
 
 // ─── Booking Section ──────────────────────────────────────────────────────────
+
+function formatCancellationPolicy(policy: NonNullable<PublicSiteOutletCtx['barbershop']['cancellationPolicy']>) {
+  const fineStr = policy.fineType === 'fixed'
+    ? `R$ ${policy.fineValue.toFixed(0)}`
+    : `${policy.fineValue}% do valor do serviço`
+  return `Cancelamentos com menos de ${policy.freeWindowHours}h de antecedência estão sujeitos a multa de ${fineStr}.`
+}
 
 const BookingSection = ({
   barbershop,
@@ -360,6 +367,15 @@ const BookingSection = ({
               </div>
             )}
           </div>
+
+          {barbershop.cancellationPolicy?.enabled && (
+            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/8 border border-amber-500/20 mb-6">
+              <AlertCircle className="w-4 h-4 text-amber-400/70 shrink-0 mt-0.5" />
+              <p className="text-amber-400/80 text-xs font-body leading-relaxed">
+                {formatCancellationPolicy(barbershop.cancellationPolicy)}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-4 mb-6">
             <div>
