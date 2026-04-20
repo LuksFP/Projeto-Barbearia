@@ -36,6 +36,7 @@ const DashboardAssinatura = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [justUpgraded, setJustUpgraded] = useState(false)
+  const [planChangedTo, setPlanChangedTo] = useState<string | null>(null)
 
   useEffect(() => {
     if (searchParams.get('upgrade') === 'success') {
@@ -86,6 +87,7 @@ const DashboardAssinatura = () => {
         if (!res.ok) throw new Error(body.error ?? 'Erro ao trocar plano.')
         if (body.success) {
           await refreshAccount()
+          setPlanChangedTo(planId)
           setUpgradeLoading(null)
           return
         }
@@ -167,6 +169,15 @@ const DashboardAssinatura = () => {
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <p className="text-emerald-300 text-sm font-body">
             Pagamento confirmado! Seu plano foi atualizado. Se ainda aparecer o plano antigo, aguarde alguns segundos e recarregue a página.
+          </p>
+        </div>
+      )}
+
+      {planChangedTo && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <p className="text-emerald-300 text-sm font-body">
+            Plano alterado com sucesso! A diferença de valor foi calculada proporcionalmente e será aplicada na próxima fatura.
           </p>
         </div>
       )}
