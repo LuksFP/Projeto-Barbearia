@@ -82,12 +82,15 @@ function exportCSV(months: MonthRevenue[]) {
 const DashboardFinanceiro = () => {
   const { barbershop } = useTenant()
   const [period, setPeriod] = useState<Period>(6)
-  const [loading, setLoading] = useState(true)
+  // fetching = true apenas na primeira carga; refreshing = true nas subsequentes (mantém dados visíveis)
+  const [fetching, setFetching] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [byMonth, setByMonth] = useState<MonthRevenue[]>([])
   const [byBarber, setByBarber] = useState<{ barberId: string; barberName: string; total: number; count: number }[]>([])
   const [totalRevenue, setTotalRevenue] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const [avgTicket, setAvgTicket] = useState(0)
+  const hasData = byMonth.length > 0
 
   useEffect(() => {
     if (isDemoMode()) {
@@ -99,11 +102,15 @@ const DashboardFinanceiro = () => {
       setTotalCount(months.reduce((s, m) => s + Object.values(m.byCategory).reduce((a, b) => a + b, 0) / 40, 0))
       setAvgTicket(total > 0 ? total / Math.max(1, months.length * 3) : 0)
       setByBarber([])
-      setLoading(false)
+      setFetching(false)
       return
     }
     if (!barbershop) return
-    setLoading(true)
+
+    // Se já tem dados, faz refresh discreto (sem apagar o conteúdo)
+    if (hasData) setRefreshing(true)
+    else setFetching(true)
+
     appointmentRepository
       .getFinancials(barbershop.id, period)
       .then(d => {
@@ -114,8 +121,10 @@ const DashboardFinanceiro = () => {
         setAvgTicket(d.avgTicket)
       })
       .catch(() => toast({ title: 'Erro ao carregar financeiro', variant: 'destructive' }))
-      .finally(() => setLoading(false))
+      .finally(() => { setFetching(false); setRefreshing(false) })
   }, [barbershop?.id, period]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loading = fetching
 
   const lastMonth  = byMonth[byMonth.length - 1]
   const prevMonth  = byMonth[byMonth.length - 2]
@@ -155,6 +164,9 @@ const DashboardFinanceiro = () => {
               </button>
             ))}
           </div>
+          {refreshing && (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400/60" />
+          )}
           <button
             onClick={() => exportCSV(byMonth)}
             disabled={byMonth.length === 0}
@@ -167,9 +179,21 @@ const DashboardFinanceiro = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-white/30">
-          <Loader2 className="w-6 h-6 animate-spin mr-3" />
-          <span className="font-body text-sm">Carregando dados...</span>
+        /* Skeleton — primeira carga */
+        <div className="space-y-6 animate-pulse">
+          {/* KPI skeletons */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 rounded-2xl bg-white/[0.04] border border-white/5" />
+            ))}
+          </div>
+          {/* Chart skeleton */}
+          <div className="h-56 rounded-2xl bg-white/[0.04] border border-white/5" />
+          {/* Bottom skeletons */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="h-40 rounded-2xl bg-white/[0.04] border border-white/5" />
+            <div className="h-40 rounded-2xl bg-white/[0.04] border border-white/5" />
+          </div>
         </div>
       ) : byMonth.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
