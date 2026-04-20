@@ -57,9 +57,9 @@ const DashboardAssinatura = () => {
   const daysLeft = trialDaysLeft(account.trialEndsAt)
   const isDemo = isDemoMode()
 
-  const handleUpgrade = async (planId: string) => {
+  const handleChangePlan = async (planId: string) => {
     if (isDemo) {
-      setUpgradeError('Upgrade não disponível no modo demo.')
+      setUpgradeError('Mudança de plano não disponível no modo demo.')
       return
     }
     if (!accessToken) {
@@ -68,9 +68,38 @@ const DashboardAssinatura = () => {
     }
     setUpgradeError('')
     setUpgradeLoading(planId)
+
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL as string
+
+    // Se já tem assinatura ativa, tenta update direto (up ou downgrade sem novo checkout)
+    if (account.planStatus === 'active' || account.planStatus === 'cancelling') {
+      try {
+        const res = await fetch(`${baseUrl}/functions/v1/billing-update-subscription`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ plan: planId }),
+        })
+        const body = await res.json() as { success?: boolean; requiresCheckout?: boolean; error?: string }
+        if (!res.ok) throw new Error(body.error ?? 'Erro ao trocar plano.')
+        if (body.success) {
+          await refreshAccount()
+          setUpgradeLoading(null)
+          return
+        }
+        // requiresCheckout: true — cai no fluxo de checkout abaixo
+      } catch (e) {
+        setUpgradeError(e instanceof Error ? e.message : 'Erro ao trocar plano.')
+        setUpgradeLoading(null)
+        return
+      }
+    }
+
+    // Sem assinatura ativa (trial, pending, cancelled) — checkout normal
     try {
-      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-create-checkout`
-      const res = await fetch(fnUrl, {
+      const res = await fetch(`${baseUrl}/functions/v1/billing-create-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +115,7 @@ const DashboardAssinatura = () => {
       if (!res.ok) throw new Error(body.error ?? 'Erro ao criar sessão de checkout.')
       window.location.href = body.url!
     } catch (e) {
-      setUpgradeError(e instanceof Error ? e.message : 'Erro ao iniciar upgrade.')
+      setUpgradeError(e instanceof Error ? e.message : 'Erro ao iniciar checkout.')
       setUpgradeLoading(null)
     }
   }
@@ -286,8 +315,8 @@ const DashboardAssinatura = () => {
         </div>
       </motion.div>
 
-      {/* Upgrade */}
-      {account.plan !== 'premium' && (
+      {/* Mudar plano — aparece para todos, mostra planos diferentes do atual */}
+      {SAAS_PLANS.filter(p => p.id !== account.plan).length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -296,36 +325,43 @@ const DashboardAssinatura = () => {
         >
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
-            <h2 className="text-white font-semibold font-body">Fazer upgrade</h2>
+            <h2 className="text-white font-semibold font-body">Mudar plano</h2>
           </div>
           <p className="text-white/45 text-sm font-body">
-            Desbloqueie mais recursos expandindo seu plano.
+            Troque para qualquer plano. A diferença de valor é calculada proporcionalmente.
           </p>
           <div className="grid grid-cols-1 gap-3">
-            {SAAS_PLANS.filter(p => p.id !== account.plan).map(plan => (
-              <button
-                key={plan.id}
-                onClick={() => handleUpgrade(plan.id)}
-                disabled={upgradeLoading === plan.id}
-                className="flex items-center justify-between p-4 rounded-xl border border-[#262626] bg-[#0f0f0f] hover:border-amber-500/30 hover:bg-amber-500/[0.03] transition-all group text-left disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div>
-                  <p className="text-white text-sm font-semibold font-body group-hover:text-amber-400 transition-colors">
-                    {plan.name}
-                    {plan.highlight && (
-                      <span className="ml-2 text-xs text-amber-400 font-normal">{plan.highlight}</span>
-                    )}
-                  </p>
-                  <p className="text-white/40 text-xs font-body mt-0.5">
-                    R$ {plan.price.toFixed(2).replace('.', ',')} / {plan.period}
-                  </p>
-                </div>
-                {upgradeLoading === plan.id
-                  ? <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
-                  : <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-amber-400 transition-colors" />
-                }
-              </button>
-            ))}
+            {SAAS_PLANS.filter(p => p.id !== account.plan).map(plan => {
+              const currentPlan = SAAS_PLANS.find(p => p.id === account.plan)
+              const isDowngrade = currentPlan && plan.price < currentPlan.price
+              return (
+                <button
+                  key={plan.id}
+                  onClick={() => handleChangePlan(plan.id)}
+                  disabled={upgradeLoading === plan.id}
+                  className="flex items-center justify-between p-4 rounded-xl border border-[#262626] bg-[#0f0f0f] hover:border-amber-500/30 hover:bg-amber-500/[0.03] transition-all group text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div>
+                    <p className="text-white text-sm font-semibold font-body group-hover:text-amber-400 transition-colors">
+                      {plan.name}
+                      {plan.highlight && (
+                        <span className="ml-2 text-xs text-amber-400 font-normal">{plan.highlight}</span>
+                      )}
+                      {isDowngrade && (
+                        <span className="ml-2 text-xs text-white/30 font-normal">downgrade</span>
+                      )}
+                    </p>
+                    <p className="text-white/40 text-xs font-body mt-0.5">
+                      R$ {plan.price.toFixed(2).replace('.', ',')} / {plan.period}
+                    </p>
+                  </div>
+                  {upgradeLoading === plan.id
+                    ? <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
+                    : <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-amber-400 transition-colors" />
+                  }
+                </button>
+              )
+            })}
           </div>
           {upgradeError && (
             <p className="text-red-400 text-xs font-body text-center mt-2">{upgradeError}</p>
