@@ -100,7 +100,7 @@ const DashboardFinanceiro = () => {
       setByMonth(months)
       const total = months.reduce((s, m) => s + m.total, 0)
       setTotalRevenue(total)
-      setTotalCount(months.reduce((s, m) => s + Object.values(m.byCategory).reduce((a, b) => a + b, 0) / 40, 0))
+      setTotalCount(Math.round(months.reduce((s, m) => s + Object.values(m.byCategory).reduce((a, b) => a + b, 0) / 40, 0)))
       setAvgTicket(total > 0 ? total / Math.max(1, months.length * 3) : 0)
       setByBarber([])
       setFetching(false)
