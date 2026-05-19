@@ -5,6 +5,7 @@ import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
 import { toast } from '@/hooks/use-toast'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  AreaChart, Area, CartesianGrid,
 } from 'recharts'
 import {
   TrendingUp, TrendingDown, DollarSign, Scissors, Users,
@@ -95,7 +96,7 @@ const DashboardFinanceiro = () => {
   useEffect(() => {
     if (isDemoMode()) {
       const plan = getDemoPlan()
-      const months = plan ? getDemoFinancials(plan) : []
+      const months = (plan ? getDemoFinancials(plan) : []).slice(-period)
       setByMonth(months)
       const total = months.reduce((s, m) => s + m.total, 0)
       setTotalRevenue(total)
@@ -138,6 +139,14 @@ const DashboardFinanceiro = () => {
     color: CATEGORY_COLORS[cat] ?? '#6b7280',
   })).sort((a, b) => b.total - a.total)
   const catMax = byCategory[0]?.total ?? 1
+
+  const comparisonData = lastMonth && prevMonth
+    ? allCategories.map(cat => ({
+        cat,
+        [prevMonth.label]: prevMonth.byCategory[cat] ?? 0,
+        [lastMonth.label]: lastMonth.byCategory[cat] ?? 0,
+      }))
+    : []
 
   return (
     <div className="space-y-7 max-w-5xl">
@@ -276,7 +285,7 @@ const DashboardFinanceiro = () => {
             className="p-6 rounded-xl bg-[#141414] border border-[#252525]"
           >
             <p className="text-white/40 text-xs font-semibold uppercase tracking-widest font-body mb-6">
-              Receita mensal
+              Receita por mês
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={byMonth} barSize={28} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -306,6 +315,130 @@ const DashboardFinanceiro = () => {
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
+
+          {/* Gráfico de tendência */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.23 }}
+            className="p-6 rounded-xl bg-[#141414] border border-[#252525]"
+          >
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-widest font-body mb-6">
+              Tendência de crescimento
+            </p>
+            <ResponsiveContainer width="100%" height={150}>
+              <AreaChart data={byMonth} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#C9A84C" stopOpacity={0.28} />
+                    <stop offset="95%" stopColor="#C9A84C" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={v => v.slice(0, 3)}
+                />
+                <YAxis
+                  tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10, fontFamily: 'inherit' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={fmtK}
+                  width={38}
+                />
+                <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(201,168,76,0.3)', strokeWidth: 1 }} />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#C9A84C"
+                  strokeWidth={2}
+                  fill="url(#gradRevenue)"
+                  dot={{ fill: '#C9A84C', r: 3, strokeWidth: 0 }}
+                  activeDot={{ r: 5, fill: '#C9A84C', strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </motion.div>
+
+          {/* Comparação mensal por categoria */}
+          {comparisonData.length > 0 && lastMonth && prevMonth && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.26 }}
+              className="p-6 rounded-xl bg-[#141414] border border-[#252525]"
+            >
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+                <p className="text-white/40 text-xs font-semibold uppercase tracking-widest font-body">
+                  Comparação mensal por categoria
+                </p>
+                <div className="flex items-center gap-4 text-xs font-body">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-white/20 inline-block" />
+                    <span className="text-white/40">{prevMonth.label}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" />
+                    <span className="text-white/60">{lastMonth.label}</span>
+                  </span>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart
+                  data={comparisonData}
+                  barCategoryGap="30%"
+                  barGap={3}
+                  margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                >
+                  <XAxis
+                    dataKey="cat"
+                    tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11, fontFamily: 'inherit' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10, fontFamily: 'inherit' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={fmtK}
+                    width={38}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null
+                      return (
+                        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-xs font-body shadow-xl">
+                          <p className="text-white/50 mb-1">{label}</p>
+                          {payload.map((p, i) => {
+                            const delta = payload[1] && i === 1
+                              ? pct(p.value as number, (payload[0].value as number))
+                              : null
+                            return (
+                              <div key={i} className="flex items-center justify-between gap-4">
+                                <span style={{ color: p.color }}>{p.name}:</span>
+                                <span className="text-white/80 font-semibold">R$ {fmt(p.value as number)}</span>
+                                {delta !== null && (
+                                  <span className={delta >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                                    {delta >= 0 ? '+' : ''}{delta}%
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    }}
+                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  />
+                  <Bar dataKey={prevMonth.label} fill="rgba(255,255,255,0.15)" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey={lastMonth.label} fill="#C9A84C" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </motion.div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Por categoria */}
