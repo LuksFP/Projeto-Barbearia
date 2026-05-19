@@ -186,15 +186,15 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     const barbershopId = account?.barbershopId
     const userId       = account?.userId
 
-    // Sem barbershop_id ainda (conta legada ou slug-only) — fallback para lookup por slug
-    const resolveId = barbershopId
-      ? Promise.resolve(barbershopId)
-      : barbershopRepository.getBySlug(account?.barbershopSlug ?? '').then(bs => bs?.id ?? null)
-
     if (!account?.barbershopSlug && !barbershopId) {
       setIsLoading(false)
       return
     }
+
+    // Sem barbershop_id ainda (conta legada ou slug-only) — fallback para lookup por slug
+    const resolveId = barbershopId
+      ? Promise.resolve(barbershopId)
+      : barbershopRepository.getBySlug(account?.barbershopSlug ?? '').then(bs => bs?.id ?? null)
 
     setIsLoading(true)
 
