@@ -26,7 +26,9 @@ const EntrarSaas = () => {
     try {
       const result = await login(email, password)
       if (result === true) {
-        navigate('/dashboard')
+        // Hard reload garante que onAuthStateChange carrega a conta antes do SaasGuard rodar
+        window.location.replace('/dashboard')
+        return
       } else if (typeof result === 'object' && result.status === 'payment_required') {
         navigate(`/pagamento?plano=${result.plan ?? 'pro'}`)
       } else if (typeof result === 'object' && result.status === 'error') {
