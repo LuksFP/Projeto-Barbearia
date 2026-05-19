@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+.env*.local
+
+# Scripts e screenshots de teste/auditoria
+test-*.mjs
+audit-*.mjs
+*.png
