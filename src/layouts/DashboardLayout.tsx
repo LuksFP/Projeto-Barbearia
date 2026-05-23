@@ -19,8 +19,10 @@ import {
   Paintbrush2,
   CreditCard,
   BarChart2,
+  Clock,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const navItems = [
@@ -45,8 +47,16 @@ const ROLE_LABELS: Record<string, string> = {
 
 const DashboardLayout = () => {
   const { barbershop, tenantUser, userRole, isLoading } = useTenant()
+  const { account } = useSaasAccount()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
+
+  const trialDaysLeft = (() => {
+    if (account?.planStatus !== 'trial' || !account.trialEndsAt) return null
+    const diffMs = new Date(account.trialEndsAt).getTime() - Date.now()
+    if (diffMs <= 0) return null
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  })()
 
   if (isLoading) {
     return (
@@ -179,6 +189,24 @@ const DashboardLayout = () => {
             {sidebarOpen && <X className="w-4 h-4" />}
           </button>
         </div>
+
+        {/* Banner de trial */}
+        {trialDaysLeft !== null && (
+          <div className="flex items-center justify-between gap-3 px-5 py-2.5 bg-amber-500/[0.10] border-b border-amber-500/20 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <p className="text-amber-300 text-sm font-body truncate">
+                <span className="font-semibold">{trialDaysLeft} {trialDaysLeft === 1 ? 'dia' : 'dias'}</span> restante{trialDaysLeft !== 1 ? 's' : ''} no teste gratuito
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/planos')}
+              className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500 text-[#0a0a0a] text-xs font-semibold font-body hover:bg-amber-400 transition-colors"
+            >
+              Assinar agora
+            </button>
+          </div>
+        )}
 
         {/* Página */}
         <main className="flex-1 overflow-y-auto scrollbar-none p-6">

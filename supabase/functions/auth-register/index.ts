@@ -57,7 +57,6 @@ Deno.serve(async (req) => {
     p_barb_name:  barbershopName,
     p_barb_slug:  barbershopSlug,
     p_embed_key:  embedKey,
-    p_plan:       plan,
   })
 
   if (rpcError) {

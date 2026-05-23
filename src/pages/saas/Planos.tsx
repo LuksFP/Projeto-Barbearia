@@ -3,6 +3,7 @@ import { Check, Crown, Zap, Sparkles, ArrowLeft, CalendarCheck, Globe, Star } fr
 import { SAAS_PLANS } from '@/types/saas'
 import type { SaasPlan } from '@/types/saas'
 import { motion } from 'framer-motion'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
 
 const PLAN_ICONS = {
   basic: CalendarCheck,
@@ -27,8 +28,19 @@ const Planos = () => {
   const [searchParams] = useSearchParams()
   const planoAtual = searchParams.get('plano') as SaasPlan | null
   const trialExpired = searchParams.get('trial') === 'expired'
+  const { account } = useSaasAccount()
 
   const handleSelect = (plan: SaasPlan) => {
+    if (account) {
+      const trialExpiredNow = account.planStatus === 'trial'
+        && !!account.trialEndsAt
+        && new Date(account.trialEndsAt) <= new Date()
+      // Conta existente sem acesso ativo → vai direto pro pagamento
+      if (trialExpiredNow || !['active', 'trial'].includes(account.planStatus ?? '')) {
+        navigate(`/pagamento?plano=${plan}`)
+        return
+      }
+    }
     navigate(`/registrar?plano=${plan}`)
   }
 

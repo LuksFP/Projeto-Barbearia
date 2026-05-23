@@ -42,11 +42,11 @@ const Registrar = () => {
 
   // Usa <Navigate> declarativo — só roda após o React commitar o estado do signup,
   // evitando o race condition de navigate() chamado no meio de um await
-  if (!isLoading && isLoggedIn && hasActivePlan && account?.plan) {
+  if (!isLoading && isLoggedIn && hasActivePlan) {
     return <Navigate to="/dashboard" replace />
   }
-  if (!isLoading && isLoggedIn && !hasActivePlan) {
-    return <Navigate to={`/pagamento?plano=${account?.plan ?? plano}`} replace />
+  if (!isLoading && isLoggedIn && !hasActivePlan && account?.plan) {
+    return <Navigate to={`/pagamento?plano=${account.plan}`} replace />
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,8 +71,8 @@ const Registrar = () => {
     setLoading(true)
     try {
       await signup({ ...form, plan: plano })
-      // window.location garante navegação mesmo com race conditions do React Router
-      window.location.replace(`/pagamento?plano=${plano}`)
+      // Após signup o account tem planStatus='trial' e hasActivePlan=true → vai direto ao dashboard
+      window.location.replace('/dashboard')
     } catch (signupError) {
       setLoading(false)
       setError(
@@ -106,7 +106,7 @@ const Registrar = () => {
       <div className="shrink-0 border-b border-white/5">
         <div className="max-w-xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
-            {['Plano', 'Cadastro', 'Pagamento'].map((step, i) => (
+            {['Plano', 'Cadastro', 'Dashboard'].map((step, i) => (
               <div key={step} className="flex items-center gap-3 flex-1">
                 <div className="flex items-center gap-2">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-heading ${
@@ -155,7 +155,7 @@ const Registrar = () => {
 
             <h1 className="font-heading text-3xl tracking-wide text-white mb-2">CRIAR CONTA</h1>
             <p className="text-white/40 text-sm font-body mb-8">
-              Sua conta fica pendente até a confirmação do pagamento no próximo passo.
+              Acesso imediato ao dashboard. 2 dias grátis, sem precisar de cartão agora.
             </p>
 
           <button
@@ -281,7 +281,7 @@ const Registrar = () => {
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold font-body text-sm tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
-                {loading ? 'Criando conta...' : 'Criar conta e ir para pagamento →'}
+                {loading ? 'Criando conta...' : 'Começar 2 dias grátis →'}
               </button>
             </form>
 
