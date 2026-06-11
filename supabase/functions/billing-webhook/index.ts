@@ -47,8 +47,27 @@ Deno.serve(async (req) => {
 
   const supabase = createAdminClient()
 
+  // ── Idempotência ────────────────────────────────────────────────────────────
+  // O Stripe pode reenviar o mesmo evento. Fazemos o "claim" do event.id:
+  // se já existe, ignoramos sem reprocessar (evita e-mail/ação duplicada).
+  const { error: dupErr } = await supabase
+    .from('processed_stripe_events')
+    .insert({ event_id: event.id, type: event.type })
+
+  if (dupErr) {
+    if (dupErr.code === '23505') {
+      // unique_violation → evento já processado
+      console.log(`Evento duplicado ignorado: ${event.id}`)
+      return json({ received: true, duplicate: true })
+    }
+    // Falha ao registrar → retorna 500 para o Stripe reenviar depois
+    console.error('idempotency insert error:', dupErr)
+    return err('Idempotency store error', 500)
+  }
+
   // ── Handlers ──────────────────────────────────────────────────────────────
 
+  try {
   switch (event.type) {
 
     // Pagamento concluído → ativa o plano
@@ -263,6 +282,12 @@ Deno.serve(async (req) => {
 
     default:
       console.log(`Unhandled event: ${event.type}`)
+  }
+  } catch (e) {
+    // Erro inesperado no handler — desfaz o claim para o Stripe reenviar o evento
+    console.error('webhook handler error, revertendo claim de idempotência:', e)
+    await supabase.from('processed_stripe_events').delete().eq('event_id', event.id)
+    return err('Handler error', 500)
   }
 
   // Stripe exige 200 rápido para não reenviar o evento
