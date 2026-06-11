@@ -148,7 +148,9 @@ Deno.serve(async (req) => {
       cancel_url: cancelUrl,
       locale: 'pt-BR',
       billing_address_collection: 'auto',
-      automatic_payment_methods: { enabled: true },
+      // Sem payment_method_types: o Checkout usa automaticamente os métodos
+      // habilitados no dashboard do Stripe. (automatic_payment_methods é param
+      // de PaymentIntent, não de Checkout Session — causava erro 500 na criação.)
       client_reference_id: appointment.id,
       metadata: {
         appointment_id: appointment.id,
