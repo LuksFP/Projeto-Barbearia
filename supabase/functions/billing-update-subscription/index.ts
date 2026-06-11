@@ -81,9 +81,11 @@ Deno.serve(async (req) => {
   })
 
   // Atualiza nosso banco imediatamente (o webhook vai confirmar depois)
+  // Persiste stripe_subscription_id: sem ele, invoice.payment_failed não acha
+  // a conta e o cliente inadimplente nunca é rebaixado (assinatura órfã).
   await supabase
     .from('saas_accounts')
-    .update({ plan, plan_status: 'active' })
+    .update({ plan, plan_status: 'active', stripe_subscription_id: subscription.id })
     .eq('id', account.id)
 
   return json({ success: true })
