@@ -328,20 +328,22 @@ const DashboardAgenda = () => {
       {/* Modal — Novo agendamento */}
       <AnimatePresence>
         {modalOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-40"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div
+              className="absolute inset-0 bg-black/70"
               onClick={() => setModalOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.97 }}
+              initial={{ y: 24, scale: 0.97 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 12, scale: 0.97 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 p-6 overflow-y-auto scrollbar-none max-h-[90vh]"
+              className="relative w-full max-w-md bg-[#111] border border-[#222] rounded-2xl p-6 overflow-y-auto scrollbar-none max-h-[90vh]"
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-heading text-xl tracking-wide text-white">NOVO AGENDAMENTO</h2>
@@ -446,7 +448,7 @@ const DashboardAgenda = () => {
                 </button>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
