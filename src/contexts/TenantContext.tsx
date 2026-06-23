@@ -34,6 +34,12 @@ interface TenantContextType {
   userRole: BarbershopRole | null
   canAccess: (minRole: BarbershopRole) => boolean
   updateBarbershop: (updates: Partial<Barbershop>) => Promise<void>
+  addClient: (input: {
+    name: string
+    phone: string
+    email?: string
+    membershipType: BarbershopClient['membershipType']
+  }) => Promise<void>
   updateServices: (services: BarbershopService[]) => void
   updateBarbers: (barbers: BarbershopBarber[]) => void
   updateMemberships: (memberships: BarbershopMembership[]) => void
@@ -254,6 +260,43 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     setBarbershop(mapBarbershop(row))
   }, [barbershop])
 
+  const addClient = useCallback(async (input: {
+    name: string
+    phone: string
+    email?: string
+    membershipType: BarbershopClient['membershipType']
+  }) => {
+    if (!barbershop) throw new Error('Barbearia não carregada')
+    const byName = (a: BarbershopClient, b: BarbershopClient) => a.name.localeCompare(b.name, 'pt-BR')
+
+    // Modo demo: só estado local, sem tocar no banco
+    if (isDemoMode()) {
+      const demo: BarbershopClient = {
+        id: `demo-client-${Date.now()}`,
+        barbershopId: barbershop.id,
+        name: input.name.trim(),
+        phone: input.phone.trim(),
+        email: input.email?.trim() || undefined,
+        membershipType: input.membershipType,
+        totalVisits: 0,
+        lastVisit: '',
+      }
+      setClients(prev => [...prev, demo].sort(byName))
+      return
+    }
+
+    const row = await clientRepository.upsertByPhone({
+      barbershop_id: barbershop.id,
+      name: input.name.trim(),
+      phone: input.phone.trim(),
+      email: input.email?.trim() || null,
+      membership_type: input.membershipType,
+    })
+    const mapped = mapClient(row)
+    // upsert por telefone: substitui se já existir, senão adiciona
+    setClients(prev => [...prev.filter(c => c.id !== mapped.id), mapped].sort(byName))
+  }, [barbershop])
+
   const updateServices = useCallback((next: BarbershopService[]) => setServices(next), [])
   const updateBarbers = useCallback((next: BarbershopBarber[]) => setBarbers(next), [])
   const updateMemberships = useCallback((next: BarbershopMembership[]) => setMemberships(next), [])
@@ -283,6 +326,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       userRole,
       canAccess,
       updateBarbershop,
+      addClient,
       updateServices,
       updateBarbers,
       updateMemberships,

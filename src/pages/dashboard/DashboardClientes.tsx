@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star } from 'lucide-react'
+import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
@@ -179,12 +179,128 @@ const ClientDrawer = ({
   )
 }
 
+// ─── Modal de novo cliente ────────────────────────────────────────────────────
+
+const AddClientModal = ({ onClose }: { onClose: () => void }) => {
+  const { addClient } = useTenant()
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [membership, setMembership] = useState<BarbershopClient['membershipType']>(null)
+  const [saving, setSaving] = useState(false)
+
+  const canSave = name.trim().length >= 2 && phone.trim().length >= 8 && !saving
+
+  const handleSave = async () => {
+    if (!canSave) return
+    setSaving(true)
+    try {
+      await addClient({ name, phone, email, membershipType: membership })
+      toast({ title: 'Cliente adicionado', description: name.trim() })
+      onClose()
+    } catch (e) {
+      toast({
+        title: 'Erro ao adicionar cliente',
+        description: e instanceof Error ? e.message : undefined,
+        variant: 'destructive',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const fieldClass =
+    'w-full px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/30 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <motion.div
+        initial={{ y: 12, scale: 0.96 }}
+        animate={{ y: 0, scale: 1 }}
+        exit={{ y: 12, scale: 0.96 }}
+        transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+        className="relative w-full max-w-md bg-[#0f0f0f] border border-[#222] rounded-2xl shadow-2xl overflow-y-auto scrollbar-none max-h-[90vh]"
+      >
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#1e1e1e]">
+        <h2 className="text-white font-heading text-xl tracking-wide">NOVO CLIENTE</h2>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="px-6 py-5 space-y-3">
+        <div>
+          <label className="text-white/40 text-xs font-body block mb-1.5">Nome *</label>
+          <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="Nome do cliente" className={fieldClass} />
+        </div>
+        <div>
+          <label className="text-white/40 text-xs font-body block mb-1.5">Telefone *</label>
+          <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(11) 99999-9999" inputMode="tel" className={fieldClass} />
+        </div>
+        <div>
+          <label className="text-white/40 text-xs font-body block mb-1.5">Email</label>
+          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com (opcional)" inputMode="email" className={fieldClass} />
+        </div>
+        <div>
+          <label className="text-white/40 text-xs font-body block mb-1.5">Plano</label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { v: null, l: 'Sem plano' },
+              { v: 'standard', l: 'Standard' },
+              { v: 'vip', l: 'VIP' },
+            ] as { v: BarbershopClient['membershipType']; l: string }[]).map(opt => (
+              <button
+                key={opt.l}
+                onClick={() => setMembership(opt.v)}
+                className={`py-2.5 rounded-xl text-xs font-body border transition-all ${
+                  membership === opt.v
+                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                    : 'bg-[#161616] border-[#262626] text-white/50 hover:border-[#333]'
+                }`}
+              >
+                {opt.l}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 px-6 py-4 border-t border-[#1e1e1e]">
+        <button
+          onClick={onClose}
+          className="flex-1 py-3 rounded-xl border border-[#262626] text-white/60 text-sm font-body hover:bg-white/5 transition-all"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={!canSave}
+          className="flex-1 py-3 rounded-xl bg-amber-500 text-black text-sm font-body font-semibold hover:bg-amber-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Adicionar'}
+        </button>
+      </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 const DashboardClientes = () => {
   const { clients, barbershop } = useTenant()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<BarbershopClient | null>(null)
+  const [adding, setAdding] = useState(false)
 
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -193,9 +309,18 @@ const DashboardClientes = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div>
-        <p className="text-white/30 text-sm font-body mb-1">Base de clientes</p>
-        <h1 className="font-heading text-3xl tracking-wide text-white">CLIENTES</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-white/30 text-sm font-body mb-1">Base de clientes</p>
+          <h1 className="font-heading text-3xl tracking-wide text-white">CLIENTES</h1>
+        </div>
+        <button
+          onClick={() => setAdding(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-black text-sm font-body font-semibold hover:bg-amber-400 transition-all shrink-0"
+        >
+          <UserPlus className="w-4 h-4" />
+          Novo cliente
+        </button>
       </div>
 
       {/* Stats rápidos */}
@@ -277,6 +402,11 @@ const DashboardClientes = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de novo cliente */}
+      <AnimatePresence>
+        {adding && <AddClientModal onClose={() => setAdding(false)} />}
+      </AnimatePresence>
 
       {/* Backdrop + drawer */}
       <AnimatePresence>
