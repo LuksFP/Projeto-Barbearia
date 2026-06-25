@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
+import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -9,12 +10,25 @@ import {
 } from 'recharts'
 import {
   TrendingUp, TrendingDown, DollarSign, Scissors, Users,
-  Download, Loader2,
+  Download, Loader2, Sparkles,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { MonthRevenue } from '@/types/tenant'
 
 type Period = 3 | 6 | 12
+
+// Insight de IA (gerado pela edge function financeiro-insights / Groq)
+type Insight = { tone: 'positivo' | 'alerta' | 'neutro'; text: string }
+
+const INSIGHT_TTL = 1000 * 60 * 60 * 3 // 3h de cache local
+
+// Hash simples e estável dos números, pra invalidar o cache quando mudarem
+function hashNumbers(obj: unknown) {
+  const s = JSON.stringify(obj)
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return String(h >>> 0)
+}
 
 const CATEGORY_COLORS: Record<string, string> = {
   Corte:       '#C9A84C',
@@ -93,6 +107,11 @@ const DashboardFinanceiro = () => {
   const [avgTicket, setAvgTicket] = useState(0)
   const hasData = byMonth.length > 0
 
+  // Insights de IA — exclusivo Pro/Premium
+  const [insights, setInsights] = useState<Insight[]>([])
+  const [insightsLoading, setInsightsLoading] = useState(false)
+  const aiEnabled = barbershop?.plan === 'pro' || barbershop?.plan === 'premium'
+
   useEffect(() => {
     if (isDemoMode()) {
       const plan = getDemoPlan()
@@ -124,6 +143,49 @@ const DashboardFinanceiro = () => {
       .catch(() => toast({ title: 'Erro ao carregar financeiro', variant: 'destructive' }))
       .finally(() => { setFetching(false); setRefreshing(false) })
   }, [barbershop?.id, period]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Gera os insights de IA quando os números mudam (só Pro/Premium)
+  useEffect(() => {
+    if (!aiEnabled || byMonth.length === 0) { setInsights([]); return }
+
+    // Demo: insights mockados, sem chamar a API
+    if (isDemoMode()) {
+      setInsights([
+        { tone: 'positivo', text: 'Seu faturamento vem crescendo nos últimos meses — mantenha o que está funcionando.' },
+        { tone: 'neutro', text: 'Cortes puxam a maior parte da receita; combos têm espaço pra crescer.' },
+        { tone: 'alerta', text: 'Há meses com queda pontual — vale promover horários ociosos para equilibrar.' },
+      ])
+      return
+    }
+
+    const payload = { months: period, totalRevenue, avgTicket, totalCount, byMonth, byBarber }
+    const cacheKey = `bo:insights:${barbershop?.id}:${period}:${hashNumbers({ byMonth, byBarber })}`
+
+    // Cache local — evita rechamar a IA com os mesmos números
+    try {
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        const { at, data } = JSON.parse(cached)
+        if (Date.now() - at < INSIGHT_TTL && Array.isArray(data)) { setInsights(data); return }
+      }
+    } catch { /* cache inválido — ignora */ }
+
+    let cancelled = false
+    setInsightsLoading(true)
+    supabase.functions
+      .invoke('financeiro-insights', { body: payload })
+      .then(({ data, error }) => {
+        if (cancelled) return
+        const list: Insight[] = (!error && Array.isArray(data?.insights)) ? data.insights : []
+        setInsights(list)
+        if (list.length) {
+          try { localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), data: list })) } catch { /* quota — ignora */ }
+        }
+      })
+      .finally(() => { if (!cancelled) setInsightsLoading(false) })
+
+    return () => { cancelled = true }
+  }, [byMonth, byBarber, totalRevenue, avgTicket, totalCount, period, aiEnabled, barbershop?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loading = fetching
 
@@ -214,6 +276,39 @@ const DashboardFinanceiro = () => {
         </div>
       ) : (
         <>
+          {/* Resumo de IA — exclusivo Pro/Premium */}
+          {aiEnabled && (insightsLoading || insights.length > 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-5 rounded-xl bg-gradient-to-br from-amber-500/[0.07] to-[#141414] border border-amber-500/20"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <p className="text-white/70 text-xs font-semibold uppercase tracking-widest font-body">
+                  Resumo do mês · IA
+                </p>
+                {insightsLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400/60" />}
+              </div>
+              {insightsLoading && insights.length === 0 ? (
+                <p className="text-white/40 text-sm font-body">Analisando seus números…</p>
+              ) : (
+                <ul className="space-y-2">
+                  {insights.map((ins, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm font-body text-white/75">
+                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
+                        ins.tone === 'positivo' ? 'bg-emerald-400'
+                        : ins.tone === 'alerta' ? 'bg-red-400'
+                        : 'bg-white/40'
+                      }`} />
+                      {ins.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          )}
+
           {/* KPIs */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
