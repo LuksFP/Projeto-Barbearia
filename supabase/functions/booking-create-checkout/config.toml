@@ -1,2 +1,0 @@
-[functions.booking-create-checkout]
-verify_jwt = false

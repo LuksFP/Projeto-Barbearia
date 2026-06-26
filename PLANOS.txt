@@ -1,0 +1,80 @@
+========================================
+   BARBEROS - PLANOS (JEITO FÁCIL)
+========================================
+
+Resumo rápido: o que muda de um plano pro outro é o SITE.
+- Básico  -> só a agenda (nada de site)
+- Pro     -> agenda + um site pronto no endereço do BarberOS
+- Premium -> agenda + site com a sua cara + domínio próprio
+
+
+----------------------------------------
+1) BÁSICO  ->  R$ 19,90 / mês
+----------------------------------------
+Pra quem quer só organizar a agenda, sem complicação.
+
+O que tem:
+  - Agenda online (cliente marca horário sozinho, 24h)
+  - Até 2 barbeiros
+  - Cadastro e gestão de clientes
+  - Confirmação por WhatsApp
+  - Suporte por email
+
+O que NÃO tem:
+  - Site público (sua barbearia não fica na internet)
+
+
+----------------------------------------
+2) PRO  ->  R$ 59,90 / mês   (MAIS POPULAR)
+----------------------------------------
+Pra quem quer a agenda E aparecer na internet rápido.
+
+Tem tudo do Básico, e MAIS:
+  - Barbeiros ILIMITADOS
+  - Site pronto no ar em minutos
+    (endereço: barberos.io/b/sua-barbearia)
+  - Personalizar topo do site, serviços e equipe
+  - Clube VIP e assinaturas (fidelizar cliente)
+  - Relatórios de desempenho
+  - Suporte prioritário
+
+
+----------------------------------------
+3) PREMIUM  ->  R$ 79,90 / mês   (TOP)
+----------------------------------------
+Pra quem quer uma identidade completa e profissional.
+
+Tem tudo do Pro, e MAIS:
+  - Site PERSONALIZADO (design exclusivo, não é template)
+  - Domínio próprio INCLUSO (ex: suabarbearia.com.br)
+  - SEO local configurado (aparece melhor no Google)
+  - Onboarding dedicado (ajuda pra configurar tudo)
+  - Gerente de conta
+
+
+----------------------------------------
+   COMPARAÇÃO LADO A LADO
+----------------------------------------
+
+                            BÁSICO    PRO       PREMIUM
+                            R$19,90   R$59,90   R$79,90
+Agenda online                 SIM       SIM       SIM
+Gestão de clientes            SIM       SIM       SIM
+Confirmação WhatsApp          SIM       SIM       SIM
+Barbeiros                     até 2   ilimitado ilimitado
+Site público                  NÃO     genérico  exclusivo
+Domínio próprio               NÃO       NÃO       SIM
+SEO no Google                 NÃO       NÃO       SIM
+Clube VIP / assinaturas       NÃO       SIM       SIM
+Relatórios                    NÃO       SIM       SIM
+Suporte                       email   prioritário gerente
+
+
+----------------------------------------
+   COMO ESCOLHER (REGRA SIMPLES)
+----------------------------------------
+- "Só quero organizar meus horários"      -> BÁSICO
+- "Quero um site rápido e barato"          -> PRO
+- "Quero site profissional com meu domínio"-> PREMIUM
+
+Sem taxa de adesão. Sem contrato mínimo. Cancela quando quiser, sem multa.

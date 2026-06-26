@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { supabasePublic } from '@/lib/supabase-public'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Calendar, Clock, Scissors, CheckCircle2, XCircle, AlertCircle, Star, ArrowLeft, Loader2 } from 'lucide-react'
+import { Search, Calendar, Clock, Scissors, AlertCircle, Star, ArrowLeft, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -15,7 +15,6 @@ type AptDisplay = {
   barber_name: string
   rating: number | null
   review: string | null
-  payment_status?: string | null
   barbershop_id?: string
 }
 
@@ -36,23 +35,6 @@ const StatusBadge = ({ status }: { status: string }) => {
   )
 }
 
-const PaymentBadge = ({ status }: { status?: string | null }) => {
-  if (!status || status === 'unpaid') return null
-  const map: Record<string, { label: string; color: string }> = {
-    paid:      { label: 'Pago',           color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-    pending:   { label: 'Pagamento pendente', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-    failed:    { label: 'Pagamento falhou',   color: 'text-red-400 bg-red-500/10 border-red-500/20' },
-    cancelled: { label: 'Pagamento cancelado', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
-  }
-  const s = map[status]
-  if (!s) return null
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-body font-medium ${s.color}`}>
-      {s.label}
-    </span>
-  )
-}
-
 const ConsultaAgendamento = () => {
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
@@ -65,7 +47,6 @@ const ConsultaAgendamento = () => {
   const [rating, setRating] = useState(0)
   const [review, setReview] = useState('')
   const [submittingRating, setSubmittingRating] = useState(false)
-  const paymentResult = searchParams.get('payment')
 
   const runSearch = async (e?: string, p?: string, showError = true) => {
     const em = e ?? email
@@ -129,33 +110,6 @@ const ConsultaAgendamento = () => {
       </div>
 
       <div className="max-w-2xl mx-auto px-6 py-12">
-        {/* Banner pagamento */}
-        <AnimatePresence>
-          {paymentResult === 'success' && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-8"
-            >
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-              <div>
-                <p className="text-emerald-400 text-sm font-semibold font-body">Pagamento confirmado!</p>
-                <p className="text-emerald-400/60 text-xs font-body">Seu agendamento foi registrado. Veja os detalhes abaixo.</p>
-              </div>
-            </motion.div>
-          )}
-          {paymentResult === 'cancelled' && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 mb-8"
-            >
-              <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-              <p className="text-red-400 text-sm font-body">Pagamento cancelado. Tente agendar novamente.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <h1 className="font-heading text-3xl tracking-wide text-white mb-2">MEUS AGENDAMENTOS</h1>
         <p className="text-white/40 text-sm font-body mb-8">Informe email ou telefone para consultar.</p>
 
@@ -221,7 +175,6 @@ const ConsultaAgendamento = () => {
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <StatusBadge status={apt.status} />
-                        <PaymentBadge status={apt.payment_status} />
                       </div>
                     </div>
 

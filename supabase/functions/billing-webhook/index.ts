@@ -115,58 +115,6 @@ Deno.serve(async (req) => {
         break
       }
 
-      if (session.mode === 'payment') {
-        const appointmentId = session.metadata?.appointment_id
-        if (!appointmentId) {
-          console.error('Missing appointment_id metadata')
-          break
-        }
-
-        if (session.payment_status !== 'paid') {
-          console.log(`Skipping booking confirmation for unpaid session ${session.id}`)
-          break
-        }
-
-        const paymentIntentId = typeof session.payment_intent === 'string'
-          ? session.payment_intent
-          : null
-
-        const { error: updateError } = await supabase
-          .from('appointments')
-          .update({
-            status: 'confirmed',
-            payment_status: 'paid',
-            payment_method: 'stripe',
-            stripe_checkout_session_id: session.id,
-            stripe_payment_intent_id: paymentIntentId,
-            paid_at: new Date().toISOString(),
-          })
-          .eq('id', appointmentId)
-
-        if (updateError) {
-          console.error('booking payment update error:', updateError)
-          break
-        }
-
-        const clientEmail = session.metadata?.client_email || session.customer_details?.email
-        if (clientEmail) {
-          await supabase.functions.invoke('send-email', {
-            body: {
-              type: 'booking_confirmation',
-              to: clientEmail,
-              clientName: session.metadata?.client_name ?? '',
-              barbershopName: session.metadata?.barbershop_name ?? 'BarberOS',
-              serviceName: session.metadata?.service_name ?? '',
-              barberName: session.metadata?.barber_name ?? 'A definir',
-              date: session.metadata?.date ?? '',
-              time: session.metadata?.time ?? '',
-              barbershopSlug: session.metadata?.barbershop_slug ?? '',
-            },
-          }).catch(e => console.error('booking confirmation email failed:', e))
-        }
-        break
-      }
-
       break
     }
 
@@ -258,25 +206,6 @@ Deno.serve(async (req) => {
           body: { type: 'cancellation', to: emailTo, ownerName: account.owner_name },
         }).catch(e => console.error('cancellation email error:', e))
       }
-      break
-    }
-
-    case 'checkout.session.expired': {
-      const session = event.data.object as Stripe.Checkout.Session
-      if (session.mode !== 'payment') break
-
-      const appointmentId = session.metadata?.appointment_id
-      if (!appointmentId) break
-
-      const { error } = await supabase
-        .from('appointments')
-        .update({
-          status: 'cancelled',
-          payment_status: 'cancelled',
-        })
-        .eq('id', appointmentId)
-
-      if (error) console.error('booking expired update error:', error)
       break
     }
 

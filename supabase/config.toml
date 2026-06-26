@@ -41,9 +41,6 @@ verify_jwt = false
 [functions.billing-webhook]
 verify_jwt = false
 
-[functions.booking-create-checkout]
-verify_jwt = false
-
 [functions.accept-invite]
 verify_jwt = false
 
