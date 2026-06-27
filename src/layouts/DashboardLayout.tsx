@@ -24,6 +24,7 @@ import {
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { motion, AnimatePresence } from 'framer-motion'
+import FeatureAnnouncementModal from '@/components/FeatureAnnouncementModal'
 
 const navItems = [
   { to: '/dashboard', label: 'Visão Geral', icon: LayoutDashboard, end: true },
@@ -213,6 +214,9 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Aviso de feature nova (uma vez por conta) */}
+      <FeatureAnnouncementModal />
     </div>
   )
 }

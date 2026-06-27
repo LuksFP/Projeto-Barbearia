@@ -458,6 +458,7 @@ export type Database = {
           plan: string | null
           plan_started_at: string | null
           plan_status: string | null
+          seen_announcements: string[]
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           trial_ends_at: string | null
@@ -474,6 +475,7 @@ export type Database = {
           plan?: string | null
           plan_started_at?: string | null
           plan_status?: string | null
+          seen_announcements?: string[]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
@@ -490,6 +492,7 @@ export type Database = {
           plan?: string | null
           plan_started_at?: string | null
           plan_status?: string | null
+          seen_announcements?: string[]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
@@ -547,6 +550,7 @@ export type Database = {
     }
     Functions: {
       my_barbershop_ids: { Args: never; Returns: string[] }
+      mark_announcement_seen: { Args: { p_key: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
