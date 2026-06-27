@@ -1,7 +1,7 @@
 import {
   CalendarDays, Users, TrendingUp, TrendingDown, Crown,
   Clock, CheckCircle2, AlertCircle, Globe, Link2,
-  ExternalLink, PartyPopper, DollarSign,
+  ExternalLink, PartyPopper, DollarSign, Copy, Check,
 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useTenant } from '@/contexts/TenantContext'
@@ -192,6 +192,24 @@ const DashboardOverview = () => {
   const navigate = useNavigate()
   const [showSuccess, setShowSuccess] = useState(searchParams.get('checkout') === 'success')
   const [financialMonths, setFinancialMonths] = useState<MonthRevenue[]>([])
+  const [copiedLink, setCopiedLink] = useState(false)
+
+  // Só os planos com site público (Pro/Premium) têm link para copiar
+  const hasSite = account?.plan === 'pro' || account?.plan === 'premium'
+  const publicUrl = barbershop?.siteType === 'external' && barbershop.customDomain
+    ? `https://${barbershop.customDomain}`
+    : `${window.location.origin}/b/${barbershop?.slug ?? ''}`
+
+  const copyPublicLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicUrl)
+      setCopiedLink(true)
+      toast({ title: 'Link copiado!', description: publicUrl })
+      setTimeout(() => setCopiedLink(false), 2000)
+    } catch {
+      toast({ title: 'Não foi possível copiar o link', variant: 'destructive' })
+    }
+  }
 
   useEffect(() => {
     if (!showSuccess) return
@@ -292,6 +310,16 @@ const DashboardOverview = () => {
               : <>Site genérico — <span className="text-white/50 font-mono text-xs">barberos.io/b/{barbershop?.slug}</span></>}
           </p>
         </div>
+        {hasSite && (
+          <button
+            onClick={copyPublicLink}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/40 hover:text-white hover:border-[#333] text-xs font-body transition-all shrink-0"
+          >
+            {copiedLink
+              ? <><Check className="w-3 h-3 text-emerald-400" />Copiado</>
+              : <><Copy className="w-3 h-3" />Copiar link</>}
+          </button>
+        )}
         <a
           href={barbershop?.siteType === 'external' && barbershop.customDomain
             ? `https://${barbershop.customDomain}`

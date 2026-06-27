@@ -540,15 +540,25 @@ const team = await BarberOS.getTeam()`
                     <p className="text-white/30 text-xs font-body mb-1">URL pública</p>
                     <p className="text-white/70 text-sm font-mono">barberos.io/b/{barbershop.slug}</p>
                   </div>
-                  <a
-                    href={previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Abrir
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => copyToClipboard(`${window.location.origin}/b/${barbershop.slug}`, 'public-url')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
+                    >
+                      {copied === 'public-url'
+                        ? <><CheckCheck className="w-3 h-3 text-emerald-400" />Copiado</>
+                        : <><Copy className="w-3 h-3" />Copiar link</>}
+                    </button>
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Abrir
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
