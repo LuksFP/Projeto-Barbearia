@@ -59,7 +59,7 @@ interface NewAptForm {
   clientName: string
   clientPhone: string
   serviceName: string
-  barberName: string
+  barberId: string
   date: string
   time: string
   price: string
@@ -78,7 +78,7 @@ const DashboardAgenda = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<NewAptForm>({
-    clientName: '', clientPhone: '', serviceName: '', barberName: '', date: '', time: '', price: '',
+    clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '',
   })
 
   const weekDays    = getWeekDays(weekOffset)
@@ -131,23 +131,29 @@ const DashboardAgenda = () => {
         setModalOpen(false)
         return
       }
+      // Resolve serviço e barbeiro selecionados para gravar os campos que
+      // alimentam os relatórios financeiros (service_category, barber_id).
+      const svc = services.find(s => s.name === form.serviceName)
+      const brb = barbers.find(b => b.id === form.barberId)
       const row = await appointmentRepository.create({
         barbershop_id: barbershop.id,
         client_name: form.clientName,
         client_phone: form.clientPhone,
         service_name: form.serviceName,
-        barber_name: form.barberName || 'A definir',
+        service_category: svc?.category ?? null,
+        barber_id: brb?.id ?? null,
+        barber_name: brb?.name ?? 'A definir',
         date: form.date,
         time: form.time,
-        price: form.price ? Number(form.price) : null,
-        status: 'scheduled',
+        price: form.price ? Number(form.price) : svc?.price ?? null,
+        status: 'confirmed',
       })
       // Se a data do novo agendamento é a selecionada, adiciona à lista
       if (row.date === selectedDate) {
         setAppointments(prev => [...prev, mapAppointment(row)].sort((a, b) => a.time.localeCompare(b.time)))
       }
       setModalOpen(false)
-      setForm({ clientName: '', clientPhone: '', serviceName: '', barberName: '', date: '', time: '', price: '' })
+      setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '' })
     } catch {
       toast({ title: 'Erro ao criar agendamento', variant: 'destructive' })
     } finally {
@@ -393,13 +399,13 @@ const DashboardAgenda = () => {
                   <div className="col-span-2">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro</label>
                     <select
-                      value={form.barberName}
-                      onChange={e => setForm(f => ({ ...f, barberName: e.target.value }))}
+                      value={form.barberId}
+                      onChange={e => setForm(f => ({ ...f, barberId: e.target.value }))}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
                     >
                       <option value="">A definir</option>
                       {barbers.map(b => (
-                        <option key={b.id} value={b.name}>{b.name}</option>
+                        <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
                     </select>
                   </div>
