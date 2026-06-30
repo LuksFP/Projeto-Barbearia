@@ -52,11 +52,25 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
 
-  const trialDaysLeft = (() => {
+  // Label do trial: dias quando > 24h, horas/minutos quando falta menos de 1 dia.
+  // `urgent` deixa o banner vermelho na reta final (< 6h).
+  const trial = (() => {
     if (account?.planStatus !== 'trial' || !account.trialEndsAt) return null
     const diffMs = new Date(account.trialEndsAt).getTime() - Date.now()
     if (diffMs <= 0) return null
-    return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+    const hours = diffMs / (1000 * 60 * 60)
+    let label: string
+    if (hours >= 24) {
+      const days = Math.ceil(hours / 24)
+      label = `${days} ${days === 1 ? 'dia' : 'dias'}`
+    } else if (hours >= 1) {
+      const h = Math.floor(hours)
+      label = `${h} ${h === 1 ? 'hora' : 'horas'}`
+    } else {
+      const mins = Math.max(1, Math.round(diffMs / (1000 * 60)))
+      label = `${mins} ${mins === 1 ? 'minuto' : 'minutos'}`
+    }
+    return { label, urgent: hours < 6 }
   })()
 
   if (isLoading) {
@@ -192,17 +206,23 @@ const DashboardLayout = () => {
         </div>
 
         {/* Banner de trial */}
-        {trialDaysLeft !== null && (
-          <div className="flex items-center justify-between gap-3 px-5 py-2.5 bg-amber-500/[0.10] border-b border-amber-500/20 shrink-0">
+        {trial !== null && (
+          <div className={`flex items-center justify-between gap-3 px-5 py-2.5 border-b shrink-0 ${
+            trial.urgent ? 'bg-red-500/[0.12] border-red-500/25' : 'bg-amber-500/[0.10] border-amber-500/20'
+          }`}>
             <div className="flex items-center gap-2 min-w-0">
-              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-              <p className="text-amber-300 text-sm font-body truncate">
-                <span className="font-semibold">{trialDaysLeft} {trialDaysLeft === 1 ? 'dia' : 'dias'}</span> restante{trialDaysLeft !== 1 ? 's' : ''} no teste gratuito
+              <Clock className={`w-4 h-4 shrink-0 ${trial.urgent ? 'text-red-400' : 'text-amber-400'}`} />
+              <p className={`text-sm font-body truncate ${trial.urgent ? 'text-red-300' : 'text-amber-300'}`}>
+                <span className="font-semibold">{trial.label}</span> restante{trial.label.startsWith('1 ') ? '' : 's'} no teste gratuito
               </p>
             </div>
             <button
               onClick={() => navigate('/planos')}
-              className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500 text-[#0a0a0a] text-xs font-semibold font-body hover:bg-amber-400 transition-colors"
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold font-body transition-colors ${
+                trial.urgent
+                  ? 'bg-red-500 text-white hover:bg-red-400'
+                  : 'bg-amber-500 text-[#0a0a0a] hover:bg-amber-400'
+              }`}
             >
               Assinar agora
             </button>

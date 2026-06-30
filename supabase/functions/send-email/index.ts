@@ -94,6 +94,33 @@ function templateCancellation(ownerName: string): string {
   `
 }
 
+function templateTrialEnding(ownerName: string, hoursLeft: number): string {
+  const prazo = hoursLeft <= 1
+    ? 'menos de 1 hora'
+    : hoursLeft < 24
+      ? `${hoursLeft} horas`
+      : `${Math.round(hoursLeft / 24)} ${Math.round(hoursLeft / 24) === 1 ? 'dia' : 'dias'}`
+  return `
+    <div style="font-family:sans-serif;max-width:560px;margin:auto;background:#0a0a0a;color:#fff;padding:40px 32px;border-radius:12px">
+      <h1 style="font-size:28px;letter-spacing:.1em;color:#f59e0b;margin-bottom:8px">BARBEROS</h1>
+      <p style="color:#ffffff99;font-size:12px;margin-bottom:32px">Plataforma de gestão para barbearias</p>
+      <h2 style="font-size:20px;margin-bottom:12px">Seu teste grátis termina em ${prazo}</h2>
+      <p style="color:#ffffff99;line-height:1.6">
+        Olá ${ownerName}, seu período de avaliação do BarberOS está acabando.
+        Assine agora para não perder o acesso à sua agenda, equipe e relatórios —
+        seus dados continuam exatamente como estão.
+      </p>
+      <a href="https://barberos.io/planos"
+         style="display:inline-block;margin-top:24px;padding:12px 24px;background:#f59e0b;color:#0a0a0a;border-radius:8px;font-weight:600;text-decoration:none">
+        Assinar agora →
+      </a>
+      <p style="color:#ffffff33;font-size:11px;margin-top:32px">
+        Dúvidas? Responda este email ou fale via WhatsApp.
+      </p>
+    </div>
+  `
+}
+
 function templateBookingConfirmation(opts: {
   clientName: string
   barbershopName: string
@@ -210,13 +237,14 @@ function templateNewBookingOwner(opts: {
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-type EmailType = 'welcome' | 'payment_failed' | 'cancellation' | 'booking_confirmation' | 'new_booking_owner'
+type EmailType = 'welcome' | 'payment_failed' | 'cancellation' | 'trial_ending' | 'booking_confirmation' | 'new_booking_owner'
 
 interface SendEmailBody {
   type: EmailType
   to: string
   ownerName?: string
   plan?: string
+  hoursLeft?: number
   // booking_confirmation fields
   clientName?: string
   clientPhone?: string
@@ -257,6 +285,11 @@ Deno.serve(async (req) => {
     const ownerName = body.ownerName ?? ''
     subject = 'Assinatura cancelada — BarberOS'
     html = templateCancellation(ownerName)
+  } else if (type === 'trial_ending') {
+    const ownerName = body.ownerName ?? ''
+    const hoursLeft = body.hoursLeft ?? 24
+    subject = 'Seu teste grátis no BarberOS está acabando'
+    html = templateTrialEnding(ownerName, hoursLeft)
   } else if (type === 'booking_confirmation') {
     const { clientName = '', barbershopName = '', serviceName = '', barberName = '', date = '', time = '', barbershopSlug = '' } = body
     if (!clientName || !barbershopName || !date || !time) return err('Missing booking fields')
