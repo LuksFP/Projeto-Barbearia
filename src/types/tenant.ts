@@ -91,6 +91,7 @@ export interface BarbershopClient {
   membershipType: 'vip' | 'standard' | null
   totalVisits: number
   lastVisit: string
+  notes?: string
 }
 
 export interface BarbershopMembership {

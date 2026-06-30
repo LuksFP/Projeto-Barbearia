@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus, Pencil, MessageCircle, Award, Repeat, Ban, FileText, Check } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
@@ -24,6 +24,50 @@ const STATUS_COLOR: Record<string, string> = {
   pending: 'text-amber-400', confirmed: 'text-blue-400', done: 'text-emerald-400', cancelled: 'text-red-400',
 }
 
+// Monta link de WhatsApp a partir do telefone livre. Assume Brasil (+55) se sem DDI.
+function waLink(phone: string): string | null {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length < 10) return null
+  const withCountry = digits.startsWith('55') ? digits : `55${digits}`
+  return `https://wa.me/${withCountry}`
+}
+
+// Calcula insights derivados do histórico de agendamentos do cliente.
+function computeInsights(history: AppointmentRow[]) {
+  const mode = (arr: string[]): string | null => {
+    const counts = new Map<string, number>()
+    arr.forEach(s => counts.set(s, (counts.get(s) ?? 0) + 1))
+    let best: string | null = null
+    let bestN = 0
+    counts.forEach((n, s) => { if (n > bestN) { bestN = n; best = s } })
+    return best
+  }
+
+  const done = history.filter(a => a.status === 'done')
+  const favoriteService = mode(history.map(a => a.service_name).filter((s): s is string => !!s))
+  const favoriteBarber = mode(
+    history.map(a => a.barber_name).filter((b): b is string => !!b && b !== 'A definir'),
+  )
+
+  const priced = done.filter(a => a.price != null)
+  const avgTicket = priced.length
+    ? priced.reduce((s, a) => s + Number(a.price), 0) / priced.length
+    : null
+
+  // Frequência: média de dias entre visitas concluídas
+  const dates = done.map(a => new Date(a.date + 'T12:00:00').getTime()).sort((a, b) => a - b)
+  let frequency: number | null = null
+  if (dates.length >= 2) {
+    let gaps = 0
+    for (let i = 1; i < dates.length; i++) gaps += dates[i] - dates[i - 1]
+    frequency = Math.round(gaps / (dates.length - 1) / 86_400_000)
+  }
+
+  const noShows = history.filter(a => a.status === 'cancelled').length
+
+  return { favoriteService, favoriteBarber, avgTicket, frequency, noShows }
+}
+
 // ─── Painel lateral de perfil ─────────────────────────────────────────────────
 
 const ClientDrawer = ({
@@ -35,23 +79,88 @@ const ClientDrawer = ({
   barbershopId: string
   onClose: () => void
 }) => {
+  const { updateClient } = useTenant()
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<AppointmentRow[]>([])
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({
+    name: client.name,
+    phone: client.phone,
+    email: client.email ?? '',
+    membershipType: client.membershipType,
+    notes: client.notes ?? '',
+  })
 
-  // Carrega histórico ao montar
-  useState(() => {
+  // Carrega histórico ao montar / quando troca de cliente
+  useEffect(() => {
+    setLoading(true)
     appointmentRepository
       .listByContact(barbershopId, client.email, client.phone)
       .then(rows => setHistory(rows))
       .catch(() => toast({ title: 'Erro ao carregar histórico', variant: 'destructive' }))
       .finally(() => setLoading(false))
-  })
+  }, [barbershopId, client.email, client.phone])
+
+  // Reseta o form quando o cliente muda (mantém em sync com a fonte de verdade)
+  useEffect(() => {
+    setForm({
+      name: client.name,
+      phone: client.phone,
+      email: client.email ?? '',
+      membershipType: client.membershipType,
+      notes: client.notes ?? '',
+    })
+  }, [client])
 
   const totalSpend = history
     .filter(a => a.status === 'done' && a.price)
     .reduce((s, a) => s + Number(a.price), 0)
 
+  const insights = useMemo(() => computeInsights(history), [history])
+  const waUrl = waLink(client.phone)
   const initials = client.name.split(' ').map(n => n[0]).slice(0, 2).join('')
+
+  const handleSave = async () => {
+    if (form.name.trim().length < 2 || form.phone.trim().length < 8) {
+      toast({ title: 'Nome e telefone são obrigatórios', variant: 'destructive' })
+      return
+    }
+    setSaving(true)
+    try {
+      await updateClient(client.id, {
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        membershipType: form.membershipType,
+        notes: form.notes,
+      })
+      toast({ title: 'Cliente atualizado' })
+      setEditing(false)
+    } catch (e) {
+      toast({
+        title: 'Erro ao salvar',
+        description: e instanceof Error ? e.message : undefined,
+        variant: 'destructive',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setForm({
+      name: client.name,
+      phone: client.phone,
+      email: client.email ?? '',
+      membershipType: client.membershipType,
+      notes: client.notes ?? '',
+    })
+    setEditing(false)
+  }
+
+  const editFieldClass =
+    'w-full px-3 py-2 rounded-lg bg-[#161616] border border-[#262626] text-white placeholder:text-white/30 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors'
 
   return (
     <motion.div
@@ -74,27 +183,116 @@ const ClientDrawer = ({
             </p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-all"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          {!editing && (
+            <button
+              onClick={() => setEditing(true)}
+              title="Editar cliente"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-amber-300 hover:bg-white/5 transition-all"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Contato */}
-      <div className="px-6 py-4 border-b border-[#1a1a1a] space-y-2">
-        <div className="flex items-center gap-2 text-sm font-body">
-          <Phone className="w-3.5 h-3.5 text-white/25 shrink-0" />
-          <span className="text-white/65">{client.phone}</span>
-        </div>
-        {client.email && (
-          <div className="flex items-center gap-2 text-sm font-body">
-            <Mail className="w-3.5 h-3.5 text-white/25 shrink-0" />
-            <span className="text-white/65 truncate">{client.email}</span>
+      {editing ? (
+        /* Form de edição */
+        <div className="px-6 py-4 border-b border-[#1a1a1a] space-y-3">
+          <div>
+            <label className="text-white/40 text-xs font-body block mb-1.5">Nome *</label>
+            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={editFieldClass} />
           </div>
-        )}
-      </div>
+          <div>
+            <label className="text-white/40 text-xs font-body block mb-1.5">Telefone *</label>
+            <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} inputMode="tel" className={editFieldClass} />
+          </div>
+          <div>
+            <label className="text-white/40 text-xs font-body block mb-1.5">Email</label>
+            <input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="opcional" inputMode="email" className={editFieldClass} />
+          </div>
+          <div>
+            <label className="text-white/40 text-xs font-body block mb-1.5">Plano</label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { v: null, l: 'Sem plano' },
+                { v: 'standard', l: 'Standard' },
+                { v: 'vip', l: 'VIP' },
+              ] as { v: BarbershopClient['membershipType']; l: string }[]).map(opt => (
+                <button
+                  key={opt.l}
+                  onClick={() => setForm(f => ({ ...f, membershipType: opt.v }))}
+                  className={`py-2 rounded-lg text-xs font-body border transition-all ${
+                    form.membershipType === opt.v
+                      ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                      : 'bg-[#161616] border-[#262626] text-white/50 hover:border-[#333]'
+                  }`}
+                >
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-white/40 text-xs font-body block mb-1.5">Observações</label>
+            <textarea
+              value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              placeholder="Preferências, alergias, tipo de corte..."
+              rows={3}
+              className={`${editFieldClass} resize-none`}
+            />
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={handleCancelEdit}
+              className="flex-1 py-2.5 rounded-lg border border-[#262626] text-white/60 text-sm font-body hover:bg-white/5 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-lg bg-amber-500 text-black text-sm font-body font-semibold hover:bg-amber-400 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" /> Salvar</>}
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Contato (leitura) */
+        <div className="px-6 py-4 border-b border-[#1a1a1a] space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-body">
+              <Phone className="w-3.5 h-3.5 text-white/25 shrink-0" />
+              <span className="text-white/65">{client.phone}</span>
+            </div>
+            {client.email && (
+              <div className="flex items-center gap-2 text-sm font-body">
+                <Mail className="w-3.5 h-3.5 text-white/25 shrink-0" />
+                <span className="text-white/65 truncate">{client.email}</span>
+              </div>
+            )}
+          </div>
+          {waUrl && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-sm font-body font-medium hover:bg-emerald-500/15 transition-all"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Chamar no WhatsApp
+            </a>
+          )}
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-px bg-[#1a1a1a] border-b border-[#1a1a1a]">
@@ -109,6 +307,54 @@ const ClientDrawer = ({
           </div>
         ))}
       </div>
+
+      {/* Notas (leitura) */}
+      {!editing && client.notes && (
+        <div className="px-6 py-4 border-b border-[#1a1a1a]">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
+            <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body">Observações</p>
+          </div>
+          <p className="text-white/65 text-sm font-body leading-relaxed whitespace-pre-wrap">{client.notes}</p>
+        </div>
+      )}
+
+      {/* Insights derivados do histórico */}
+      {!loading && history.length > 0 && (
+        <div className="px-6 py-4 border-b border-[#1a1a1a] space-y-2.5">
+          <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body mb-1">Insights</p>
+          {insights.favoriteService && (
+            <div className="flex items-center justify-between text-sm font-body">
+              <span className="flex items-center gap-2 text-white/45"><Scissors className="w-3.5 h-3.5 text-white/25" /> Serviço favorito</span>
+              <span className="text-white/80">{insights.favoriteService}</span>
+            </div>
+          )}
+          {insights.favoriteBarber && (
+            <div className="flex items-center justify-between text-sm font-body">
+              <span className="flex items-center gap-2 text-white/45"><Award className="w-3.5 h-3.5 text-white/25" /> Barbeiro favorito</span>
+              <span className="text-white/80">{insights.favoriteBarber}</span>
+            </div>
+          )}
+          {insights.avgTicket != null && (
+            <div className="flex items-center justify-between text-sm font-body">
+              <span className="flex items-center gap-2 text-white/45"><Star className="w-3.5 h-3.5 text-white/25" /> Ticket médio</span>
+              <span className="text-amber-400/90">R$ {fmt(insights.avgTicket)}</span>
+            </div>
+          )}
+          {insights.frequency != null && (
+            <div className="flex items-center justify-between text-sm font-body">
+              <span className="flex items-center gap-2 text-white/45"><Repeat className="w-3.5 h-3.5 text-white/25" /> Frequência</span>
+              <span className="text-white/80">a cada {insights.frequency} {insights.frequency === 1 ? 'dia' : 'dias'}</span>
+            </div>
+          )}
+          {insights.noShows > 0 && (
+            <div className="flex items-center justify-between text-sm font-body">
+              <span className="flex items-center gap-2 text-white/45"><Ban className="w-3.5 h-3.5 text-red-400/50" /> Cancelamentos</span>
+              <span className="text-red-400/80">{insights.noShows}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Histórico */}
       <div className="flex-1 overflow-y-auto scrollbar-none px-6 py-4">
@@ -307,6 +553,9 @@ const DashboardClientes = () => {
     c.phone.includes(search)
   )
 
+  // Sempre lê o cliente selecionado da fonte de verdade (reflete edições na hora)
+  const selectedFresh = selected ? clients.find(c => c.id === selected.id) ?? selected : null
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-start justify-between gap-4">
@@ -410,7 +659,7 @@ const DashboardClientes = () => {
 
       {/* Backdrop + drawer */}
       <AnimatePresence>
-        {selected && barbershop && (
+        {selectedFresh && barbershop && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -420,7 +669,7 @@ const DashboardClientes = () => {
               className="fixed inset-0 bg-black/60 z-40"
             />
             <ClientDrawer
-              client={selected}
+              client={selectedFresh}
               barbershopId={barbershop.id}
               onClose={() => setSelected(null)}
             />

@@ -364,6 +364,7 @@ export type Database = {
           last_visit: string | null
           membership_type: string | null
           name: string
+          notes: string | null
           phone: string
           total_visits: number
         }
@@ -375,6 +376,7 @@ export type Database = {
           last_visit?: string | null
           membership_type?: string | null
           name: string
+          notes?: string | null
           phone: string
           total_visits?: number
         }
@@ -386,6 +388,7 @@ export type Database = {
           last_visit?: string | null
           membership_type?: string | null
           name?: string
+          notes?: string | null
           phone?: string
           total_visits?: number
         }

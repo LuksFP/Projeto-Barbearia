@@ -16,7 +16,7 @@ import type { ServiceRow } from '@/repositories/serviceRepository'
 import type { MemberRow } from '@/repositories/teamRepository'
 import type { MembershipRow } from '@/repositories/membershipRepository'
 import type { AppointmentRow } from '@/repositories/appointmentRepository'
-import type { ClientRow } from '@/repositories/clientRepository'
+import type { ClientRow, ClientUpdate } from '@/repositories/clientRepository'
 import {
   isDemoMode, getDemoPlan,
   getDemoBarbershop, getDemoBarbers, getDemoServices,
@@ -39,6 +39,13 @@ interface TenantContextType {
     phone: string
     email?: string
     membershipType: BarbershopClient['membershipType']
+  }) => Promise<void>
+  updateClient: (id: string, input: {
+    name?: string
+    phone?: string
+    email?: string
+    membershipType?: BarbershopClient['membershipType']
+    notes?: string
   }) => Promise<void>
   updateServices: (services: BarbershopService[]) => void
   updateBarbers: (barbers: BarbershopBarber[]) => void
@@ -149,6 +156,7 @@ function mapClient(row: ClientRow): BarbershopClient {
     membershipType: row.membership_type as BarbershopClient['membershipType'],
     totalVisits: row.total_visits,
     lastVisit: row.last_visit ?? '',
+    notes: row.notes ?? undefined,
   }
 }
 
@@ -297,6 +305,40 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     setClients(prev => [...prev.filter(c => c.id !== mapped.id), mapped].sort(byName))
   }, [barbershop])
 
+  const updateClient = useCallback(async (id: string, input: {
+    name?: string
+    phone?: string
+    email?: string
+    membershipType?: BarbershopClient['membershipType']
+    notes?: string
+  }) => {
+    const byName = (a: BarbershopClient, b: BarbershopClient) => a.name.localeCompare(b.name, 'pt-BR')
+
+    // Modo demo: só estado local
+    if (isDemoMode()) {
+      setClients(prev => prev.map(c => c.id === id ? {
+        ...c,
+        ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+        ...(input.phone !== undefined ? { phone: input.phone.trim() } : {}),
+        ...(input.email !== undefined ? { email: input.email.trim() || undefined } : {}),
+        ...(input.membershipType !== undefined ? { membershipType: input.membershipType } : {}),
+        ...(input.notes !== undefined ? { notes: input.notes.trim() || undefined } : {}),
+      } : c).sort(byName))
+      return
+    }
+
+    const payload: ClientUpdate = {}
+    if (input.name !== undefined) payload.name = input.name.trim()
+    if (input.phone !== undefined) payload.phone = input.phone.trim()
+    if (input.email !== undefined) payload.email = input.email.trim() || null
+    if (input.membershipType !== undefined) payload.membership_type = input.membershipType
+    if (input.notes !== undefined) payload.notes = input.notes.trim() || null
+
+    const row = await clientRepository.update(id, payload)
+    const mapped = mapClient(row)
+    setClients(prev => prev.map(c => c.id === id ? mapped : c).sort(byName))
+  }, [])
+
   const updateServices = useCallback((next: BarbershopService[]) => setServices(next), [])
   const updateBarbers = useCallback((next: BarbershopBarber[]) => setBarbers(next), [])
   const updateMemberships = useCallback((next: BarbershopMembership[]) => setMemberships(next), [])
@@ -327,6 +369,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       canAccess,
       updateBarbershop,
       addClient,
+      updateClient,
       updateServices,
       updateBarbers,
       updateMemberships,
