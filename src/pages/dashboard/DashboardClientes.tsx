@@ -3,7 +3,8 @@ import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserP
 import { useTenant } from '@/contexts/TenantContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
-import type { BarbershopClient } from '@/types/tenant'
+import { isDemoMode } from '@/lib/demo'
+import type { BarbershopAppointment, BarbershopClient } from '@/types/tenant'
 import type { AppointmentRow } from '@/repositories/appointmentRepository'
 import { toast } from '@/hooks/use-toast'
 
@@ -30,6 +31,37 @@ function waLink(phone: string): string | null {
   if (digits.length < 10) return null
   const withCountry = digits.startsWith('55') ? digits : `55${digits}`
   return `https://wa.me/${withCountry}`
+}
+
+// Converte agendamento mock (modo demo) na shape de AppointmentRow do banco,
+// pra os insights e o histórico funcionarem sem tocar no Supabase.
+function demoApptToRow(a: BarbershopAppointment, client: BarbershopClient): AppointmentRow {
+  return {
+    id: a.id,
+    barbershop_id: client.barbershopId,
+    client_name: a.clientName,
+    client_phone: a.clientPhone,
+    client_email: client.email ?? null,
+    barber_id: a.barberId ?? null,
+    barber_name: a.barberName,
+    service_id: a.serviceId ?? null,
+    service_name: a.serviceName,
+    service_category: a.serviceCategory ?? null,
+    date: a.date,
+    time: a.time,
+    status: a.status,
+    price: a.price ?? null,
+    membership_type: a.membershipType ?? null,
+    rating: null,
+    review: null,
+    created_at: a.date,
+    paid_at: null,
+    payment_method: null,
+    payment_status: null,
+    stripe_checkout_session_id: null,
+    stripe_payment_intent_id: null,
+    user_id: null,
+  }
 }
 
 // Calcula insights derivados do histórico de agendamentos do cliente.
@@ -79,7 +111,7 @@ const ClientDrawer = ({
   barbershopId: string
   onClose: () => void
 }) => {
-  const { updateClient } = useTenant()
+  const { updateClient, appointments } = useTenant()
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<AppointmentRow[]>([])
   const [editing, setEditing] = useState(false)
@@ -94,13 +126,22 @@ const ClientDrawer = ({
 
   // Carrega histórico ao montar / quando troca de cliente
   useEffect(() => {
+    // Modo demo: usa os agendamentos mock do tenant (não toca no Supabase)
+    if (isDemoMode()) {
+      const rows = appointments
+        .filter(a => a.clientPhone === client.phone || a.clientName === client.name)
+        .map(a => demoApptToRow(a, client))
+      setHistory(rows)
+      setLoading(false)
+      return
+    }
     setLoading(true)
     appointmentRepository
       .listByContact(barbershopId, client.email, client.phone)
       .then(rows => setHistory(rows))
       .catch(() => toast({ title: 'Erro ao carregar histórico', variant: 'destructive' }))
       .finally(() => setLoading(false))
-  }, [barbershopId, client.email, client.phone])
+  }, [barbershopId, client.email, client.phone, client.name, appointments])
 
   // Reseta o form quando o cliente muda (mantém em sync com a fonte de verdade)
   useEffect(() => {
