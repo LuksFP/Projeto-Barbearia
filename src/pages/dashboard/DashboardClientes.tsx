@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus, Pencil, MessageCircle, Award, Repeat, Ban, FileText, Check } from 'lucide-react'
+import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus, Pencil, MessageCircle, Award, Repeat, Ban, FileText, Check, Sparkles } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
+import { supabase } from '@/lib/supabase'
 import { isDemoMode } from '@/lib/demo'
 import type { BarbershopAppointment, BarbershopClient } from '@/types/tenant'
 import type { AppointmentRow } from '@/repositories/appointmentRepository'
@@ -111,11 +112,13 @@ const ClientDrawer = ({
   barbershopId: string
   onClose: () => void
 }) => {
-  const { updateClient, appointments } = useTenant()
+  const { updateClient, appointments, barbershop } = useTenant()
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<AppointmentRow[]>([])
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [aiSummary, setAiSummary] = useState<{ resumo: string; sugestao: string } | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
   const [form, setForm] = useState({
     name: client.name,
     phone: client.phone,
@@ -152,6 +155,7 @@ const ClientDrawer = ({
       membershipType: client.membershipType,
       notes: client.notes ?? '',
     })
+    setAiSummary(null)
   }, [client])
 
   const totalSpend = history
@@ -198,6 +202,68 @@ const ClientDrawer = ({
       notes: client.notes ?? '',
     })
     setEditing(false)
+  }
+
+  // Resumo IA — exclusivo Pro/Premium
+  const aiEnabled = barbershop?.plan === 'pro' || barbershop?.plan === 'premium'
+
+  const handleGenerateSummary = async () => {
+    setAiLoading(true)
+    try {
+      // Demo: resumo mockado, sem chamar a API
+      if (isDemoMode()) {
+        await new Promise(r => setTimeout(r, 600))
+        setAiSummary({
+          resumo: `${client.name} é um cliente ${client.membershipType === 'vip' ? 'VIP muito fiel' : 'recorrente'}, com ${client.totalVisits} visitas${insights.favoriteService ? ` e preferência por ${insights.favoriteService}` : ''}${insights.favoriteBarber ? ` com ${insights.favoriteBarber}` : ''}. ${insights.frequency != null ? `Costuma voltar a cada ${insights.frequency} dias.` : ''}`.trim(),
+          sugestao: insights.noShows > 0
+            ? 'Confirme o próximo horário por WhatsApp — ele já teve cancelamentos.'
+            : 'Ofereça o combo Corte + Barba para aumentar o ticket.',
+        })
+        return
+      }
+
+      const payload = {
+        name: client.name,
+        membershipType: client.membershipType,
+        totalVisits: client.totalVisits,
+        totalSpend,
+        lastVisit: client.lastVisit || null,
+        notes: client.notes || null,
+        favoriteService: insights.favoriteService,
+        favoriteBarber: insights.favoriteBarber,
+        avgTicket: insights.avgTicket,
+        frequency: insights.frequency,
+        noShows: insights.noShows,
+        recent: history.slice(0, 8).map(a => ({
+          service: a.service_name,
+          barber: a.barber_name,
+          date: a.date,
+          status: a.status,
+          price: a.price,
+          rating: a.rating,
+        })),
+      }
+      const cacheKey = `bo:cliente-resumo:${client.id}:${history.length}:${(client.notes ?? '').length}`
+
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const { at, data } = JSON.parse(cached)
+          if (Date.now() - at < 3 * 60 * 60 * 1000 && data?.resumo) { setAiSummary(data); return }
+        }
+      } catch { /* cache inválido — ignora */ }
+
+      const { data, error } = await supabase.functions.invoke('cliente-resumo', { body: payload })
+      if (error || !data?.resumo) {
+        toast({ title: 'Não foi possível gerar o resumo', variant: 'destructive' })
+        return
+      }
+      const result = { resumo: data.resumo as string, sugestao: (data.sugestao as string) ?? '' }
+      setAiSummary(result)
+      try { localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), data: result })) } catch { /* quota — ignora */ }
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   const editFieldClass =
@@ -348,6 +414,37 @@ const ClientDrawer = ({
           </div>
         ))}
       </div>
+
+      {/* Resumo IA — Pro/Premium */}
+      {!editing && aiEnabled && (
+        <div className="px-6 py-4 border-b border-[#1a1a1a]">
+          {aiSummary ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body">Resumo IA</p>
+              </div>
+              <p className="text-white/75 text-sm font-body leading-relaxed">{aiSummary.resumo}</p>
+              {aiSummary.sugestao && (
+                <div className="flex items-start gap-2 mt-2 p-3 rounded-lg bg-amber-500/[0.07] border border-amber-500/15">
+                  <Star className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-amber-200/90 text-sm font-body leading-relaxed">{aiSummary.sugestao}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={handleGenerateSummary}
+              disabled={aiLoading}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 text-sm font-body font-medium hover:bg-amber-500/15 transition-all disabled:opacity-50"
+            >
+              {aiLoading
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando resumo...</>
+                : <><Sparkles className="w-4 h-4" /> Gerar resumo IA</>}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Notas (leitura) */}
       {!editing && client.notes && (
