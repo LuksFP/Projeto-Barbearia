@@ -90,11 +90,12 @@ const DashboardAgenda = () => {
   // Duração editável no form (padrão = tempo de corte do barbeiro / serviço / 30)
   const slotDuration = Math.max(5, Number(form.durationMin) || formBarber?.cutDurationMin || formService?.durationMin || 30)
 
-  // Slots do dia respeitando o tempo de corte e bloqueando os ranges ocupados
+  // Slots do dia respeitando o tempo de corte e bloqueando os ranges ocupados.
+  // Sem corte por horário atual: o barbeiro vê o dia inteiro (09:00–00:00).
   const bookingSlots = useMemo(() => {
     if (!form.date) return []
     const busy = form.barberId ? busyRanges(appointments, form.barberId, form.date) : []
-    return buildDaySlots({ step: slotDuration, duration: slotDuration, busy, now: new Date(), date: form.date })
+    return buildDaySlots({ step: slotDuration, duration: slotDuration, busy })
   }, [form.date, form.barberId, slotDuration, appointments])
 
   const openNewModal = () => {
