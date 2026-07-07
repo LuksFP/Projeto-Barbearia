@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Plus, Scissors, X, Loader2, Pencil, Mail, Upload, Clock } from 'lucide-react'
+import { Plus, Scissors, X, Loader2, Pencil, Mail, Upload, Clock, Percent } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { teamRepository } from '@/repositories/teamRepository'
@@ -28,6 +28,7 @@ interface EditForm {
   bio: string
   role: string
   cutDurationMin: string
+  commissionPercent: string
 }
 
 const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50 transition-colors'
@@ -45,7 +46,7 @@ const DashboardEquipe = () => {
 
   // Modal de edição
   const [editingBarber, setEditingBarber] = useState<BarbershopBarber | null>(null)
-  const [editForm, setEditForm] = useState<EditForm>({ name: '', specialty: '', bio: '', role: 'barber', cutDurationMin: '30' })
+  const [editForm, setEditForm] = useState<EditForm>({ name: '', specialty: '', bio: '', role: 'barber', cutDurationMin: '30', commissionPercent: '50' })
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
 
@@ -76,6 +77,7 @@ const DashboardEquipe = () => {
         specialty: inviteForm.specialty,
         bio: inviteForm.bio,
         cutDurationMin: 30,
+        commissionPercent: 50,
         active: true,
       }
       updateBarbers([...barbers, fakeBarber])
@@ -125,6 +127,7 @@ const DashboardEquipe = () => {
       bio: barber.bio,
       role: 'barber',
       cutDurationMin: String(barber.cutDurationMin),
+      commissionPercent: String(barber.commissionPercent),
     })
     setEditError('')
     setAvatarError('')
@@ -144,6 +147,7 @@ const DashboardEquipe = () => {
                 specialty: editForm.specialty,
                 bio: editForm.bio,
                 cutDurationMin: Number(editForm.cutDurationMin),
+                commissionPercent: Number(editForm.commissionPercent),
               }
             : b
         ))
@@ -156,6 +160,7 @@ const DashboardEquipe = () => {
         bio: editForm.bio,
         role: editForm.role,
         cut_duration_minutes: Number(editForm.cutDurationMin),
+        commission_percent: Number(editForm.commissionPercent),
       })
       updateBarbers(barbers.map(b =>
         b.id === editingBarber.id
@@ -165,6 +170,7 @@ const DashboardEquipe = () => {
               specialty: row.specialty,
               bio: row.bio,
               cutDurationMin: row.cut_duration_minutes,
+              commissionPercent: row.commission_percent ?? 50,
               active: row.active,
             }
           : b
@@ -252,9 +258,13 @@ const DashboardEquipe = () => {
             <p className="text-amber-400/70 text-xs font-body font-semibold tracking-wide uppercase mb-3">
               {barber.specialty}
             </p>
-            <div className="flex items-center gap-1.5 text-white/35 text-xs font-body mb-3">
+            <div className="flex items-center gap-1.5 text-white/35 text-xs font-body mb-1.5">
               <Clock className="w-3 h-3" />
               Bloqueia {barber.cutDurationMin} min por atendimento
+            </div>
+            <div className="flex items-center gap-1.5 text-white/35 text-xs font-body mb-3">
+              <Percent className="w-3 h-3" />
+              {barber.commissionPercent}% de comissão
             </div>
             {barber.bio && (
               <p className="text-white/50 text-sm font-body leading-relaxed mb-4 line-clamp-2">{barber.bio}</p>
@@ -532,6 +542,22 @@ const DashboardEquipe = () => {
                   />
                   <p className="mt-1.5 text-white/25 text-[11px] font-body">
                     Um agendamento às 15:00 com 15 min bloqueia de 15:00 a 15:15.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-white/45 text-xs font-body mb-1.5">Comissão (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={editForm.commissionPercent}
+                    onChange={e => setEditForm(f => ({ ...f, commissionPercent: e.target.value }))}
+                    placeholder="50"
+                    className={inputCls}
+                  />
+                  <p className="mt-1.5 text-white/25 text-[11px] font-body">
+                    % da receita gerada que fica com o barbeiro (aparece no Financeiro).
                   </p>
                 </div>
                 <div>

@@ -95,7 +95,7 @@ function exportCSV(months: MonthRevenue[]) {
 // ─── Página ───────────────────────────────────────────────────────────────────
 
 const DashboardFinanceiro = () => {
-  const { barbershop } = useTenant()
+  const { barbershop, barbers } = useTenant()
   const [period, setPeriod] = useState<Period>(6)
   // fetching = true apenas na primeira carga; refreshing = true nas subsequentes (mantém dados visíveis)
   const [fetching, setFetching] = useState(true)
@@ -121,7 +121,14 @@ const DashboardFinanceiro = () => {
       setTotalRevenue(total)
       setTotalCount(Math.round(months.reduce((s, m) => s + Object.values(m.byCategory).reduce((a, b) => a + b, 0) / 40, 0)))
       setAvgTicket(total > 0 ? total / Math.max(1, months.length * 3) : 0)
-      setByBarber([])
+      // Demo: distribui a receita entre os barbeiros (shares decrescentes)
+      const active = barbers.filter(b => b.active)
+      const weightSum = active.reduce((s, _, i) => s + (active.length - i), 0) || 1
+      setByBarber(active.map((b, i) => {
+        const share = (active.length - i) / weightSum
+        const bt = Math.round(total * share)
+        return { barberId: b.id, barberName: b.name, total: bt, count: Math.max(1, Math.round(bt / 45)) }
+      }))
       setFetching(false)
       return
     }
@@ -612,6 +619,71 @@ const DashboardFinanceiro = () => {
               })}
             </motion.div>
           </div>
+
+          {/* Comissões por barbeiro */}
+          {byBarber.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="p-6 rounded-xl bg-[#141414] border border-amber-500/15"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-white/40 text-xs font-semibold uppercase tracking-widest font-body">Comissões</p>
+                <a href="/dashboard/equipe" className="text-amber-400/60 hover:text-amber-400 text-xs font-body transition-colors">Ajustar % na Equipe →</a>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm font-body">
+                  <thead>
+                    <tr className="border-b border-[#252525] text-white/30 text-xs">
+                      <th className="text-left pb-3 pr-4">Barbeiro</th>
+                      <th className="text-right pb-3 pr-4">Receita</th>
+                      <th className="text-right pb-3 pr-4">%</th>
+                      <th className="text-right pb-3 pr-4">Comissão</th>
+                      <th className="text-right pb-3">Casa</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {byBarber.map(b => {
+                      const barber = barbers.find(x => x.id === b.barberId)
+                      const pct = barber?.commissionPercent ?? 50
+                      const commission = b.total * pct / 100
+                      return (
+                        <tr key={b.barberId} className="border-b border-[#1c1c1c]">
+                          <td className="py-2.5 pr-4 text-white/70">{b.barberName}</td>
+                          <td className="py-2.5 pr-4 text-right text-white/50">R$ {fmt(b.total)}</td>
+                          <td className="py-2.5 pr-4 text-right text-white/40">{pct}%</td>
+                          <td className="py-2.5 pr-4 text-right text-amber-400 font-semibold">R$ {fmt(Math.round(commission))}</td>
+                          <td className="py-2.5 text-right text-white/50">R$ {fmt(Math.round(b.total - commission))}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    {(() => {
+                      const totalComm = byBarber.reduce((s, b) => {
+                        const pct = barbers.find(x => x.id === b.barberId)?.commissionPercent ?? 50
+                        return s + b.total * pct / 100
+                      }, 0)
+                      const totalRev = byBarber.reduce((s, b) => s + b.total, 0)
+                      return (
+                        <tr className="border-t border-[#2a2a2a] text-xs">
+                          <td className="pt-3 pr-4 text-white/40 uppercase tracking-wide">Total</td>
+                          <td className="pt-3 pr-4 text-right text-white/60">R$ {fmt(totalRev)}</td>
+                          <td className="pt-3 pr-4"></td>
+                          <td className="pt-3 pr-4 text-right text-amber-400 font-bold">R$ {fmt(Math.round(totalComm))}</td>
+                          <td className="pt-3 text-right text-white/60">R$ {fmt(Math.round(totalRev - totalComm))}</td>
+                        </tr>
+                      )
+                    })()}
+                  </tfoot>
+                </table>
+              </div>
+              <p className="text-white/25 text-[11px] font-body mt-4">
+                Comissão = receita gerada pelo barbeiro (atendimentos concluídos) × % configurado. "Casa" é o que fica pra barbearia.
+              </p>
+            </motion.div>
+          )}
 
           {/* Tabela mensal detalhada */}
           <motion.div

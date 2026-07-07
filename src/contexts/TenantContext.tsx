@@ -114,6 +114,7 @@ function mapBarber(row: MemberRow): BarbershopBarber {
     bio: row.bio,
     specialty: row.specialty,
     cutDurationMin: row.cut_duration_minutes,
+    commissionPercent: row.commission_percent ?? 50,
     avatar: row.avatar ?? undefined,
     active: row.active,
   }

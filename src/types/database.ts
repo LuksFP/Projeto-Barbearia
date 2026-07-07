@@ -179,6 +179,7 @@ export type Database = {
           avatar: string | null
           barbershop_id: string
           bio: string
+          commission_percent: number
           cut_duration_minutes: number
           id: string
           joined_at: string
@@ -192,6 +193,7 @@ export type Database = {
           avatar?: string | null
           barbershop_id: string
           bio?: string
+          commission_percent?: number
           cut_duration_minutes?: number
           id?: string
           joined_at?: string
@@ -205,6 +207,7 @@ export type Database = {
           avatar?: string | null
           barbershop_id?: string
           bio?: string
+          commission_percent?: number
           cut_duration_minutes?: number
           id?: string
           joined_at?: string

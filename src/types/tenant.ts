@@ -65,6 +65,7 @@ export interface BarbershopBarber {
   bio: string
   specialty: string
   cutDurationMin: number
+  commissionPercent: number
   avatar?: string
   active: boolean
 }

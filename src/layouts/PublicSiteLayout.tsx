@@ -180,6 +180,7 @@ const PublicSiteLayout = () => {
       setBarbers((team ?? []).map((r: MemberRow) => ({
         id: r.id, barbershopId: r.barbershop_id, userId: r.user_id, name: r.name,
         bio: r.bio, specialty: r.specialty, cutDurationMin: r.cut_duration_minutes,
+        commissionPercent: r.commission_percent ?? 50,
         avatar: r.avatar ?? undefined, active: r.active,
       })))
       setMemberships((mems ?? []).map((r: MembershipRow) => ({

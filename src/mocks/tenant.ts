@@ -89,6 +89,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     bio: 'Fundador. Especialista em degradê e barba árabe.',
     specialty: 'Low Fade + Barba',
     cutDurationMin: 30,
+    commissionPercent: 50,
     active: true,
   },
   {
@@ -99,6 +100,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     bio: '8 anos de mercado. Referência em cortes texturizados.',
     specialty: 'Texturizado + Crespo',
     cutDurationMin: 15,
+    commissionPercent: 50,
     active: true,
   },
   {
@@ -109,6 +111,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     bio: 'Novo na casa, mas old school no estilo.',
     specialty: 'Clássico + Pompadour',
     cutDurationMin: 45,
+    commissionPercent: 50,
     active: true,
   },
   {
@@ -119,6 +122,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     bio: 'Especialista em acabamento limpo e barba desenhada.',
     specialty: 'Fade + Barba',
     cutDurationMin: 30,
+    commissionPercent: 50,
     active: true,
   },
   {
@@ -129,6 +133,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     bio: 'Atendimento premium com foco em corte social contemporâneo.',
     specialty: 'Social + Tesoura',
     cutDurationMin: 20,
+    commissionPercent: 50,
     active: true,
   },
 ]
