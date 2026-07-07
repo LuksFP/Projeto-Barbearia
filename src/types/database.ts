@@ -24,6 +24,7 @@ export type Database = {
           client_phone: string
           created_at: string
           date: string
+          duration_min: number
           id: string
           membership_type: string | null
           price: number | null
@@ -50,6 +51,7 @@ export type Database = {
           client_phone: string
           created_at?: string
           date: string
+          duration_min?: number
           id?: string
           membership_type?: string | null
           price?: number | null
@@ -76,6 +78,7 @@ export type Database = {
           client_phone?: string
           created_at?: string
           date?: string
+          duration_min?: number
           id?: string
           membership_type?: string | null
           price?: number | null
@@ -173,6 +176,7 @@ export type Database = {
           avatar: string | null
           barbershop_id: string
           bio: string
+          cut_duration_minutes: number
           id: string
           joined_at: string
           name: string
@@ -185,6 +189,7 @@ export type Database = {
           avatar?: string | null
           barbershop_id: string
           bio?: string
+          cut_duration_minutes?: number
           id?: string
           joined_at?: string
           name: string
@@ -197,6 +202,7 @@ export type Database = {
           avatar?: string | null
           barbershop_id?: string
           bio?: string
+          cut_duration_minutes?: number
           id?: string
           joined_at?: string
           name?: string
@@ -611,6 +617,10 @@ export type Database = {
     Functions: {
       my_barbershop_ids: { Args: never; Returns: string[] }
       mark_announcement_seen: { Args: { p_key: string }; Returns: undefined }
+      public_barber_busy_slots: {
+        Args: { p_barbershop_id: string; p_barber_id: string; p_date: string }
+        Returns: { slot_time: string; slot_duration: number }[]
+      }
     }
     Enums: {
       [_ in never]: never

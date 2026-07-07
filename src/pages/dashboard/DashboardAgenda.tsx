@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
@@ -7,6 +7,7 @@ import { isDemoMode } from '@/lib/demo'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
+import { buildDaySlots, busyRanges, isTimeAvailable } from '@/lib/scheduling'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
@@ -49,12 +50,6 @@ function todayIndex(): number {
   return day === 0 ? 6 : day - 1
 }
 
-const TIME_SLOTS = [
-  '09:00','09:30','10:00','10:30','11:00','11:30',
-  '12:00','13:00','13:30','14:00','14:30',
-  '15:00','15:30','16:00','16:30','17:00','17:30','18:00',
-]
-
 interface NewAptForm {
   clientName: string
   clientPhone: string
@@ -84,6 +79,23 @@ const DashboardAgenda = () => {
   const weekDays    = getWeekDays(weekOffset)
   const selectedDate = weekDays[selectedIdx]?.date ?? ''
   const todayStr = new Date().toISOString().split('T')[0]
+
+  // Duração do atendimento = tempo de corte do barbeiro (fallback: serviço, ou 30 min)
+  const formBarber  = barbers.find(b => b.id === form.barberId)
+  const formService = services.find(s => s.name === form.serviceName)
+  const slotDuration = formBarber?.cutDurationMin || formService?.durationMin || 30
+
+  // Slots do dia respeitando o tempo de corte e bloqueando os ranges ocupados
+  const bookingSlots = useMemo(() => {
+    if (!form.date) return []
+    const busy = form.barberId ? busyRanges(appointments, form.barberId, form.date) : []
+    return buildDaySlots({ step: slotDuration, duration: slotDuration, busy, now: new Date(), date: form.date })
+  }, [form.date, form.barberId, slotDuration, appointments])
+
+  const openNewModal = () => {
+    setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: selectedDate, time: '', price: '' })
+    setModalOpen(true)
+  }
 
   useEffect(() => {
     if (!barbershop || !selectedDate) return
@@ -124,17 +136,49 @@ const DashboardAgenda = () => {
 
   const handleNewAppointment = async () => {
     if (!barbershop || !form.clientName || !form.clientPhone || !form.serviceName || !form.date || !form.time) return
+
+    const svc = services.find(s => s.name === form.serviceName)
+    const brb = barbers.find(b => b.id === form.barberId)
+    const duration = brb?.cutDurationMin || svc?.durationMin || 30
+
+    // Guarda: não deixa marcar em cima de um horário já ocupado do barbeiro
+    if (form.barberId) {
+      const busy = busyRanges(appointments, form.barberId, form.date)
+      if (!isTimeAvailable(form.time, duration, busy)) {
+        toast({ title: 'Horário ocupado', description: `${brb?.name ?? 'O barbeiro'} já tem atendimento nesse horário.`, variant: 'destructive' })
+        return
+      }
+    }
+
     setSaving(true)
     try {
       if (isDemoMode()) {
-        // Em demo apenas fecha o modal
+        // Demo: adiciona ao estado local pra o range ficar bloqueado na hora
+        const demoApt: BarbershopAppointment = {
+          id: `demo-apt-new-${Date.now()}`,
+          barbershopId: barbershop.id,
+          clientName: form.clientName,
+          clientPhone: form.clientPhone,
+          barberId: brb?.id ?? '',
+          barberName: brb?.name ?? 'A definir',
+          serviceId: svc?.id ?? '',
+          serviceName: form.serviceName,
+          serviceCategory: svc?.category,
+          date: form.date,
+          time: form.time,
+          durationMin: duration,
+          status: 'confirmed',
+          price: form.price ? Number(form.price) : svc?.price,
+        }
+        if (form.date === selectedDate) {
+          setAppointments(prev => [...prev, demoApt].sort((a, b) => a.time.localeCompare(b.time)))
+        }
         setModalOpen(false)
+        setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '' })
         return
       }
       // Resolve serviço e barbeiro selecionados para gravar os campos que
       // alimentam os relatórios financeiros (service_category, barber_id).
-      const svc = services.find(s => s.name === form.serviceName)
-      const brb = barbers.find(b => b.id === form.barberId)
       const row = await appointmentRepository.create({
         barbershop_id: barbershop.id,
         client_name: form.clientName,
@@ -145,6 +189,7 @@ const DashboardAgenda = () => {
         barber_name: brb?.name ?? 'A definir',
         date: form.date,
         time: form.time,
+        duration_min: duration,
         price: form.price ? Number(form.price) : svc?.price ?? null,
         status: 'confirmed',
       })
@@ -184,7 +229,7 @@ const DashboardAgenda = () => {
           <h1 className="font-heading text-3xl tracking-wide text-white">AGENDA</h1>
         </div>
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={openNewModal}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -400,7 +445,7 @@ const DashboardAgenda = () => {
                     <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro</label>
                     <select
                       value={form.barberId}
-                      onChange={e => setForm(f => ({ ...f, barberId: e.target.value }))}
+                      onChange={e => setForm(f => ({ ...f, barberId: e.target.value, time: '' }))}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
                     >
                       <option value="">A definir</option>
@@ -415,21 +460,30 @@ const DashboardAgenda = () => {
                       type="date"
                       min={todayStr}
                       value={form.date}
-                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value, time: '' }))}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
                       style={{ colorScheme: 'dark' }}
                     />
                   </div>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Horário *</label>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Horário * <span className="text-white/25">(início–fim)</span></label>
                     <select
                       value={form.time}
                       onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
                     >
                       <option value="">Selecione...</option>
-                      {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+                      {bookingSlots.map(s => (
+                        <option key={s.time} value={s.time} disabled={!s.available}>
+                          {s.time} – {s.end}{s.available ? '' : ' · ocupado'}
+                        </option>
+                      ))}
                     </select>
+                    <p className="text-white/30 text-[11px] font-body mt-1.5">
+                      {form.barberId
+                        ? `${formBarber?.name?.split(' ')[0] ?? 'Barbeiro'} corta em ${slotDuration} min — cada horário bloqueia ${slotDuration} min`
+                        : `Selecione o barbeiro para bloquear os horários ocupados (padrão ${slotDuration} min)`}
+                    </p>
                   </div>
                   <div className="col-span-2">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Valor (R$)</label>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Plus, Scissors, X, Loader2, Pencil, Mail, Upload } from 'lucide-react'
+import { Plus, Scissors, X, Loader2, Pencil, Mail, Upload, Clock } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { teamRepository } from '@/repositories/teamRepository'
@@ -27,6 +27,7 @@ interface EditForm {
   specialty: string
   bio: string
   role: string
+  cutDurationMin: string
 }
 
 const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50 transition-colors'
@@ -44,7 +45,7 @@ const DashboardEquipe = () => {
 
   // Modal de edição
   const [editingBarber, setEditingBarber] = useState<BarbershopBarber | null>(null)
-  const [editForm, setEditForm] = useState<EditForm>({ name: '', specialty: '', bio: '', role: 'barber' })
+  const [editForm, setEditForm] = useState<EditForm>({ name: '', specialty: '', bio: '', role: 'barber', cutDurationMin: '30' })
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
 
@@ -74,6 +75,7 @@ const DashboardEquipe = () => {
         name: inviteForm.name,
         specialty: inviteForm.specialty,
         bio: inviteForm.bio,
+        cutDurationMin: 30,
         active: true,
       }
       updateBarbers([...barbers, fakeBarber])
@@ -117,7 +119,13 @@ const DashboardEquipe = () => {
 
   const openEdit = (barber: BarbershopBarber) => {
     setEditingBarber(barber)
-    setEditForm({ name: barber.name, specialty: barber.specialty, bio: barber.bio, role: 'barber' })
+    setEditForm({
+      name: barber.name,
+      specialty: barber.specialty,
+      bio: barber.bio,
+      role: 'barber',
+      cutDurationMin: String(barber.cutDurationMin),
+    })
     setEditError('')
     setAvatarError('')
   }
@@ -130,7 +138,13 @@ const DashboardEquipe = () => {
       if (isDemoMode()) {
         updateBarbers(barbers.map(b =>
           b.id === editingBarber.id
-            ? { ...b, name: editForm.name, specialty: editForm.specialty, bio: editForm.bio }
+            ? {
+                ...b,
+                name: editForm.name,
+                specialty: editForm.specialty,
+                bio: editForm.bio,
+                cutDurationMin: Number(editForm.cutDurationMin),
+              }
             : b
         ))
         setEditingBarber(null)
@@ -141,10 +155,18 @@ const DashboardEquipe = () => {
         specialty: editForm.specialty,
         bio: editForm.bio,
         role: editForm.role,
+        cut_duration_minutes: Number(editForm.cutDurationMin),
       })
       updateBarbers(barbers.map(b =>
         b.id === editingBarber.id
-          ? { ...b, name: row.name, specialty: row.specialty, bio: row.bio, active: row.active }
+          ? {
+              ...b,
+              name: row.name,
+              specialty: row.specialty,
+              bio: row.bio,
+              cutDurationMin: row.cut_duration_minutes,
+              active: row.active,
+            }
           : b
       ))
       setEditingBarber(null)
@@ -230,6 +252,10 @@ const DashboardEquipe = () => {
             <p className="text-amber-400/70 text-xs font-body font-semibold tracking-wide uppercase mb-3">
               {barber.specialty}
             </p>
+            <div className="flex items-center gap-1.5 text-white/35 text-xs font-body mb-3">
+              <Clock className="w-3 h-3" />
+              Bloqueia {barber.cutDurationMin} min por atendimento
+            </div>
             {barber.bio && (
               <p className="text-white/50 text-sm font-body leading-relaxed mb-4 line-clamp-2">{barber.bio}</p>
             )}
@@ -493,6 +519,22 @@ const DashboardEquipe = () => {
                   </select>
                 </div>
                 <div>
+                  <label className="block text-white/45 text-xs font-body mb-1.5">Tempo de corte (min) *</label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="480"
+                    step="5"
+                    value={editForm.cutDurationMin}
+                    onChange={e => setEditForm(f => ({ ...f, cutDurationMin: e.target.value }))}
+                    placeholder="15"
+                    className={inputCls}
+                  />
+                  <p className="mt-1.5 text-white/25 text-[11px] font-body">
+                    Um agendamento às 15:00 com 15 min bloqueia de 15:00 a 15:15.
+                  </p>
+                </div>
+                <div>
                   <label className="block text-white/45 text-xs font-body mb-1.5">Bio (opcional)</label>
                   <textarea
                     value={editForm.bio}
@@ -507,7 +549,7 @@ const DashboardEquipe = () => {
 
                 <button
                   onClick={handleEdit}
-                  disabled={editSaving || !editForm.name || !editForm.specialty}
+                  disabled={editSaving || !editForm.name || !editForm.specialty || Number(editForm.cutDurationMin) < 5}
                   className="w-full py-3 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {editSaving

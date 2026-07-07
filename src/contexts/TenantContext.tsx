@@ -110,6 +110,7 @@ function mapBarber(row: MemberRow): BarbershopBarber {
     name: row.name,
     bio: row.bio,
     specialty: row.specialty,
+    cutDurationMin: row.cut_duration_minutes,
     avatar: row.avatar ?? undefined,
     active: row.active,
   }
@@ -141,6 +142,7 @@ export function mapAppointment(row: AppointmentRow): BarbershopAppointment {
     serviceCategory: row.service_category ?? undefined,
     date: row.date,
     time: row.time,
+    durationMin: row.duration_min,
     status: row.status as BarbershopAppointment['status'],
     membershipType: row.membership_type as BarbershopAppointment['membershipType'],
     price: row.price ?? undefined,

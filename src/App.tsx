@@ -78,6 +78,7 @@ import Demo from "./pages/Demo";
 // ── Dashboard da barbearia (/dashboard/*) ─────────────────────────────────
 import DashboardOverview from "./pages/dashboard/DashboardOverview";
 import DashboardAgenda from "./pages/dashboard/DashboardAgenda";
+import DashboardLembretes from "./pages/dashboard/DashboardLembretes";
 import DashboardEquipe from "./pages/dashboard/DashboardEquipe";
 import DashboardClientes from "./pages/dashboard/DashboardClientes";
 import DashboardServicos from "./pages/dashboard/DashboardServicos";
@@ -154,6 +155,7 @@ const App = () => (
                         }>
                           <Route index element={<DashboardOverview />} />
                           <Route path="agenda" element={<DashboardAgenda />} />
+                          <Route path="lembretes" element={<DashboardLembretes />} />
                           <Route path="equipe" element={<DashboardEquipe />} />
                           <Route path="clientes" element={<DashboardClientes />} />
                           <Route path="servicos" element={<DashboardServicos />} />

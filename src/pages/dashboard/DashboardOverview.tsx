@@ -264,6 +264,17 @@ const DashboardOverview = () => {
   const today = new Date()
   const dateLabel = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 
+  // Alerta de cobranças: atrasadas, vencendo hoje ou perto de vencer (≤3 dias)
+  const alertList = billings.filter(b =>
+    b.status === 'overdue' || b.status === 'today' || (b.status === 'due-soon' && b.daysUntil <= 3)
+  )
+  const hasOverdue = summary.overdueCount > 0
+  const alertParts: string[] = []
+  if (summary.overdueCount > 0) alertParts.push(`${summary.overdueCount} atrasada${summary.overdueCount > 1 ? 's' : ''}`)
+  if (summary.todayCount > 0) alertParts.push(`${summary.todayCount} vencendo hoje`)
+  const soon3 = billings.filter(b => b.status === 'due-soon' && b.daysUntil <= 3).length
+  if (soon3 > 0) alertParts.push(`${soon3} perto de vencer`)
+
   return (
     <div className="space-y-8 max-w-5xl">
 
@@ -295,6 +306,64 @@ const DashboardOverview = () => {
           BOM DIA, {barbershop?.logoText}
         </h1>
       </motion.div>
+
+      {/* Alerta de cobranças do clube perto de vencer / atrasadas */}
+      <AnimatePresence>
+        {alertList.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className={`p-4 rounded-xl border ${
+              hasOverdue ? 'bg-red-500/[0.07] border-red-500/25' : 'bg-amber-500/[0.07] border-amber-500/25'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                hasOverdue ? 'bg-red-500/15 border border-red-500/25' : 'bg-amber-500/15 border border-amber-500/25'
+              }`}>
+                <AlertTriangle className={`w-4 h-4 ${hasOverdue ? 'text-red-400' : 'text-amber-400'}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold font-body ${hasOverdue ? 'text-red-400' : 'text-amber-400'}`}>
+                  Mensalidades do clube — {alertParts.join(' · ')}
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {alertList.slice(0, 5).map(b => {
+                    const hint = b.status === 'overdue' ? `${b.daysLate}d atraso`
+                      : b.status === 'today' ? 'hoje' : `em ${b.daysUntil}d`
+                    return (
+                      <span
+                        key={b.sub.id}
+                        className={`text-xs font-body px-2 py-0.5 rounded-full border ${
+                          b.status === 'overdue'
+                            ? 'bg-red-500/10 border-red-500/20 text-red-300'
+                            : 'bg-white/[0.04] border-white/10 text-white/60'
+                        }`}
+                      >
+                        {b.sub.name.split(' ')[0]} · {hint}
+                      </span>
+                    )
+                  })}
+                  {alertList.length > 5 && (
+                    <span className="text-xs font-body px-2 py-0.5 text-white/40">+{alertList.length - 5}</span>
+                  )}
+                </div>
+              </div>
+              <a
+                href="/dashboard/clube"
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold font-body transition-colors ${
+                  hasOverdue
+                    ? 'bg-red-500 text-white hover:bg-red-400'
+                    : 'bg-amber-500 text-[#0a0a0a] hover:bg-amber-400'
+                }`}
+              >
+                Cobrar agora →
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Site strip */}
       <div className="flex items-center gap-3 p-4 rounded-xl bg-[#161616] border border-[#262626]">

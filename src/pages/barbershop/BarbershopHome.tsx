@@ -1,12 +1,13 @@
 // Site público de uma barbearia — template profissional configurável por slug
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, Check, ChevronLeft, Loader2, CheckCircle2, User, Calendar, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 import { supabasePublic } from '@/lib/supabase-public'
+import { buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -21,12 +22,6 @@ const TESTIMONIALS = [
   { name: 'Bruno Alves', text: 'Melhor degradê da cidade. Não troco por nada.', stars: 5 },
   { name: 'Pedro Costa', text: 'Ambiente diferenciado, equipe atenciosa. Virei fixo.', stars: 5 },
   { name: 'Diego Santos', text: 'A barba saiu exatamente como eu pedi. Ótimo serviço.', stars: 5 },
-]
-
-const TIME_SLOTS = [
-  '09:00','09:30','10:00','10:30','11:00','11:30',
-  '12:00','13:00','13:30','14:00','14:30',
-  '15:00','15:30','16:00','16:30','17:00','17:30','18:00',
 ]
 
 type BookStep = 'service' | 'barber' | 'datetime' | 'contact' | 'done'
@@ -60,8 +55,47 @@ const BookingSection = ({
   const [clientEmail, setClientEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [bookError, setBookError] = useState('')
+  const [busy, setBusy] = useState<BusyRange[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
 
   const todayStr = new Date().toISOString().split('T')[0]
+
+  // Barbeiro específico escolhido (ou null se "qualquer um")
+  const pickedBarber = selectedBarber !== 'any' && selectedBarber ? selectedBarber : null
+  // Duração = tempo de corte do barbeiro (ou duração do serviço, ou 30 min)
+  const slotDuration = (pickedBarber ? pickedBarber.cutDurationMin : selectedService?.durationMin) || 30
+
+  // Busca horários ocupados do barbeiro na data (RPC seguro — só horário+duração)
+  useEffect(() => {
+    if (step !== 'datetime' || !selectedDate || !pickedBarber) { setBusy([]); return }
+    let active = true
+    setLoadingSlots(true)
+    supabasePublic
+      .rpc('public_barber_busy_slots', {
+        p_barbershop_id: barbershop.id,
+        p_barber_id: pickedBarber.id,
+        p_date: selectedDate,
+      })
+      .then(({ data, error }) => {
+        if (!active) return
+        if (error || !data) { setBusy([]); return }
+        setBusy(data.map(r => {
+          const start = toMin(r.slot_time)
+          return { start, end: start + (r.slot_duration || 30) }
+        }))
+      })
+      .finally(() => { if (active) setLoadingSlots(false) })
+    return () => { active = false }
+  }, [step, selectedDate, pickedBarber?.id, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const slots = useMemo(() =>
+    selectedDate ? buildDaySlots({ step: slotDuration, duration: slotDuration, busy, now: new Date(), date: selectedDate }) : []
+  , [selectedDate, slotDuration, busy])
+
+  // Limpa o horário escolhido se ele deixou de estar disponível
+  useEffect(() => {
+    if (selectedTime && !slots.some(s => s.time === selectedTime && s.available)) setSelectedTime('')
+  }, [slots]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetBooking = () => {
     setStep('service')
@@ -92,6 +126,7 @@ const BookingSection = ({
         barber_name: barberObj?.name ?? 'A definir',
         date: selectedDate,
         time: selectedTime,
+        duration_min: slotDuration,
         client_name: clientName,
         client_phone: clientPhone,
         client_email: clientEmail || null,
@@ -214,7 +249,7 @@ const BookingSection = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
             {/* Qualquer barbeiro */}
             <button
-              onClick={() => { setSelectedBarber('any'); setStep('datetime') }}
+              onClick={() => { setSelectedBarber('any'); setSelectedTime(''); setStep('datetime') }}
               className="text-left p-4 rounded-xl border transition-all"
               style={
                 selectedBarber === 'any'
@@ -239,7 +274,7 @@ const BookingSection = ({
             {barbers.map((barber) => (
               <button
                 key={barber.id}
-                onClick={() => { setSelectedBarber(barber); setStep('datetime') }}
+                onClick={() => { setSelectedBarber(barber); setSelectedTime(''); setStep('datetime') }}
                 className="text-left p-4 rounded-xl border transition-all"
                 style={
                   selectedBarber !== 'any' && selectedBarber?.id === barber.id
@@ -291,7 +326,7 @@ const BookingSection = ({
               type="date"
               min={todayStr}
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => { setSelectedDate(e.target.value); setSelectedTime('') }}
               className="w-full bg-[#161616] border border-[#252525] rounded-xl px-4 py-3 text-white text-sm font-body focus:outline-none focus:border-[#333] transition-colors"
               style={{ colorScheme: 'dark' }}
             />
@@ -300,24 +335,37 @@ const BookingSection = ({
             <div className="mb-6">
               <label className="block text-white/50 text-xs font-body mb-3 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
-                Horário disponível
+                Horário disponível <span className="text-white/30">(início–fim · {slotDuration} min)</span>
+                {loadingSlots && <Loader2 className="w-3 h-3 animate-spin" />}
               </label>
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {TIME_SLOTS.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setSelectedTime(t)}
-                    className="py-2 rounded-lg text-xs font-body font-semibold transition-all"
-                    style={
-                      selectedTime === t
-                        ? { backgroundColor: primary, color: '#0a0a0a' }
-                        : { backgroundColor: '#161616', color: 'rgba(255,255,255,0.55)', border: '1px solid #252525' }
-                    }
-                  >
-                    {t}
-                  </button>
-                ))}
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {slots.map((s) => {
+                  const isSel = selectedTime === s.time
+                  return (
+                    <button
+                      key={s.time}
+                      onClick={() => s.available && setSelectedTime(s.time)}
+                      disabled={!s.available}
+                      className="py-2 rounded-lg font-body transition-all disabled:cursor-not-allowed"
+                      style={
+                        !s.available
+                          ? { backgroundColor: '#111', color: 'rgba(255,255,255,0.2)', border: '1px solid #1c1c1c' }
+                          : isSel
+                            ? { backgroundColor: primary, color: '#0a0a0a' }
+                            : { backgroundColor: '#161616', color: 'rgba(255,255,255,0.6)', border: '1px solid #252525' }
+                      }
+                    >
+                      <span className="block text-xs font-semibold leading-none">{s.time}</span>
+                      <span className="block text-[10px] opacity-60 leading-none mt-0.5">
+                        {s.available ? `–${s.end}` : 'ocupado'}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
+              {slots.length > 0 && slots.every(s => !s.available) && (
+                <p className="text-white/35 text-xs font-body mt-3">Nenhum horário livre nesse dia. Tente outra data.</p>
+              )}
             </div>
           )}
           <div className="flex items-center justify-between">

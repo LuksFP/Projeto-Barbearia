@@ -88,6 +88,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     name: 'Rafael Moura',
     bio: 'Fundador. Especialista em degradê e barba árabe.',
     specialty: 'Low Fade + Barba',
+    cutDurationMin: 30,
     active: true,
   },
   {
@@ -97,6 +98,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     name: 'Lucas Ferreira',
     bio: '8 anos de mercado. Referência em cortes texturizados.',
     specialty: 'Texturizado + Crespo',
+    cutDurationMin: 15,
     active: true,
   },
   {
@@ -106,6 +108,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     name: 'Thiago Nunes',
     bio: 'Novo na casa, mas old school no estilo.',
     specialty: 'Clássico + Pompadour',
+    cutDurationMin: 45,
     active: true,
   },
   {
@@ -115,6 +118,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     name: 'Diego Matos',
     bio: 'Especialista em acabamento limpo e barba desenhada.',
     specialty: 'Fade + Barba',
+    cutDurationMin: 30,
     active: true,
   },
   {
@@ -124,6 +128,7 @@ export const MOCK_BARBERS: BarbershopBarber[] = [
     name: 'Caio Brito',
     bio: 'Atendimento premium com foco em corte social contemporâneo.',
     specialty: 'Social + Tesoura',
+    cutDurationMin: 20,
     active: true,
   },
 ]
@@ -227,6 +232,7 @@ export const MOCK_APPOINTMENTS: BarbershopAppointment[] = [
     serviceName: 'Corte + Barba',
     date: '2026-04-11',
     time: '09:00',
+    durationMin: 30,
     status: 'done',
     membershipType: 'vip',
   },
@@ -241,6 +247,7 @@ export const MOCK_APPOINTMENTS: BarbershopAppointment[] = [
     serviceName: 'Corte Degradê',
     date: '2026-04-11',
     time: '10:00',
+    durationMin: 15,
     status: 'confirmed',
     membershipType: 'standard',
   },
@@ -255,6 +262,7 @@ export const MOCK_APPOINTMENTS: BarbershopAppointment[] = [
     serviceName: 'Barba Completa',
     date: '2026-04-11',
     time: '11:00',
+    durationMin: 30,
     status: 'confirmed',
   },
   {
@@ -268,6 +276,7 @@ export const MOCK_APPOINTMENTS: BarbershopAppointment[] = [
     serviceName: 'Corte Degradê',
     date: '2026-04-11',
     time: '14:00',
+    durationMin: 45,
     status: 'pending',
     membershipType: 'vip',
   },
@@ -282,6 +291,7 @@ export const MOCK_APPOINTMENTS: BarbershopAppointment[] = [
     serviceName: 'Pigmentação',
     date: '2026-04-11',
     time: '15:30',
+    durationMin: 15,
     status: 'pending',
   },
   {
@@ -295,6 +305,7 @@ export const MOCK_APPOINTMENTS: BarbershopAppointment[] = [
     serviceName: 'Combo Atlas',
     date: '2026-04-11',
     time: '10:30',
+    durationMin: 30,
     status: 'confirmed',
     membershipType: 'vip',
   },
@@ -309,6 +320,7 @@ export const MOCK_APPOINTMENTS: BarbershopAppointment[] = [
     serviceName: 'Corte Executivo',
     date: '2026-04-11',
     time: '13:00',
+    durationMin: 20,
     status: 'pending',
     membershipType: 'standard',
   },

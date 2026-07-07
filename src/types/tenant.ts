@@ -62,6 +62,7 @@ export interface BarbershopBarber {
   name: string
   bio: string
   specialty: string
+  cutDurationMin: number
   avatar?: string
   active: boolean
 }
@@ -78,6 +79,7 @@ export interface BarbershopAppointment {
   serviceCategory?: string
   date: string
   time: string
+  durationMin: number
   status: 'pending' | 'confirmed' | 'done' | 'cancelled'
   membershipType?: 'vip' | 'standard'
   price?: number
