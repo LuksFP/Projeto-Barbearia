@@ -21,6 +21,7 @@ import {
   BarChart2,
   Clock,
   BellRing,
+  UserPlus,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
@@ -33,6 +34,7 @@ const navItems = [
   { to: '/dashboard/lembretes', label: 'Lembretes', icon: BellRing },
   { to: '/dashboard/equipe', label: 'Equipe', icon: UserCheck },
   { to: '/dashboard/clientes', label: 'Clientes', icon: Users },
+  { to: '/dashboard/reativar', label: 'Reativação', icon: UserPlus },
   { to: '/dashboard/servicos', label: 'Serviços', icon: Scissors },
   { to: '/dashboard/clube', label: 'Clube VIP', icon: Crown },
   { to: '/dashboard/financeiro', label: 'Financeiro', icon: BarChart2 },

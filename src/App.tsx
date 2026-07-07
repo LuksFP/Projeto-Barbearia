@@ -79,6 +79,7 @@ import Demo from "./pages/Demo";
 import DashboardOverview from "./pages/dashboard/DashboardOverview";
 import DashboardAgenda from "./pages/dashboard/DashboardAgenda";
 import DashboardLembretes from "./pages/dashboard/DashboardLembretes";
+import DashboardReativar from "./pages/dashboard/DashboardReativar";
 import DashboardEquipe from "./pages/dashboard/DashboardEquipe";
 import DashboardClientes from "./pages/dashboard/DashboardClientes";
 import DashboardServicos from "./pages/dashboard/DashboardServicos";
@@ -158,6 +159,7 @@ const App = () => (
                           <Route path="lembretes" element={<DashboardLembretes />} />
                           <Route path="equipe" element={<DashboardEquipe />} />
                           <Route path="clientes" element={<DashboardClientes />} />
+                          <Route path="reativar" element={<DashboardReativar />} />
                           <Route path="servicos" element={<DashboardServicos />} />
                           <Route path="clube" element={<DashboardClube />} />
                           <Route path="personalizar" element={<DashboardPersonalizar />} />
