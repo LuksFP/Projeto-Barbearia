@@ -221,6 +221,7 @@ export type Database = {
           address: string
           cancellation_policy: Json | null
           city: string
+          club_pix_key: string
           cover_image: string | null
           created_at: string
           custom_domain: string | null
@@ -245,6 +246,7 @@ export type Database = {
           address?: string
           cancellation_policy?: Json | null
           city?: string
+          club_pix_key?: string
           cover_image?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -269,6 +271,7 @@ export type Database = {
           address?: string
           cancellation_policy?: Json | null
           city?: string
+          club_pix_key?: string
           cover_image?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -398,6 +401,60 @@ export type Database = {
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_subscribers: {
+        Row: {
+          active: boolean
+          barbershop_id: string
+          billing_day: number
+          created_at: string
+          id: string
+          membership_id: string | null
+          name: string
+          paid_until: string | null
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          barbershop_id: string
+          billing_day?: number
+          created_at?: string
+          id?: string
+          membership_id?: string | null
+          name: string
+          paid_until?: string | null
+          phone?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          barbershop_id?: string
+          billing_day?: number
+          created_at?: string
+          id?: string
+          membership_id?: string | null
+          name?: string
+          paid_until?: string | null
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_subscribers_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_subscribers_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
             referencedColumns: ["id"]
           },
         ]

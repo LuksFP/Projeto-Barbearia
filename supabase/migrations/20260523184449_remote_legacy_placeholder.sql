@@ -1,0 +1,2 @@
+-- Placeholder local para migration já existente no ambiente remoto.
+-- Mantém o histórico alinhado para permitir `supabase db push`.

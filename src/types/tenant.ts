@@ -25,6 +25,7 @@ export interface Barbershop {
   customDomain?: string
   embedKey?: string
   cancellationPolicy?: CancellationPolicy | null
+  clubPixKey?: string       // chave PIX usada nas cobranças do Clube VIP
 }
 
 export interface BarbershopMember {

@@ -85,6 +85,7 @@ function mapBarbershop(row: BarbershopRow): Barbershop {
     customDomain: row.custom_domain ?? '',
     embedKey: row.embed_key,
     cancellationPolicy: row.cancellation_policy as Barbershop['cancellationPolicy'] ?? undefined,
+    clubPixKey: row.club_pix_key ?? '',
   }
 }
 
@@ -264,6 +265,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     if (updates.siteType !== undefined) payload.site_type = updates.siteType
     if (updates.customDomain !== undefined) payload.custom_domain = updates.customDomain
     if (updates.cancellationPolicy !== undefined) payload.cancellation_policy = updates.cancellationPolicy
+    if (updates.clubPixKey !== undefined) payload.club_pix_key = updates.clubPixKey
     const row = await barbershopRepository.update(barbershop.id, payload as any)
     setBarbershop(mapBarbershop(row))
   }, [barbershop])
