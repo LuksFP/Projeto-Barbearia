@@ -61,7 +61,7 @@ interface NewAptForm {
 }
 
 const DashboardAgenda = () => {
-  const { barbershop, barbers, services, appointments: demoAppointments } = useTenant()
+  const { barbershop, barbers, services, clients, addClient, appointments: demoAppointments } = useTenant()
   const [weekOffset, setWeekOffset]     = useState(0)
   const [selectedIdx, setSelectedIdx]   = useState(todayIndex)
   const [filterBarber, setFilterBarber] = useState<string>('all')
@@ -150,6 +150,15 @@ const DashboardAgenda = () => {
       }
     }
 
+    // Cliente entra automaticamente na aba Clientes (no banco é via trigger;
+    // aqui reflete na hora na UI). Só se ainda não existir esse telefone.
+    const ensureClient = () => {
+      const digits = form.clientPhone.replace(/\D/g, '')
+      if (digits && !clients.some(c => c.phone.replace(/\D/g, '') === digits)) {
+        addClient({ name: form.clientName, phone: form.clientPhone, membershipType: null }).catch(() => {})
+      }
+    }
+
     setSaving(true)
     try {
       if (isDemoMode()) {
@@ -173,6 +182,7 @@ const DashboardAgenda = () => {
         if (form.date === selectedDate) {
           setAppointments(prev => [...prev, demoApt].sort((a, b) => a.time.localeCompare(b.time)))
         }
+        ensureClient()
         setModalOpen(false)
         setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '' })
         return
@@ -197,6 +207,7 @@ const DashboardAgenda = () => {
       if (row.date === selectedDate) {
         setAppointments(prev => [...prev, mapAppointment(row)].sort((a, b) => a.time.localeCompare(b.time)))
       }
+      ensureClient()
       setModalOpen(false)
       setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '' })
     } catch {
