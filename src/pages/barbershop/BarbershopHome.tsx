@@ -26,6 +26,15 @@ const TESTIMONIALS = [
 
 type BookStep = 'service' | 'barber' | 'datetime' | 'contact' | 'done'
 
+// Guarda nome/telefone/email no navegador do cliente pra prefill nos próximos agendamentos
+const SAVED_CONTACT_KEY = 'barberos:client-contact'
+function loadSavedContact(): { name?: string; phone?: string; email?: string } {
+  try { return JSON.parse(localStorage.getItem(SAVED_CONTACT_KEY) || '{}') } catch { return {} }
+}
+function saveContact(name: string, phone: string, email: string) {
+  try { localStorage.setItem(SAVED_CONTACT_KEY, JSON.stringify({ name, phone, email })) } catch { /* ignore */ }
+}
+
 // ─── Booking Section ──────────────────────────────────────────────────────────
 
 function formatCancellationPolicy(policy: NonNullable<PublicSiteOutletCtx['barbershop']['cancellationPolicy']>) {
@@ -50,9 +59,10 @@ const BookingSection = ({
   const [selectedBarber, setSelectedBarber] = useState<BarbershopBarber | null | 'any'>('any')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
-  const [clientName, setClientName] = useState('')
-  const [clientPhone, setClientPhone] = useState('')
-  const [clientEmail, setClientEmail] = useState('')
+  const [clientName, setClientName] = useState(() => loadSavedContact().name || '')
+  const [clientPhone, setClientPhone] = useState(() => loadSavedContact().phone || '')
+  const [clientEmail, setClientEmail] = useState(() => loadSavedContact().email || '')
+  const [clientNotes, setClientNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [bookError, setBookError] = useState('')
   const [busy, setBusy] = useState<BusyRange[]>([])
@@ -129,9 +139,12 @@ const BookingSection = ({
     setSelectedBarber('any')
     setSelectedDate('')
     setSelectedTime('')
-    setClientName('')
-    setClientPhone('')
-    setClientEmail('')
+    // Mantém nome/telefone/email salvos pra o próximo agendamento
+    const s = loadSavedContact()
+    setClientName(s.name || '')
+    setClientPhone(s.phone || '')
+    setClientEmail(s.email || '')
+    setClientNotes('')
     setBookError('')
   }
 
@@ -143,6 +156,9 @@ const BookingSection = ({
     const barberObj = selectedBarber === 'any' ? null : selectedBarber
     // Vários serviços viram um atendimento só: nomes juntos, preço e duração somados
     const category = selectedServices.length > 1 ? 'Combo' : selectedServices[0].category
+
+    // Salva os dados no navegador do cliente pra prefill nos próximos agendamentos
+    saveContact(clientName.trim(), clientPhone.trim(), clientEmail.trim())
 
     // Demo: não grava no banco (id não é real), só mostra a confirmação
     if (isDemoBarbershop) {
@@ -164,6 +180,7 @@ const BookingSection = ({
         client_name: clientName,
         client_phone: clientPhone,
         client_email: clientEmail || null,
+        notes: clientNotes.trim() || null,
         status: 'pending',
       })
       if (error) throw error
@@ -531,6 +548,17 @@ const BookingSection = ({
                 placeholder="seu@email.com"
                 className="w-full bg-[#161616] border border-[#252525] rounded-xl px-4 py-3 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#333] transition-colors"
               />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-body mb-1.5">Observação (opcional)</label>
+              <textarea
+                value={clientNotes}
+                onChange={(e) => setClientNotes(e.target.value)}
+                rows={2}
+                placeholder="Ex: agendamento para pai e filho, cabelo cacheado…"
+                className="w-full bg-[#161616] border border-[#252525] rounded-xl px-4 py-3 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#333] transition-colors resize-none"
+              />
+              <p className="text-white/25 text-[11px] font-body mt-1.5">Fica salvo na sua ficha pra facilitar os próximos.</p>
             </div>
           </div>
 

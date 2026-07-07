@@ -27,6 +27,7 @@ export type Database = {
           duration_min: number
           id: string
           membership_type: string | null
+          notes: string | null
           price: number | null
           payment_method: string | null
           payment_status: string | null
@@ -54,6 +55,7 @@ export type Database = {
           duration_min?: number
           id?: string
           membership_type?: string | null
+          notes?: string | null
           price?: number | null
           payment_method?: string | null
           payment_status?: string | null
@@ -81,6 +83,7 @@ export type Database = {
           duration_min?: number
           id?: string
           membership_type?: string | null
+          notes?: string | null
           price?: number | null
           payment_method?: string | null
           payment_status?: string | null
