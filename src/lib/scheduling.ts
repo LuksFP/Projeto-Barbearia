@@ -3,7 +3,7 @@
 // trava 15:00–15:15 pra aquele barbeiro).
 import type { BarbershopAppointment } from '@/types/tenant'
 
-export const DEFAULT_OPEN = '09:00'
+export const DEFAULT_OPEN = '00:00'    // dia inteiro; barbeiro escolhe o horário
 export const DEFAULT_CLOSE = '24:00'   // meia-noite
 
 export interface Slot {
