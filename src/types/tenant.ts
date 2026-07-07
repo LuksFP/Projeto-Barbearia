@@ -26,6 +26,8 @@ export interface Barbershop {
   embedKey?: string
   cancellationPolicy?: CancellationPolicy | null
   clubPixKey?: string       // chave PIX usada nas cobranças do Clube VIP
+  openTime?: string         // horário de abertura 'HH:MM'
+  closeTime?: string        // horário de fechamento 'HH:MM'
 }
 
 export interface BarbershopMember {

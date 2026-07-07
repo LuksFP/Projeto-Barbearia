@@ -3,8 +3,8 @@
 // trava 15:00–15:15 pra aquele barbeiro).
 import type { BarbershopAppointment } from '@/types/tenant'
 
-export const DEFAULT_OPEN = '00:00'    // dia inteiro; barbeiro escolhe o horário
-export const DEFAULT_CLOSE = '24:00'   // meia-noite
+export const DEFAULT_OPEN = '08:00'    // fallback quando a barbearia não configurou
+export const DEFAULT_CLOSE = '20:00'
 
 export interface Slot {
   time: string        // início 'HH:MM'
@@ -73,8 +73,10 @@ export interface BuildSlotsOptions {
  * ou se já passou (quando a data é hoje).
  */
 export function buildDaySlots(opts: BuildSlotsOptions): Slot[] {
-  const open = toMin(opts.open ?? DEFAULT_OPEN)
-  const close = toMin(opts.close ?? DEFAULT_CLOSE)
+  const open = toMin(opts.open || DEFAULT_OPEN)
+  let close = toMin(opts.close || DEFAULT_CLOSE)
+  // fechamento à meia-noite ('00:00') ou "vira o dia" → trata como 24:00+
+  if (close <= open) close += 1440
   const step = Math.max(5, Math.round(opts.step))
   const duration = Math.max(5, Math.round(opts.duration))
 

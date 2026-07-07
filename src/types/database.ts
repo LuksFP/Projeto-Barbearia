@@ -231,6 +231,8 @@ export type Database = {
           cancellation_policy: Json | null
           city: string
           club_pix_key: string
+          open_time: string
+          close_time: string
           cover_image: string | null
           created_at: string
           custom_domain: string | null
@@ -256,6 +258,8 @@ export type Database = {
           cancellation_policy?: Json | null
           city?: string
           club_pix_key?: string
+          open_time?: string
+          close_time?: string
           cover_image?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -281,6 +285,8 @@ export type Database = {
           cancellation_policy?: Json | null
           city?: string
           club_pix_key?: string
+          open_time?: string
+          close_time?: string
           cover_image?: string | null
           created_at?: string
           custom_domain?: string | null

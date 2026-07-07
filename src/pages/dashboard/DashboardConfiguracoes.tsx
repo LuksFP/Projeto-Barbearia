@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
-import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info } from 'lucide-react'
+import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2 } from 'lucide-react'
 import { getDefaultCancellationPolicy, isDemoMode } from '@/lib/demo'
 import type { CancellationPolicy } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
@@ -229,9 +229,32 @@ const DashboardConfiguracoes = () => {
   const [policySaved, setPolicySaved] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const [openTime, setOpenTime] = useState(barbershop?.openTime || '08:00')
+  const [closeTime, setCloseTime] = useState(barbershop?.closeTime || '20:00')
+  const [hoursSaved, setHoursSaved] = useState(false)
+  const [savingHours, setSavingHours] = useState(false)
+
   if (!barbershop) return null
 
   const canEdit = userRole === 'owner' || userRole === 'admin'
+
+  const handleSaveHours = async () => {
+    if (isDemoMode()) {
+      setHoursSaved(true)
+      setTimeout(() => setHoursSaved(false), 3000)
+      return
+    }
+    setSavingHours(true)
+    try {
+      await updateBarbershop({ openTime, closeTime })
+      setHoursSaved(true)
+      setTimeout(() => setHoursSaved(false), 3000)
+    } catch {
+      toast({ title: 'Erro ao salvar horário', variant: 'destructive' })
+    } finally {
+      setSavingHours(false)
+    }
+  }
 
   const handleSavePolicy = async () => {
     if (isDemoMode()) {
@@ -299,6 +322,60 @@ const DashboardConfiguracoes = () => {
           ))}
         </div>
         <Field label="Logo texto" value={barbershop.logoText} hint="fallback sem logo" />
+      </Section>
+
+      {/* Horário de funcionamento */}
+      <Section title="Horário de Funcionamento" icon={Clock} accent>
+        <p className="text-white/40 text-sm font-body mb-4">
+          Define o intervalo de horários disponíveis para agendamento (na agenda e no site).
+        </p>
+        {canEdit ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-white/35 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">Abre às</label>
+                <input
+                  type="time"
+                  value={openTime}
+                  onChange={e => setOpenTime(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-amber-500/50"
+                  style={{ colorScheme: 'dark' }}
+                />
+              </div>
+              <div>
+                <label className="text-white/35 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">Fecha às</label>
+                <input
+                  type="time"
+                  value={closeTime}
+                  onChange={e => setCloseTime(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-amber-500/50"
+                  style={{ colorScheme: 'dark' }}
+                />
+              </div>
+            </div>
+            <p className="text-white/25 text-xs font-body">Dica: para fechar à meia-noite, use 00:00 no fechamento.</p>
+            <div className="flex items-center justify-end gap-3">
+              {hoursSaved && (
+                <span className="flex items-center gap-1.5 text-emerald-400 text-sm font-body">
+                  <Check className="w-4 h-4" />Salvo
+                </span>
+              )}
+              <button
+                onClick={handleSaveHours}
+                disabled={savingHours}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors disabled:opacity-40"
+              >
+                {savingHours ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {savingHours ? 'Salvando…' : 'Salvar horário'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between py-2">
+            <span className="text-white/50 text-sm font-body">Funcionamento</span>
+            <span className="text-white/70 text-sm font-body font-semibold">{openTime} — {closeTime}</span>
+          </div>
+        )}
       </Section>
 
       {/* Política de cancelamento */}

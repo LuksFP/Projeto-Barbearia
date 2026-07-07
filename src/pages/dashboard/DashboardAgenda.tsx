@@ -95,8 +95,11 @@ const DashboardAgenda = () => {
   const bookingSlots = useMemo(() => {
     if (!form.date) return []
     const busy = form.barberId ? busyRanges(appointments, form.barberId, form.date) : []
-    return buildDaySlots({ step: slotDuration, duration: slotDuration, busy })
-  }, [form.date, form.barberId, slotDuration, appointments])
+    return buildDaySlots({
+      step: slotDuration, duration: slotDuration, busy,
+      open: barbershop?.openTime, close: barbershop?.closeTime,
+    })
+  }, [form.date, form.barberId, slotDuration, appointments, barbershop?.openTime, barbershop?.closeTime])
 
   const openNewModal = () => {
     setForm({ ...EMPTY_APT, date: selectedDate })

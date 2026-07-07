@@ -125,8 +125,11 @@ const BookingSection = ({
   }, [step, selectedDate, pickedBarber?.id, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const slots = useMemo(() =>
-    selectedDate ? buildDaySlots({ step: slotDuration, duration: slotDuration, busy, now: new Date(), date: selectedDate }) : []
-  , [selectedDate, slotDuration, busy])
+    selectedDate ? buildDaySlots({
+      step: slotDuration, duration: slotDuration, busy, now: new Date(), date: selectedDate,
+      open: barbershop.openTime, close: barbershop.closeTime,
+    }) : []
+  , [selectedDate, slotDuration, busy, barbershop.openTime, barbershop.closeTime])
 
   // Limpa o horário escolhido se ele deixou de estar disponível
   useEffect(() => {
