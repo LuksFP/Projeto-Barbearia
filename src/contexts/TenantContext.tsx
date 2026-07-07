@@ -39,6 +39,7 @@ interface TenantContextType {
     phone: string
     email?: string
     membershipType: BarbershopClient['membershipType']
+    notes?: string
   }) => Promise<void>
   updateClient: (id: string, input: {
     name?: string
@@ -277,6 +278,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     phone: string
     email?: string
     membershipType: BarbershopClient['membershipType']
+    notes?: string
   }) => {
     if (!barbershop) throw new Error('Barbearia não carregada')
     const byName = (a: BarbershopClient, b: BarbershopClient) => a.name.localeCompare(b.name, 'pt-BR')
@@ -292,6 +294,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         membershipType: input.membershipType,
         totalVisits: 0,
         lastVisit: '',
+        notes: input.notes?.trim() || undefined,
       }
       setClients(prev => [...prev, demo].sort(byName))
       return
@@ -303,6 +306,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       phone: input.phone.trim(),
       email: input.email?.trim() || null,
       membership_type: input.membershipType,
+      ...(input.notes?.trim() ? { notes: input.notes.trim() } : {}),
     })
     const mapped = mapClient(row)
     // upsert por telefone: substitui se já existir, senão adiciona

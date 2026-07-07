@@ -57,7 +57,14 @@ interface NewAptForm {
   barberId: string
   date: string
   time: string
+  durationMin: string
   price: string
+  notes: string
+}
+
+const EMPTY_APT: NewAptForm = {
+  clientName: '', clientPhone: '', serviceName: '', barberId: '',
+  date: '', time: '', durationMin: '30', price: '', notes: '',
 }
 
 const DashboardAgenda = () => {
@@ -72,18 +79,16 @@ const DashboardAgenda = () => {
   // Modal "Novo agendamento"
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState<NewAptForm>({
-    clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '',
-  })
+  const [form, setForm] = useState<NewAptForm>(EMPTY_APT)
 
   const weekDays    = getWeekDays(weekOffset)
   const selectedDate = weekDays[selectedIdx]?.date ?? ''
   const todayStr = new Date().toISOString().split('T')[0]
 
-  // Duração do atendimento = tempo de corte do barbeiro (fallback: serviço, ou 30 min)
   const formBarber  = barbers.find(b => b.id === form.barberId)
   const formService = services.find(s => s.name === form.serviceName)
-  const slotDuration = formBarber?.cutDurationMin || formService?.durationMin || 30
+  // Duração editável no form (padrão = tempo de corte do barbeiro / serviço / 30)
+  const slotDuration = Math.max(5, Number(form.durationMin) || formBarber?.cutDurationMin || formService?.durationMin || 30)
 
   // Slots do dia respeitando o tempo de corte e bloqueando os ranges ocupados
   const bookingSlots = useMemo(() => {
@@ -93,7 +98,7 @@ const DashboardAgenda = () => {
   }, [form.date, form.barberId, slotDuration, appointments])
 
   const openNewModal = () => {
-    setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: selectedDate, time: '', price: '' })
+    setForm({ ...EMPTY_APT, date: selectedDate })
     setModalOpen(true)
   }
 
@@ -139,7 +144,7 @@ const DashboardAgenda = () => {
 
     const svc = services.find(s => s.name === form.serviceName)
     const brb = barbers.find(b => b.id === form.barberId)
-    const duration = brb?.cutDurationMin || svc?.durationMin || 30
+    const duration = slotDuration
 
     // Guarda: não deixa marcar em cima de um horário já ocupado do barbeiro
     if (form.barberId) {
@@ -155,7 +160,7 @@ const DashboardAgenda = () => {
     const ensureClient = () => {
       const digits = form.clientPhone.replace(/\D/g, '')
       if (digits && !clients.some(c => c.phone.replace(/\D/g, '') === digits)) {
-        addClient({ name: form.clientName, phone: form.clientPhone, membershipType: null }).catch(() => {})
+        addClient({ name: form.clientName, phone: form.clientPhone, membershipType: null, notes: form.notes.trim() || undefined }).catch(() => {})
       }
     }
 
@@ -184,7 +189,7 @@ const DashboardAgenda = () => {
         }
         ensureClient()
         setModalOpen(false)
-        setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '' })
+        setForm(EMPTY_APT)
         return
       }
       // Resolve serviço e barbeiro selecionados para gravar os campos que
@@ -201,6 +206,7 @@ const DashboardAgenda = () => {
         time: form.time,
         duration_min: duration,
         price: form.price ? Number(form.price) : svc?.price ?? null,
+        notes: form.notes.trim() || null,
         status: 'confirmed',
       })
       // Se a data do novo agendamento é a selecionada, adiciona à lista
@@ -209,7 +215,7 @@ const DashboardAgenda = () => {
       }
       ensureClient()
       setModalOpen(false)
-      setForm({ clientName: '', clientPhone: '', serviceName: '', barberId: '', date: '', time: '', price: '' })
+      setForm(EMPTY_APT)
     } catch {
       toast({ title: 'Erro ao criar agendamento', variant: 'destructive' })
     } finally {
@@ -442,7 +448,14 @@ const DashboardAgenda = () => {
                       value={form.serviceName}
                       onChange={e => {
                         const svc = services.find(s => s.name === e.target.value)
-                        setForm(f => ({ ...f, serviceName: e.target.value, price: svc ? String(svc.price) : f.price }))
+                        setForm(f => ({
+                          ...f,
+                          serviceName: e.target.value,
+                          price: svc ? String(svc.price) : f.price,
+                          // Sem barbeiro escolhido, a duração acompanha o serviço
+                          durationMin: !f.barberId && svc ? String(svc.durationMin) : f.durationMin,
+                          time: '',
+                        }))
                       }}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
                     >
@@ -456,7 +469,16 @@ const DashboardAgenda = () => {
                     <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro</label>
                     <select
                       value={form.barberId}
-                      onChange={e => setForm(f => ({ ...f, barberId: e.target.value, time: '' }))}
+                      onChange={e => {
+                        const b = barbers.find(x => x.id === e.target.value)
+                        setForm(f => ({
+                          ...f,
+                          barberId: e.target.value,
+                          // Duração acompanha o tempo de corte do barbeiro escolhido
+                          durationMin: b ? String(b.cutDurationMin) : f.durationMin,
+                          time: '',
+                        }))
+                      }}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
                     >
                       <option value="">A definir</option>
@@ -491,12 +513,23 @@ const DashboardAgenda = () => {
                       ))}
                     </select>
                     <p className="text-white/30 text-[11px] font-body mt-1.5">
-                      {form.barberId
-                        ? `${formBarber?.name?.split(' ')[0] ?? 'Barbeiro'} corta em ${slotDuration} min — cada horário bloqueia ${slotDuration} min`
-                        : `Selecione o barbeiro para bloquear os horários ocupados (padrão ${slotDuration} min)`}
+                      Bloqueia {slotDuration} min a partir do horário escolhido
+                      {!form.barberId && ' — escolha o barbeiro pra ver os ocupados'}
                     </p>
                   </div>
-                  <div className="col-span-2">
+                  <div>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Duração (min)</label>
+                    <input
+                      type="number"
+                      min="5"
+                      step="5"
+                      value={form.durationMin}
+                      onChange={e => setForm(f => ({ ...f, durationMin: e.target.value, time: '' }))}
+                      placeholder="30"
+                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-white/45 text-xs font-body mb-1.5">Valor (R$)</label>
                     <input
                       type="number"
@@ -507,6 +540,17 @@ const DashboardAgenda = () => {
                       placeholder="0,00"
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
                     />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Observação</label>
+                    <textarea
+                      value={form.notes}
+                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                      rows={2}
+                      placeholder="Ex: pai e filho, cliente do plano, cabelo cacheado…"
+                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a] resize-none"
+                    />
+                    <p className="text-white/25 text-[11px] font-body mt-1.5">Vai para a descrição do cliente na aba Clientes.</p>
                   </div>
                 </div>
 
