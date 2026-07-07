@@ -46,7 +46,7 @@ const BookingSection = ({
 }) => {
   const primary = barbershop.primaryColor
   const [step, setStep] = useState<BookStep>('service')
-  const [selectedService, setSelectedService] = useState<BarbershopService | null>(null)
+  const [selectedServices, setSelectedServices] = useState<BarbershopService[]>([])
   const [selectedBarber, setSelectedBarber] = useState<BarbershopBarber | null | 'any'>('any')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
@@ -62,12 +62,38 @@ const BookingSection = ({
 
   // Barbeiro específico escolhido (ou null se "qualquer um")
   const pickedBarber = selectedBarber !== 'any' && selectedBarber ? selectedBarber : null
-  // Duração = tempo de corte do barbeiro (ou duração do serviço, ou 30 min)
-  const slotDuration = (pickedBarber ? pickedBarber.cutDurationMin : selectedService?.durationMin) || 30
+  // Vários serviços somam preço e duração (ex: barba + sobrancelha)
+  const totalPrice = selectedServices.reduce((acc, s) => acc + s.price, 0)
+  const totalDuration = selectedServices.reduce((acc, s) => acc + s.durationMin, 0)
+  const servicesLabel = selectedServices.map(s => s.name).join(' + ')
+  // Duração do atendimento = soma dos serviços (fallback: tempo de corte, ou 30 min)
+  const slotDuration = totalDuration || pickedBarber?.cutDurationMin || 30
+
+  const toggleService = (svc: BarbershopService) => {
+    setSelectedServices(prev =>
+      prev.some(s => s.id === svc.id) ? prev.filter(s => s.id !== svc.id) : [...prev, svc],
+    )
+    setSelectedTime('')
+  }
+
+  // Barbearia demo (id não-UUID) → não existe no banco real; simula ocupados
+  const isDemoBarbershop = !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(barbershop.id)
 
   // Busca horários ocupados do barbeiro na data (RPC seguro — só horário+duração)
   useEffect(() => {
     if (step !== 'datetime' || !selectedDate || !pickedBarber) { setBusy([]); return }
+
+    // Demo: injeta ocupados fixos pra dar pra ver o bloqueio na tela
+    if (isDemoBarbershop) {
+      setBusy([
+        { start: toMin('10:00'), end: toMin('10:00') + 45 },
+        { start: toMin('11:30'), end: toMin('11:30') + 30 },
+        { start: toMin('15:00'), end: toMin('15:00') + 60 },
+        { start: toMin('18:30'), end: toMin('18:30') + 45 },
+      ])
+      return
+    }
+
     let active = true
     setLoadingSlots(true)
     supabasePublic
@@ -99,7 +125,7 @@ const BookingSection = ({
 
   const resetBooking = () => {
     setStep('service')
-    setSelectedService(null)
+    setSelectedServices([])
     setSelectedBarber('any')
     setSelectedDate('')
     setSelectedTime('')
@@ -110,18 +136,26 @@ const BookingSection = ({
   }
 
   const handleBook = async () => {
-    if (!selectedService || !selectedDate || !selectedTime || !clientName || !clientPhone) return
+    if (selectedServices.length === 0 || !selectedDate || !selectedTime || !clientName || !clientPhone) return
     setSubmitting(true)
     setBookError('')
 
     const barberObj = selectedBarber === 'any' ? null : selectedBarber
+    // Vários serviços viram um atendimento só: nomes juntos, preço e duração somados
+    const category = selectedServices.length > 1 ? 'Combo' : selectedServices[0].category
+
+    // Demo: não grava no banco (id não é real), só mostra a confirmação
+    if (isDemoBarbershop) {
+      setTimeout(() => { setSubmitting(false); setStep('done') }, 500)
+      return
+    }
     try {
       const { error } = await supabasePublic.from('appointments').insert({
         barbershop_id: barbershop.id,
-        service_id: selectedService.id,
-        service_name: selectedService.name,
-        service_category: selectedService.category,
-        price: selectedService.price,
+        service_id: selectedServices[0].id,
+        service_name: servicesLabel,
+        service_category: category,
+        price: totalPrice,
         barber_id: barberObj?.id ?? null,
         barber_name: barberObj?.name ?? 'A definir',
         date: selectedDate,
@@ -182,7 +216,7 @@ const BookingSection = ({
         </div>
         <h3 className="font-heading text-3xl text-white mb-3 tracking-wide">AGENDADO!</h3>
         <p className="text-white/50 text-sm font-body leading-relaxed mb-2">
-          {selectedService?.name} em {new Date(selectedDate + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às {selectedTime}
+          {servicesLabel} em {new Date(selectedDate + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às {selectedTime}
         </p>
         {selectedBarber !== 'any' && selectedBarber && (
           <p className="text-white/35 text-xs font-body mb-8">com {selectedBarber.name}</p>
@@ -208,34 +242,72 @@ const BookingSection = ({
       {/* Step 1: Serviço */}
       {step === 'service' && (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-          <h3 className="text-white/70 text-sm font-semibold tracking-widest uppercase font-body mb-4">
-            Escolha o serviço
+          <h3 className="text-white/70 text-sm font-semibold tracking-widest uppercase font-body mb-1">
+            Escolha os serviços
           </h3>
+          <p className="text-white/35 text-xs font-body mb-4">Pode marcar mais de um (ex: barba + sobrancelha).</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {services.map((svc) => (
-              <button
-                key={svc.id}
-                onClick={() => { setSelectedService(svc); setStep('barber') }}
-                className="text-left p-4 rounded-xl border transition-all group"
-                style={
-                  selectedService?.id === svc.id
-                    ? { borderColor: primary + '66', backgroundColor: primary + '10' }
-                    : { borderColor: '#252525', backgroundColor: '#161616' }
-                }
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-white font-semibold text-sm">{svc.name}</span>
-                  <span className="font-heading text-base shrink-0 ml-2" style={{ color: primary }}>
-                    R$ {Number(svc.price).toFixed(0)}
+            {services.map((svc) => {
+              const checked = selectedServices.some(s => s.id === svc.id)
+              return (
+                <button
+                  key={svc.id}
+                  onClick={() => toggleService(svc)}
+                  className="text-left p-4 rounded-xl border transition-all group relative"
+                  style={
+                    checked
+                      ? { borderColor: primary + '66', backgroundColor: primary + '10' }
+                      : { borderColor: '#252525', backgroundColor: '#161616' }
+                  }
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="flex items-center gap-2 text-white font-semibold text-sm">
+                      <span
+                        className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors"
+                        style={checked
+                          ? { backgroundColor: primary, color: '#0a0a0a' }
+                          : { border: '1.5px solid #3a3a3a' }}
+                      >
+                        {checked && <Check className="w-3 h-3" />}
+                      </span>
+                      {svc.name}
+                    </span>
+                    <span className="font-heading text-base shrink-0 ml-2" style={{ color: primary }}>
+                      R$ {Number(svc.price).toFixed(0)}
+                    </span>
+                  </div>
+                  <p className="text-white/40 text-xs leading-relaxed mb-2 pl-6">{svc.description}</p>
+                  <span className="flex items-center gap-1 text-white/30 text-xs pl-6">
+                    <Clock className="w-3 h-3" />
+                    {svc.durationMin} min
                   </span>
-                </div>
-                <p className="text-white/40 text-xs leading-relaxed mb-2">{svc.description}</p>
-                <span className="flex items-center gap-1 text-white/30 text-xs">
-                  <Clock className="w-3 h-3" />
-                  {svc.durationMin} min
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Total + continuar */}
+          <div className="flex items-center justify-between mt-6">
+            <div className="text-sm font-body">
+              {selectedServices.length > 0 ? (
+                <span className="text-white/60">
+                  {selectedServices.length} {selectedServices.length === 1 ? 'serviço' : 'serviços'} ·{' '}
+                  <span className="text-white/90 font-semibold">R$ {totalPrice.toFixed(0)}</span>
+                  <span className="text-white/35"> · ~{totalDuration} min</span>
                 </span>
-              </button>
-            ))}
+              ) : (
+                <span className="text-white/30">Selecione ao menos um serviço</span>
+              )}
+            </div>
+            <button
+              onClick={() => setStep('barber')}
+              disabled={selectedServices.length === 0}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: primary, color: '#0a0a0a' }}
+            >
+              Continuar
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </motion.div>
       )}
@@ -401,8 +473,12 @@ const BookingSection = ({
             <p className="text-white/45 text-xs font-body uppercase tracking-widest mb-2">Resumo</p>
             <div className="flex items-center gap-2 text-sm">
               <Scissors className="w-3.5 h-3.5 shrink-0" style={{ color: primary }} />
-              <span className="text-white/80">{selectedService?.name}</span>
-              <span className="ml-auto font-heading" style={{ color: primary }}>R$ {Number(selectedService?.price).toFixed(0)}</span>
+              <span className="text-white/80">{servicesLabel}</span>
+              <span className="ml-auto font-heading" style={{ color: primary }}>R$ {totalPrice.toFixed(0)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-white/40 pl-6">
+              <Clock className="w-3 h-3 shrink-0" />
+              ~{slotDuration} min
             </div>
             <div className="flex items-center gap-2 text-sm text-white/50">
               <Calendar className="w-3.5 h-3.5 shrink-0" />

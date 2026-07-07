@@ -126,6 +126,18 @@ const PublicSiteLayout = () => {
       if (cancelled) return
 
       if (error || !bs) {
+        // Fallback: slug de barbearia demo (corvo/mendes/atlas) — funciona em
+        // qualquer aba, mesmo sem sessão demo ativa. Barbearia real tem prioridade.
+        const demoSite = getDemoPublicSiteBySlug(slug)
+        if (demoSite) {
+          setBarbershop(demoSite.barbershop)
+          setServices(demoSite.services)
+          setBarbers(demoSite.barbers)
+          setMemberships(demoSite.memberships)
+          setNotFound(false)
+          setIsLoading(false)
+          return
+        }
         setBarbershop(null)
         setServices([])
         setBarbers([])
