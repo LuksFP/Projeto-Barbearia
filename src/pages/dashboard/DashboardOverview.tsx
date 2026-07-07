@@ -11,6 +11,9 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
+import { useClubBilling } from '@/hooks/useClubBilling'
+import { formatBRL, formatDueDate } from '@/lib/clubBilling'
+import { AlertTriangle, CalendarClock, Wallet } from 'lucide-react'
 import type { MonthRevenue } from '@/types/tenant'
 
 const fadeUp = {
@@ -188,6 +191,7 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
 const DashboardOverview = () => {
   const { barbershop, memberships, appointments: todayApts, clients } = useTenant()
   const { account } = useSaasAccount()
+  const { billings, summary } = useClubBilling()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [showSuccess, setShowSuccess] = useState(searchParams.get('checkout') === 'success')
@@ -412,6 +416,55 @@ const DashboardOverview = () => {
           })}
         </div>
       </motion.div>
+
+      {/* Vencimentos do clube */}
+      {billings.length > 0 && (
+        <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={7}>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-heading text-xl tracking-wide text-white">VENCIMENTOS DO CLUBE</h2>
+            <a href="/dashboard/clube" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
+              Ver cobranças →
+            </a>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            {[
+              { label: 'Atrasados', value: summary.overdueCount, icon: AlertTriangle, color: 'text-red-400', ring: summary.overdueCount > 0 ? 'border-red-500/25 bg-red-500/[0.05]' : 'border-[#262626] bg-[#161616]' },
+              { label: 'A vencer (7 dias)', value: summary.dueSoonCount + summary.todayCount, icon: CalendarClock, color: 'text-amber-400', ring: 'border-[#262626] bg-[#161616]' },
+              { label: 'Recebido no mês', value: formatBRL(summary.received), icon: Wallet, color: 'text-emerald-400', ring: 'border-[#262626] bg-[#161616]' },
+            ].map((c) => (
+              <div key={c.label} className={`p-5 rounded-xl border ${c.ring}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-white/40 text-xs font-body">{c.label}</span>
+                  <c.icon className={`w-4 h-4 ${c.color}`} />
+                </div>
+                <p className="font-heading text-2xl text-white">{c.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Próximos a resolver */}
+          {billings.filter(b => b.status !== 'paid').length > 0 && (
+            <div className="rounded-xl bg-[#161616] border border-[#262626] divide-y divide-white/[0.04]">
+              {billings.filter(b => b.status !== 'paid').slice(0, 4).map(b => {
+                const color = b.status === 'overdue' ? 'text-red-400' : b.status === 'today' ? 'text-amber-400' : 'text-blue-400'
+                const hint = b.status === 'overdue' ? `${b.daysLate}d em atraso` : b.status === 'today' ? 'vence hoje' : `em ${b.daysUntil}d`
+                return (
+                  <div key={b.sub.id} className="flex items-center gap-3 p-3.5">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${b.status === 'overdue' ? 'bg-red-400' : b.status === 'today' ? 'bg-amber-400' : 'bg-blue-400'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-body truncate">{b.sub.name}</p>
+                      <p className="text-white/35 text-xs font-body">{b.membership?.name ?? '—'} · {formatDueDate(b.dueDate)}</p>
+                    </div>
+                    <span className="text-white/60 text-sm font-body shrink-0">{formatBRL(b.amount)}</span>
+                    <span className={`text-xs font-body shrink-0 ${color}`}>{hint}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Clube VIP resumo */}
       {memberships.length > 0 && (

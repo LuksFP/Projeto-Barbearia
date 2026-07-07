@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Crown, Users, TrendingUp, Plus, Check, X, Pencil, Scissors, Building2, Loader2 } from 'lucide-react'
+import { Crown, Users, TrendingUp, Plus, Check, X, Pencil, Scissors, Building2, Loader2, Receipt } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { membershipRepository } from '@/repositories/membershipRepository'
 import { isDemoMode } from '@/lib/demo'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopMembership } from '@/types/tenant'
+import ClubeCobrancas from './ClubeCobrancas'
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
@@ -291,6 +292,7 @@ const PlanCard = ({ mem, onEdit, editing }: PlanCardProps) => {
 const DashboardClube = () => {
   const { barbershop, barbers, memberships, updateMemberships } = useTenant()
 
+  const [view, setView]             = useState<'planos' | 'cobrancas'>('planos')
   const [editingId, setEditingId]   = useState<string | null>(null)
   const [editDraft, setEditDraft]   = useState<MembershipDraft>(EMPTY_DRAFT)
   const [creating, setCreating]     = useState(false)
@@ -401,14 +403,39 @@ const DashboardClube = () => {
           <p className="text-white/30 text-sm font-body mb-1">Recorrência e benefícios</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">CLUBE VIP</h1>
         </div>
-        <button
-          onClick={() => { setCreating(true); setNewDraft(EMPTY_DRAFT); setEditingId(null) }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Novo plano
-        </button>
+        {view === 'planos' && (
+          <button
+            onClick={() => { setCreating(true); setNewDraft(EMPTY_DRAFT); setEditingId(null) }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Novo plano
+          </button>
+        )}
       </div>
+
+      {/* Abas */}
+      <div className="flex items-center gap-1 p-1 rounded-xl bg-[#141414] border border-[#242424] w-fit">
+        {([
+          { key: 'planos' as const, label: 'Planos', icon: Crown },
+          { key: 'cobrancas' as const, label: 'Cobranças', icon: Receipt },
+        ]).map(t => (
+          <button
+            key={t.key}
+            onClick={() => setView(t.key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body transition-all ${
+              view === t.key ? 'bg-amber-500/15 text-amber-400' : 'text-white/40 hover:text-white/70'
+            }`}
+          >
+            <t.icon className="w-4 h-4" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'cobrancas' && <ClubeCobrancas />}
+
+      {view === 'planos' && (<>
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4">
@@ -539,6 +566,8 @@ const DashboardClube = () => {
           </button>
         </div>
       )}
+
+      </>)}
     </div>
   )
 }
