@@ -8,7 +8,7 @@
 //
 // Acesso: verify_jwt = true (config.toml) + checagem de usuário autenticado.
 
-import { corsHeaders, json, err } from '../_shared/supabase-admin.ts'
+import { corsHeaders, json, err, aiGate } from '../_shared/supabase-admin.ts'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const MODEL = 'llama-3.3-70b-versatile'
@@ -28,24 +28,13 @@ barbearia. Regras:
 Responda APENAS um JSON válido, sem texto fora dele, no formato:
 {"insights":[{"tone":"positivo|alerta|neutro","text":"..."}]}`
 
-// Extrai o payload de role do JWT sem validar assinatura (o gateway já validou).
-function jwtRole(authHeader: string | null): string | null {
-  try {
-    const token = authHeader?.replace(/^Bearer\s+/i, '') ?? ''
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload.role ?? null
-  } catch {
-    return null
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() })
   if (req.method !== 'POST') return err('Método não permitido', 405)
 
-  // Exige usuário autenticado (não a anon key).
-  const role = jwtRole(req.headers.get('Authorization'))
-  if (role !== 'authenticated') return err('Não autorizado', 401)
+  // Exige plano Pro/Premium + rate limit (server-side, não só o gate do front).
+  const gate = await aiGate(req, 'financeiro-insights', 20)
+  if (!gate.ok) return err(gate.message, gate.status)
 
   const apiKey = Deno.env.get('GROQ_API_KEY')
   if (!apiKey) return err('GROQ_API_KEY não configurada', 500)

@@ -28,3 +28,33 @@ export function json(data: unknown, status = 200) {
 export function err(message: string, status = 400) {
   return json({ error: message }, status)
 }
+
+// Gate para endpoints de IA: valida plano (Pro/Premium) + rate limit por hora,
+// via RPC ai_gate (SECURITY DEFINER). Usa o JWT do usuário para resolver auth.uid().
+export async function aiGate(
+  req: Request,
+  fn: string,
+  limit: number,
+): Promise<{ ok: boolean; status: number; message: string }> {
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) return { ok: false, status: 401, message: 'Não autorizado' }
+
+  const supa = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } },
+  )
+
+  const { data, error } = await supa.rpc('ai_gate', { p_fn: fn, p_limit: limit })
+  if (error) {
+    console.error('ai_gate error', error)
+    return { ok: false, status: 500, message: 'Falha na verificação de acesso' }
+  }
+
+  switch (data) {
+    case 'ok':   return { ok: true,  status: 200, message: 'ok' }
+    case 'plan': return { ok: false, status: 403, message: 'Recurso exclusivo dos planos Pro e Premium' }
+    case 'rate': return { ok: false, status: 429, message: 'Muitas solicitações. Tente novamente em instantes.' }
+    default:     return { ok: false, status: 401, message: 'Não autorizado' }
+  }
+}
