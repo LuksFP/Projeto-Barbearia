@@ -28,11 +28,21 @@ function mapBarbershop(row: BarbershopRow): Barbershop {
   }
 }
 
+export interface PublicReview {
+  rating: number
+  review: string | null
+  clientLabel: string
+  date: string
+}
+
 export interface PublicSiteOutletCtx {
   barbershop: Barbershop
   services: BarbershopService[]
   barbers: BarbershopBarber[]
   memberships: BarbershopMembership[]
+  reviews: PublicReview[]
+  ratingAvg: number | null
+  ratingCount: number
 }
 
 const PublicSiteLayout = () => {
@@ -41,9 +51,17 @@ const PublicSiteLayout = () => {
   const [services, setServices] = useState<BarbershopService[]>([])
   const [barbers, setBarbers] = useState<BarbershopBarber[]>([])
   const [memberships, setMemberships] = useState<BarbershopMembership[]>([])
+  const [reviews, setReviews] = useState<PublicReview[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+
+  // Agregados de avaliação — declarados aqui (antes do useEffect de SEO que os
+  // usa nas dependências), senão caem em temporal dead zone.
+  const ratingCount = reviews.length
+  const ratingAvg = ratingCount
+    ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / ratingCount) * 10) / 10
+    : null
 
   // Injeta/restaura meta tags SEO
   useEffect(() => {
@@ -75,20 +93,71 @@ const PublicSiteLayout = () => {
       el.setAttribute(attr, value)
     }
 
+    const url = window.location.href
+
     setMeta('meta[name="description"]',         'content', description)
     setMeta('meta[property="og:title"]',         'content', title)
     setMeta('meta[property="og:description"]',   'content', description)
     setMeta('meta[property="og:type"]',          'content', 'website')
+    setMeta('meta[property="og:url"]',           'content', url)
+    setMeta('meta[property="og:site_name"]',     'content', barbershop.name)
+    setMeta('meta[name="twitter:card"]',         'content', barbershop.coverImage ? 'summary_large_image' : 'summary')
+    setMeta('meta[name="twitter:title"]',        'content', title)
+    setMeta('meta[name="twitter:description"]',  'content', description)
     if (barbershop.coverImage) {
-      setMeta('meta[property="og:image"]', 'content', barbershop.coverImage)
+      setMeta('meta[property="og:image"]',  'content', barbershop.coverImage)
+      setMeta('meta[name="twitter:image"]', 'content', barbershop.coverImage)
     }
+
+    // Canonical
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.rel = 'canonical'
+      document.head.appendChild(canonical)
+    }
+    canonical.href = url.split('#')[0].split('?')[0]
+
+    // JSON-LD — dados estruturados p/ o Google (rich results de negócio local)
+    const ld: Record<string, unknown> = {
+      '@context': 'https://schema.org',
+      '@type': 'HairSalon',
+      name: barbershop.name,
+      description,
+      url,
+      ...(barbershop.coverImage ? { image: barbershop.coverImage } : {}),
+      ...(barbershop.phone ? { telephone: barbershop.phone } : {}),
+      address: {
+        '@type': 'PostalAddress',
+        ...(barbershop.address ? { streetAddress: barbershop.address } : {}),
+        ...(barbershop.city ? { addressLocality: barbershop.city } : {}),
+        ...(barbershop.state ? { addressRegion: barbershop.state } : {}),
+        addressCountry: 'BR',
+      },
+      ...(barbershop.openTime && barbershop.closeTime
+        ? { openingHours: `Mo-Sa ${barbershop.openTime}-${barbershop.closeTime}` }
+        : {}),
+      priceRange: 'R$',
+      ...(ratingCount > 0 && ratingAvg
+        ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: ratingAvg, reviewCount: ratingCount } }
+        : {}),
+    }
+    let ldScript = document.getElementById('barberos-jsonld')
+    if (!ldScript) {
+      ldScript = document.createElement('script')
+      ldScript.id = 'barberos-jsonld'
+      ;(ldScript as HTMLScriptElement).type = 'application/ld+json'
+      document.head.appendChild(ldScript)
+    }
+    ldScript.textContent = JSON.stringify(ld)
 
     return () => {
       document.title = prev.title
       document.querySelector<HTMLMetaElement>('meta[name="description"]')
         ?.setAttribute('content', prev.desc)
+      document.getElementById('barberos-jsonld')?.remove()
     }
-  }, [barbershop])
+  }, [barbershop, ratingAvg, ratingCount])
 
   useEffect(() => {
     let cancelled = false
@@ -112,6 +181,7 @@ const PublicSiteLayout = () => {
           setServices(demoSite.services)
           setBarbers(demoSite.barbers)
           setMemberships(demoSite.memberships)
+          setReviews([])
           setIsLoading(false)
           return
         }
@@ -134,6 +204,7 @@ const PublicSiteLayout = () => {
           setServices(demoSite.services)
           setBarbers(demoSite.barbers)
           setMemberships(demoSite.memberships)
+          setReviews([])
           setNotFound(false)
           setIsLoading(false)
           return
@@ -149,7 +220,7 @@ const PublicSiteLayout = () => {
 
       setBarbershop(mapBarbershop(bs))
 
-      const [{ data: svcs }, { data: team }, { data: mems }] = await Promise.all([
+      const [{ data: svcs }, { data: team }, { data: mems }, { data: revs }] = await Promise.all([
         supabasePublic
           .from('services')
           .select('*')
@@ -169,6 +240,7 @@ const PublicSiteLayout = () => {
           .eq('barbershop_id', bs.id)
           .eq('active', true)
           .order('price'),
+        supabasePublic.rpc('public_barbershop_reviews', { p_barbershop_id: bs.id }),
       ])
 
       if (cancelled) return
@@ -187,6 +259,9 @@ const PublicSiteLayout = () => {
         id: r.id, barbershopId: r.barbershop_id, name: r.name, price: Number(r.price),
         period: r.period as BarbershopMembership['period'], benefits: r.benefits,
         active: r.active, subscriberCount: r.subscriber_count,
+      })))
+      setReviews((revs ?? []).map((r: { rating: number; review: string | null; client_label: string; review_date: string }) => ({
+        rating: r.rating, review: r.review, clientLabel: r.client_label, date: r.review_date,
       })))
       setIsLoading(false)
     }
@@ -307,7 +382,7 @@ const PublicSiteLayout = () => {
       </header>
 
       <main className="flex-1 pt-16">
-        <Outlet context={{ barbershop, services, barbers, memberships } satisfies PublicSiteOutletCtx} />
+        <Outlet context={{ barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount } satisfies PublicSiteOutletCtx} />
       </main>
 
       <footer className="border-t border-[#1a1a1a] py-8">

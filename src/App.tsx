@@ -1,4 +1,4 @@
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -37,60 +37,69 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { SaasAccountProvider } from "@/contexts/SaasAccountContext";
 import SaasGuard from "@/guards/SaasGuard";
 
-// ── Fluxo de assinatura SaaS ──────────────────────────────────────────────
-import Planos from "./pages/saas/Planos";
-import Registrar from "./pages/saas/Registrar";
-import Pagamento from "./pages/saas/Pagamento";
-import BemVindo from "./pages/saas/BemVindo";
-import EntrarSaas from "./pages/saas/EntrarSaas";
-import EsqueciSenha from "./pages/saas/EsqueciSenha";
-import NovaSenha from "./pages/saas/NovaSenha";
-import AuthCallback from "./pages/saas/AuthCallback";
-import CompletarRegistro from "./pages/saas/CompletarRegistro";
-
-// Layouts — 3 áreas distintas do produto
+// Layouts — 3 áreas distintas do produto (eager: estruturais, sempre no wrapper)
 import LandingLayout from "@/layouts/LandingLayout";
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
-// ── Landing do SaaS (existente — não mexer) ───────────────────────────────
-import Index from "./pages/Index";
-import Sobre from "./pages/Sobre";
-import Cortes from "./pages/Cortes";
-import TiposCabelo from "./pages/TiposCabelo";
-import CabeloLiso from "./pages/CabeloLiso";
-import CabeloOndulado from "./pages/CabeloOndulado";
-import CabeloCrespo from "./pages/CabeloCrespo";
-import Profile from "./pages/Profile";
-import Admin from "./pages/Admin";
-import Agendamento from "./pages/Agendamento";
-import AgendamentoVisitante from "./pages/AgendamentoVisitante";
-import ConsultaAgendamento from "./pages/ConsultaAgendamento";
-import Depoimentos from "./pages/Depoimentos";
-import Fidelidade from "./pages/Fidelidade";
-import Assinatura from "./pages/Assinatura";
-import NotFound from "./pages/NotFound";
+// ── Páginas lazy — cada área vira seu próprio chunk (dashboard não pesa no
+//    bundle do site público, e vice-versa). ────────────────────────────────
+// Fluxo de assinatura SaaS
+const Planos = lazy(() => import("./pages/saas/Planos"));
+const Registrar = lazy(() => import("./pages/saas/Registrar"));
+const Pagamento = lazy(() => import("./pages/saas/Pagamento"));
+const BemVindo = lazy(() => import("./pages/saas/BemVindo"));
+const EntrarSaas = lazy(() => import("./pages/saas/EntrarSaas"));
+const EsqueciSenha = lazy(() => import("./pages/saas/EsqueciSenha"));
+const NovaSenha = lazy(() => import("./pages/saas/NovaSenha"));
+const AuthCallback = lazy(() => import("./pages/saas/AuthCallback"));
+const CompletarRegistro = lazy(() => import("./pages/saas/CompletarRegistro"));
 
-// ── Site público da barbearia (/b/:slug) ──────────────────────────────────
-import BarbershopHome from "./pages/barbershop/BarbershopHome";
-import Demo from "./pages/Demo";
+// Landing do SaaS
+const Index = lazy(() => import("./pages/Index"));
+const Sobre = lazy(() => import("./pages/Sobre"));
+const Cortes = lazy(() => import("./pages/Cortes"));
+const TiposCabelo = lazy(() => import("./pages/TiposCabelo"));
+const CabeloLiso = lazy(() => import("./pages/CabeloLiso"));
+const CabeloOndulado = lazy(() => import("./pages/CabeloOndulado"));
+const CabeloCrespo = lazy(() => import("./pages/CabeloCrespo"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Agendamento = lazy(() => import("./pages/Agendamento"));
+const AgendamentoVisitante = lazy(() => import("./pages/AgendamentoVisitante"));
+const ConsultaAgendamento = lazy(() => import("./pages/ConsultaAgendamento"));
+const Depoimentos = lazy(() => import("./pages/Depoimentos"));
+const Fidelidade = lazy(() => import("./pages/Fidelidade"));
+const Assinatura = lazy(() => import("./pages/Assinatura"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-// ── Dashboard da barbearia (/dashboard/*) ─────────────────────────────────
-import DashboardOverview from "./pages/dashboard/DashboardOverview";
-import DashboardAgenda from "./pages/dashboard/DashboardAgenda";
-import DashboardLembretes from "./pages/dashboard/DashboardLembretes";
-import DashboardReativar from "./pages/dashboard/DashboardReativar";
-import DashboardEquipe from "./pages/dashboard/DashboardEquipe";
-import DashboardClientes from "./pages/dashboard/DashboardClientes";
-import DashboardServicos from "./pages/dashboard/DashboardServicos";
-import DashboardClube from "./pages/dashboard/DashboardClube";
-import DashboardConfiguracoes from "./pages/dashboard/DashboardConfiguracoes";
-import DashboardAssinatura from "./pages/dashboard/DashboardAssinatura";
-import DashboardFinanceiro from "./pages/dashboard/DashboardFinanceiro";
-import AceitarConvite from "./pages/AceitarConvite";
-import DashboardPersonalizar from "./pages/dashboard/DashboardPersonalizar";
+// Site público da barbearia (/b/:slug)
+const BarbershopHome = lazy(() => import("./pages/barbershop/BarbershopHome"));
+const Demo = lazy(() => import("./pages/Demo"));
+
+// Dashboard da barbearia (/dashboard/*)
+const DashboardOverview = lazy(() => import("./pages/dashboard/DashboardOverview"));
+const DashboardAgenda = lazy(() => import("./pages/dashboard/DashboardAgenda"));
+const DashboardLembretes = lazy(() => import("./pages/dashboard/DashboardLembretes"));
+const DashboardReativar = lazy(() => import("./pages/dashboard/DashboardReativar"));
+const DashboardEquipe = lazy(() => import("./pages/dashboard/DashboardEquipe"));
+const DashboardClientes = lazy(() => import("./pages/dashboard/DashboardClientes"));
+const DashboardServicos = lazy(() => import("./pages/dashboard/DashboardServicos"));
+const DashboardClube = lazy(() => import("./pages/dashboard/DashboardClube"));
+const DashboardConfiguracoes = lazy(() => import("./pages/dashboard/DashboardConfiguracoes"));
+const DashboardAssinatura = lazy(() => import("./pages/dashboard/DashboardAssinatura"));
+const DashboardFinanceiro = lazy(() => import("./pages/dashboard/DashboardFinanceiro"));
+const DashboardPersonalizar = lazy(() => import("./pages/dashboard/DashboardPersonalizar"));
+const AceitarConvite = lazy(() => import("./pages/AceitarConvite"));
 
 const queryClient = new QueryClient();
+
+// Fallback enquanto o chunk da rota carrega — spinner no tema escuro.
+const PageFallback = () => (
+  <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-amber-500/30 border-t-amber-500 animate-spin" />
+  </div>
+);
 
 const App = () => (
   <ErrorBoundary>
@@ -107,6 +116,7 @@ const App = () => (
                 <LoyaltyProvider>
                   <CartProvider>
                     <TenantProvider>
+                      <Suspense fallback={<PageFallback />}>
                       <Routes>
                         {/* ── Landing do SaaS ── Header + Footer do projeto */}
                         <Route element={<LandingLayout />}>
@@ -170,6 +180,7 @@ const App = () => (
 
                         <Route path="*" element={<NotFound />} />
                       </Routes>
+                      </Suspense>
                     </TenantProvider>
                   </CartProvider>
                 </LoyaltyProvider>

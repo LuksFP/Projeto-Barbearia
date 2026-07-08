@@ -188,8 +188,14 @@ const BookingSection = ({
       })
       if (error) throw error
       setStep('done')
-    } catch {
-      setBookError('Não foi possível criar o agendamento. Tente novamente.')
+    } catch (e: unknown) {
+      // Mostra a mensagem do limite anti-abuse (trigger) se vier; senão, genérica.
+      const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message: unknown }).message) : ''
+      setBookError(
+        msg.includes('Muitos agendamentos')
+          ? msg
+          : 'Não foi possível criar o agendamento. Tente novamente.',
+      )
     } finally {
       setSubmitting(false)
     }
@@ -599,7 +605,7 @@ const BookingSection = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const BarbershopHome = () => {
-  const { barbershop, services, barbers, memberships } = useOutletContext<PublicSiteOutletCtx>()
+  const { barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount } = useOutletContext<PublicSiteOutletCtx>()
 
   const primary = barbershop.primaryColor
 
@@ -630,6 +636,23 @@ const BarbershopHome = () => {
             <MapPin className="w-3 h-3" />
             {barbershop.address}
           </motion.div>
+
+          {ratingCount > 0 && ratingAvg && (
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}
+              className="flex items-center justify-center gap-2 mb-6 text-sm"
+            >
+              <span className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star key={n} className="w-4 h-4"
+                    style={{ color: primary }}
+                    fill={n <= Math.round(ratingAvg) ? primary : 'transparent'}
+                  />
+                ))}
+              </span>
+              <span className="text-white/70 font-semibold">{ratingAvg.toFixed(1)}</span>
+              <span className="text-white/35">({ratingCount} avaliações)</span>
+            </motion.div>
+          )}
 
           <motion.h1 initial="hidden" animate="visible" variants={fadeUp} custom={1}
             className="font-heading text-6xl md:text-8xl lg:text-9xl tracking-wider text-white mb-6 leading-none"
@@ -843,6 +866,50 @@ const BarbershopHome = () => {
           </div>
         </div>
       </section>
+
+      {/* ── AVALIAÇÕES (prova social) ─────────────────────────────────────── */}
+      {ratingCount > 0 && (
+        <section id="avaliacoes" className="py-24 bg-[#111111]">
+          <div className="max-w-5xl mx-auto px-6">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="mb-14">
+              <p className="text-xs font-semibold tracking-[0.3em] uppercase mb-3" style={{ color: primary }}>O que dizem</p>
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+                <h2 className="font-heading text-4xl md:text-5xl tracking-wider text-white">AVALIAÇÕES</h2>
+                {ratingAvg && (
+                  <span className="flex items-center gap-2 pb-1">
+                    <span className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Star key={n} className="w-5 h-5" style={{ color: primary }}
+                          fill={n <= Math.round(ratingAvg) ? primary : 'transparent'} />
+                      ))}
+                    </span>
+                    <span className="text-white/80 font-bold text-lg">{ratingAvg.toFixed(1)}</span>
+                    <span className="text-white/35 text-sm">· {ratingCount} avaliações</span>
+                  </span>
+                )}
+              </div>
+            </motion.div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {reviews.filter((r) => r.review).slice(0, 6).map((r, i) => (
+                <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                  variants={fadeUp} custom={i % 3}
+                  className="rounded-2xl border border-white/8 bg-white/[0.02] p-6 flex flex-col gap-4"
+                >
+                  <span className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star key={n} className="w-4 h-4" style={{ color: primary }}
+                        fill={n <= r.rating ? primary : 'transparent'} />
+                    ))}
+                  </span>
+                  <p className="text-white/70 text-sm leading-relaxed flex-1">"{r.review}"</p>
+                  <p className="text-white/40 text-xs font-semibold">{r.clientLabel}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── AGENDAMENTO ONLINE ────────────────────────────────────────────── */}
       <section id="agendar" className="py-24 bg-[#0a0a0a]">
