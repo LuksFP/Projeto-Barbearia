@@ -438,7 +438,7 @@ const BookingSection = ({
               {timeCheck ? (
                 <p className={`text-xs font-body mt-2 flex items-center gap-1.5 ${timeCheck.available ? 'text-white/50' : 'text-red-400'}`}>
                   {timeCheck.available ? (
-                    <><CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: primary }} /> Disponível · termina às {timeCheck.end}</>
+                    <><CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: primary }} /> Disponível · <span className="text-white/80 font-medium">{selectedTime} – {timeCheck.end}</span></>
                   ) : (
                     <><AlertCircle className="w-3.5 h-3.5 shrink-0" /> {timeCheck.reason}</>
                   )}

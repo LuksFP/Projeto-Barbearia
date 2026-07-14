@@ -566,12 +566,16 @@ const DashboardAgenda = () => {
                       style={{ colorScheme: 'dark' }}
                     />
                     {bookingCheck ? (
-                      <p className={`text-[11px] font-body mt-1.5 ${bookingCheck.available ? 'text-white/30' : 'text-red-400'}`}>
-                        {bookingCheck.available
-                          ? `Termina às ${bookingCheck.end} · bloqueia ${slotDuration} min`
-                          : 'Conflito: já há atendimento nesse intervalo'}
-                        {!form.barberId && bookingCheck.available && ' — escolha o barbeiro pra checar conflitos'}
-                      </p>
+                      bookingCheck.available ? (
+                        <p className="text-[11px] font-body mt-1.5 text-white/30">
+                          <span className="text-amber-400/90 font-medium">{form.time} – {bookingCheck.end}</span> · {slotDuration} min
+                          {!form.barberId && ' — escolha o barbeiro pra checar conflitos'}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] font-body mt-1.5 text-red-400">
+                          Conflito: já há atendimento nesse intervalo
+                        </p>
+                      )
                     ) : (
                       <p className="text-white/30 text-[11px] font-body mt-1.5">
                         Bloqueia {slotDuration} min a partir do início
