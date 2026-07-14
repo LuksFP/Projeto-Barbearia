@@ -87,14 +87,13 @@ const DashboardAgenda = () => {
   const todayStr = new Date().toISOString().split('T')[0]
 
   const formBarber   = barbers.find(b => b.id === form.barberId)
-  // Vários serviços somam preço e duração (ex: corte + barba + sobrancelha)
+  // Vários serviços somam só o preço (o tempo é definido no agendamento, não no serviço)
   const formServices = services.filter(s => form.serviceNames.includes(s.name))
-  const servicesTotalPrice    = formServices.reduce((acc, s) => acc + s.price, 0)
-  const servicesTotalDuration = formServices.reduce((acc, s) => acc + s.durationMin, 0)
-  // Duração editável no form (padrão = soma dos serviços / tempo de corte / 30)
-  const slotDuration = Math.max(5, Number(form.durationMin) || servicesTotalDuration || formBarber?.cutDurationMin || 30)
+  const servicesTotalPrice = formServices.reduce((acc, s) => acc + s.price, 0)
+  // Duração editável no form (padrão = tempo de corte do barbeiro / 30)
+  const slotDuration = Math.max(5, Number(form.durationMin) || formBarber?.cutDurationMin || 30)
 
-  // Marca/desmarca um serviço e reajusta preço e duração pela soma
+  // Marca/desmarca um serviço e reajusta só o preço pela soma
   const toggleService = (name: string) => {
     setForm(f => {
       const names = f.serviceNames.includes(name)
@@ -102,12 +101,10 @@ const DashboardAgenda = () => {
         : [...f.serviceNames, name]
       const picked = services.filter(s => names.includes(s.name))
       const totalPrice = picked.reduce((acc, s) => acc + s.price, 0)
-      const totalDuration = picked.reduce((acc, s) => acc + s.durationMin, 0)
       return {
         ...f,
         serviceNames: names,
         price: names.length ? String(totalPrice) : '',
-        durationMin: names.length ? String(totalDuration) : f.durationMin,
         time: '',
       }
     })
@@ -522,7 +519,7 @@ const DashboardAgenda = () => {
 
                     {form.serviceNames.length > 0 && !servicesOpen && (
                       <p className="text-amber-400/70 text-[11px] font-body mt-1 px-1">
-                        {form.serviceNames.length} serviço{form.serviceNames.length > 1 ? 's' : ''} · {servicesTotalDuration} min
+                        {form.serviceNames.length} serviço{form.serviceNames.length > 1 ? 's' : ''} selecionado{form.serviceNames.length > 1 ? 's' : ''}
                       </p>
                     )}
 
@@ -552,10 +549,7 @@ const DashboardAgenda = () => {
                               <span className={`text-sm font-body flex-1 min-w-0 truncate transition-colors ${checked ? 'text-white font-medium' : 'text-white/70 group-hover:text-white/90'}`}>
                                 {s.name}
                               </span>
-                              <span className="text-right shrink-0 leading-tight">
-                                <span className="block text-sm font-heading text-amber-400">R$ {s.price}</span>
-                                <span className="block text-[10px] font-body text-white/30">{s.durationMin} min</span>
-                              </span>
+                              <span className="text-sm font-heading text-amber-400 shrink-0">R$ {s.price}</span>
                             </button>
                           )
                         })}
@@ -571,8 +565,8 @@ const DashboardAgenda = () => {
                         setForm(f => ({
                           ...f,
                           barberId: e.target.value,
-                          // Com serviços marcados, a duração é a soma deles; senão acompanha o barbeiro
-                          durationMin: f.serviceNames.length ? f.durationMin : (b ? String(b.cutDurationMin) : f.durationMin),
+                          // Duração padrão = tempo de corte do barbeiro (editável no campo Duração)
+                          durationMin: b ? String(b.cutDurationMin) : f.durationMin,
                           time: '',
                         }))
                       }}
