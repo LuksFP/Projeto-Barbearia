@@ -56,7 +56,7 @@ const BookingSection = ({
   const primary = barbershop.primaryColor
   const [step, setStep] = useState<BookStep>('service')
   const [selectedServices, setSelectedServices] = useState<BarbershopService[]>([])
-  const [selectedBarber, setSelectedBarber] = useState<BarbershopBarber | null | 'any'>('any')
+  const [selectedBarber, setSelectedBarber] = useState<BarbershopBarber | null>(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [clientName, setClientName] = useState(() => loadSavedContact().name || '')
@@ -70,8 +70,8 @@ const BookingSection = ({
 
   const todayStr = new Date().toISOString().split('T')[0]
 
-  // Barbeiro específico escolhido (ou null se "qualquer um")
-  const pickedBarber = selectedBarber !== 'any' && selectedBarber ? selectedBarber : null
+  // Barbeiro é obrigatório (garante a checagem de conflito por barbeiro)
+  const pickedBarber = selectedBarber
   // Vários serviços somam preço e duração (ex: barba + sobrancelha)
   const totalPrice = selectedServices.reduce((acc, s) => acc + s.price, 0)
   const totalDuration = selectedServices.reduce((acc, s) => acc + s.durationMin, 0)
@@ -149,7 +149,7 @@ const BookingSection = ({
   const resetBooking = () => {
     setStep('service')
     setSelectedServices([])
-    setSelectedBarber('any')
+    setSelectedBarber(null)
     setSelectedDate('')
     setSelectedTime('')
     // Mantém nome/telefone/email salvos pra o próximo agendamento
@@ -167,7 +167,7 @@ const BookingSection = ({
     setSubmitting(true)
     setBookError('')
 
-    const barberObj = selectedBarber === 'any' ? null : selectedBarber
+    const barberObj = selectedBarber
     // Vários serviços viram um atendimento só: nomes juntos, preço e duração somados
     const category = selectedServices.length > 1 ? 'Combo' : selectedServices[0].category
 
@@ -202,10 +202,14 @@ const BookingSection = ({
     } catch (e: unknown) {
       // Mostra a mensagem do limite anti-abuse (trigger) se vier; senão, genérica.
       const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message: unknown }).message) : ''
+      const code = (e && typeof e === 'object' && 'code' in e) ? String((e as { code: unknown }).code) : ''
+      const overlap = code === '23P01' || msg.includes('appointments_no_overlap_per_barber')
       setBookError(
-        msg.includes('Muitos agendamentos')
-          ? msg
-          : 'Não foi possível criar o agendamento. Tente novamente.',
+        overlap
+          ? 'Esse horário acabou de ser reservado para esse barbeiro. Escolha outro horário.'
+          : msg.includes('Muitos agendamentos')
+            ? msg
+            : 'Não foi possível criar o agendamento. Tente novamente.',
       )
     } finally {
       setSubmitting(false)
@@ -255,7 +259,7 @@ const BookingSection = ({
         <p className="text-white/50 text-sm font-body leading-relaxed mb-2">
           {servicesLabel} em {new Date(selectedDate + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às {selectedTime}
         </p>
-        {selectedBarber !== 'any' && selectedBarber && (
+        {selectedBarber && (
           <p className="text-white/35 text-xs font-body mb-8">com {selectedBarber.name}</p>
         )}
         <p className="text-white/40 text-sm font-body mb-8">
@@ -356,37 +360,13 @@ const BookingSection = ({
             Escolha o barbeiro
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-            {/* Qualquer barbeiro */}
-            <button
-              onClick={() => { setSelectedBarber('any'); setSelectedTime(''); setStep('datetime') }}
-              className="text-left p-4 rounded-xl border transition-all"
-              style={
-                selectedBarber === 'any'
-                  ? { borderColor: primary + '66', backgroundColor: primary + '10' }
-                  : { borderColor: '#252525', backgroundColor: '#161616' }
-              }
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: primary + '15', border: `1px solid ${primary}30` }}
-                >
-                  <Scissors className="w-4 h-4" style={{ color: primary + 'aa' }} />
-                </div>
-                <div>
-                  <p className="text-white text-sm font-semibold">Qualquer barbeiro</p>
-                  <p className="text-white/35 text-xs">Primeiro disponível</p>
-                </div>
-              </div>
-            </button>
-
             {barbers.map((barber) => (
               <button
                 key={barber.id}
                 onClick={() => { setSelectedBarber(barber); setSelectedTime(''); setStep('datetime') }}
                 className="text-left p-4 rounded-xl border transition-all"
                 style={
-                  selectedBarber !== 'any' && selectedBarber?.id === barber.id
+                  selectedBarber?.id === barber.id
                     ? { borderColor: primary + '66', backgroundColor: primary + '10' }
                     : { borderColor: '#252525', backgroundColor: '#161616' }
                 }
@@ -512,7 +492,7 @@ const BookingSection = ({
               <Calendar className="w-3.5 h-3.5 shrink-0" />
               {new Date(selectedDate + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} · {selectedTime}
             </div>
-            {selectedBarber !== 'any' && selectedBarber && (
+            {selectedBarber && (
               <div className="flex items-center gap-2 text-sm text-white/50">
                 <User className="w-3.5 h-3.5 shrink-0" />
                 {selectedBarber.name}

@@ -164,7 +164,7 @@ const DashboardAgenda = () => {
   }
 
   const handleNewAppointment = async () => {
-    if (!barbershop || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.date || !form.time) return
+    if (!barbershop || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.barberId || !form.date || !form.time) return
 
     // Vários serviços viram um atendimento só: nomes juntos, preço somado
     const picked = services.filter(s => form.serviceNames.includes(s.name))
@@ -245,8 +245,15 @@ const DashboardAgenda = () => {
       ensureClient()
       setModalOpen(false)
       setForm(EMPTY_APT)
-    } catch {
-      toast({ title: 'Erro ao criar agendamento', variant: 'destructive' })
+    } catch (err: unknown) {
+      // 23P01 = exclusion_violation da trava de sobreposição por barbeiro
+      const msg = (err && typeof err === 'object' && 'message' in err) ? String((err as { message: unknown }).message) : ''
+      const overlap = msg.includes('23P01') || msg.includes('appointments_no_overlap_per_barber')
+      toast({
+        title: overlap ? 'Horário já ocupado' : 'Erro ao criar agendamento',
+        description: overlap ? `${brb?.name ?? 'Esse barbeiro'} já tem um atendimento que bate com esse horário.` : undefined,
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -515,7 +522,7 @@ const DashboardAgenda = () => {
                     )}
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro</label>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro *</label>
                     <select
                       value={form.barberId}
                       onChange={e => {
@@ -530,11 +537,12 @@ const DashboardAgenda = () => {
                       }}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
                     >
-                      <option value="">A definir</option>
+                      <option value="">Selecione o barbeiro…</option>
                       {barbers.map(b => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
                     </select>
+                    <p className="text-white/30 text-[11px] font-body mt-1.5">Obrigatório — é o que garante que ninguém marque em cima do horário de outro.</p>
                   </div>
                   <div>
                     <label className="block text-white/45 text-xs font-body mb-1.5">Data *</label>
@@ -609,7 +617,7 @@ const DashboardAgenda = () => {
 
                 <button
                   onClick={handleNewAppointment}
-                  disabled={saving || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.date || !form.time || (bookingCheck ? !bookingCheck.available : false)}
+                  disabled={saving || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.barberId || !form.date || !form.time || (bookingCheck ? !bookingCheck.available : false)}
                   className="w-full py-3 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando…</> : 'Confirmar Agendamento'}
