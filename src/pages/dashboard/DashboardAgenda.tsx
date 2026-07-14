@@ -7,7 +7,7 @@ import { isDemoMode } from '@/lib/demo'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
-import { busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
+import { buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
@@ -112,8 +112,24 @@ const DashboardAgenda = () => {
     })
   }
 
-  // Horário é livre (campo de tempo): a partir do início digitado, calcula o
-  // término (início + duração) e checa se cai em cima de um range já ocupado.
+  // Horários já calculados (início–fim) do barbeiro naquela data: passo fino,
+  // reservando o bloco cheio (soma dos serviços / duração) e escondendo os
+  // ocupados. É o que aparece ao abrir a lista de horário.
+  const daySlots = useMemo(() => {
+    if (!form.date || !form.barberId) return []
+    const busy = busyRanges(appointments, form.barberId, form.date)
+    return buildDaySlots({
+      step: Math.min(30, slotDuration),
+      duration: slotDuration,
+      busy,
+      open: barbershop?.openTime,
+      close: barbershop?.closeTime,
+      now: new Date(),
+      date: form.date,
+    }).filter(s => s.available)
+  }, [form.date, form.barberId, slotDuration, appointments, barbershop?.openTime, barbershop?.closeTime])
+
+  // Término do horário escolhido (usado no resumo e na trava do botão)
   const bookingCheck = useMemo(() => {
     if (!form.date || !form.time) return null
     const busy = form.barberId ? busyRanges(appointments, form.barberId, form.date) : []
@@ -556,31 +572,23 @@ const DashboardAgenda = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Horário de início *</label>
-                    <input
-                      type="time"
-                      step="300"
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Horário * <span className="text-white/25">(início–fim)</span></label>
+                    <select
                       value={form.time}
                       onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
-                      style={{ colorScheme: 'dark' }}
-                    />
-                    {bookingCheck ? (
-                      bookingCheck.available ? (
-                        <p className="text-[11px] font-body mt-1.5 text-white/30">
-                          <span className="text-amber-400/90 font-medium">{form.time} – {bookingCheck.end}</span> · {slotDuration} min
-                          {!form.barberId && ' — escolha o barbeiro pra checar conflitos'}
-                        </p>
-                      ) : (
-                        <p className="text-[11px] font-body mt-1.5 text-red-400">
-                          Conflito: já há atendimento nesse intervalo
-                        </p>
-                      )
-                    ) : (
-                      <p className="text-white/30 text-[11px] font-body mt-1.5">
-                        Bloqueia {slotDuration} min a partir do início
-                      </p>
-                    )}
+                      disabled={!form.date || !form.barberId}
+                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a] disabled:opacity-50"
+                    >
+                      <option value="">
+                        {!form.barberId ? 'Escolha o barbeiro primeiro' : !form.date ? 'Escolha a data primeiro' : daySlots.length ? 'Selecione…' : 'Sem horários livres nesse dia'}
+                      </option>
+                      {daySlots.map(s => (
+                        <option key={s.time} value={s.time}>{s.time} – {s.end}</option>
+                      ))}
+                    </select>
+                    <p className="text-white/30 text-[11px] font-body mt-1.5">
+                      Bloco de {slotDuration} min · só aparecem horários livres do barbeiro
+                    </p>
                   </div>
                   <div>
                     <label className="block text-white/45 text-xs font-body mb-1.5">Duração (min)</label>
