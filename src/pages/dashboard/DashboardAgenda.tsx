@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, Loader2, X, Check } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -80,6 +80,7 @@ const DashboardAgenda = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<NewAptForm>(EMPTY_APT)
+  const [servicesOpen, setServicesOpen] = useState(false)   // accordion da lista de serviços
 
   const weekDays    = getWeekDays(weekOffset)
   const selectedDate = weekDays[selectedIdx]?.date ?? ''
@@ -139,6 +140,7 @@ const DashboardAgenda = () => {
 
   const openNewModal = () => {
     setForm({ ...EMPTY_APT, date: selectedDate })
+    setServicesOpen(false)
     setModalOpen(true)
   }
 
@@ -495,45 +497,68 @@ const DashboardAgenda = () => {
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-white/45 text-xs font-body mb-2">Serviços * <span className="text-white/25">(pode marcar vários)</span></label>
-                    <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-none pr-0.5">
-                      {services.map(s => {
-                        const checked = form.serviceNames.includes(s.name)
-                        return (
-                          <button
-                            type="button"
-                            key={s.id}
-                            onClick={() => toggleService(s.name)}
-                            className="group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-all duration-150"
-                            style={checked
-                              ? { borderColor: 'rgba(245,158,11,0.55)', backgroundColor: 'rgba(245,158,11,0.10)', boxShadow: 'inset 0 0 0 1px rgba(245,158,11,0.12)' }
-                              : { borderColor: '#272727', backgroundColor: '#161616' }}
-                          >
-                            <span
-                              className="w-[18px] h-[18px] rounded-md flex items-center justify-center shrink-0 transition-all duration-150"
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Serviços *</label>
+                    {/* Trigger do accordion — fechado mostra só o resumo */}
+                    <button
+                      type="button"
+                      onClick={() => setServicesOpen(o => !o)}
+                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-colors"
+                      style={form.serviceNames.length > 0
+                        ? { borderColor: 'rgba(245,158,11,0.45)', backgroundColor: 'rgba(245,158,11,0.08)' }
+                        : { borderColor: '#272727', backgroundColor: '#161616' }}
+                    >
+                      <span className={`text-sm font-body flex-1 min-w-0 truncate ${form.serviceNames.length > 0 ? 'text-white font-medium' : 'text-white/40'}`}>
+                        {form.serviceNames.length === 0
+                          ? 'Selecionar serviços…'
+                          : form.serviceNames.length === 1
+                            ? formServices[0]?.name
+                            : `${formServices[0]?.name} +${form.serviceNames.length - 1}`}
+                      </span>
+                      {form.serviceNames.length > 0 && (
+                        <span className="text-amber-400 text-sm font-heading shrink-0">R$ {servicesTotalPrice}</span>
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-white/40 shrink-0 transition-transform duration-200 ${servicesOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {form.serviceNames.length > 0 && !servicesOpen && (
+                      <p className="text-amber-400/70 text-[11px] font-body mt-1 px-1">
+                        {form.serviceNames.length} serviço{form.serviceNames.length > 1 ? 's' : ''} · {servicesTotalDuration} min
+                      </p>
+                    )}
+
+                    {/* Lista expansível */}
+                    {servicesOpen && (
+                      <div className="mt-2 space-y-2 max-h-56 overflow-y-auto scrollbar-none pr-0.5">
+                        {services.map(s => {
+                          const checked = form.serviceNames.includes(s.name)
+                          return (
+                            <button
+                              type="button"
+                              key={s.id}
+                              onClick={() => toggleService(s.name)}
+                              className="group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-all duration-150"
                               style={checked
-                                ? { backgroundColor: '#f59e0b', color: '#0a0a0a' }
-                                : { border: '1.5px solid #3a3a3a' }}
+                                ? { borderColor: 'rgba(245,158,11,0.55)', backgroundColor: 'rgba(245,158,11,0.10)', boxShadow: 'inset 0 0 0 1px rgba(245,158,11,0.12)' }
+                                : { borderColor: '#272727', backgroundColor: '#161616' }}
                             >
-                              {checked && <Check className="w-3 h-3" strokeWidth={3} />}
-                            </span>
-                            <span className={`text-sm font-body flex-1 min-w-0 truncate transition-colors ${checked ? 'text-white font-medium' : 'text-white/70 group-hover:text-white/90'}`}>
-                              {s.name}
-                            </span>
-                            <span className="text-right shrink-0 leading-tight">
-                              <span className="block text-sm font-heading text-amber-400">R$ {s.price}</span>
-                              <span className="block text-[10px] font-body text-white/30">{s.durationMin} min</span>
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                    {form.serviceNames.length > 0 && (
-                      <div className="mt-2 flex items-center justify-between px-3.5 py-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20">
-                        <span className="text-amber-400/90 text-xs font-body font-medium">
-                          {form.serviceNames.length} serviço{form.serviceNames.length > 1 ? 's' : ''} · {servicesTotalDuration} min
-                        </span>
-                        <span className="text-amber-400 text-sm font-heading">R$ {servicesTotalPrice}</span>
+                              <span
+                                className="w-[18px] h-[18px] rounded-md flex items-center justify-center shrink-0 transition-all duration-150"
+                                style={checked
+                                  ? { backgroundColor: '#f59e0b', color: '#0a0a0a' }
+                                  : { border: '1.5px solid #3a3a3a' }}
+                              >
+                                {checked && <Check className="w-3 h-3" strokeWidth={3} />}
+                              </span>
+                              <span className={`text-sm font-body flex-1 min-w-0 truncate transition-colors ${checked ? 'text-white font-medium' : 'text-white/70 group-hover:text-white/90'}`}>
+                                {s.name}
+                              </span>
+                              <span className="text-right shrink-0 leading-tight">
+                                <span className="block text-sm font-heading text-amber-400">R$ {s.price}</span>
+                                <span className="block text-[10px] font-body text-white/30">{s.durationMin} min</span>
+                              </span>
+                            </button>
+                          )
+                        })}
                       </div>
                     )}
                   </div>
