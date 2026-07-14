@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, Loader2, X, Check } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -7,7 +7,7 @@ import { isDemoMode } from '@/lib/demo'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
-import { buildDaySlots, busyRanges, isTimeAvailable } from '@/lib/scheduling'
+import { busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
@@ -53,7 +53,7 @@ function todayIndex(): number {
 interface NewAptForm {
   clientName: string
   clientPhone: string
-  serviceName: string
+  serviceNames: string[]
   barberId: string
   date: string
   time: string
@@ -63,7 +63,7 @@ interface NewAptForm {
 }
 
 const EMPTY_APT: NewAptForm = {
-  clientName: '', clientPhone: '', serviceName: '', barberId: '',
+  clientName: '', clientPhone: '', serviceNames: [], barberId: '',
   date: '', time: '', durationMin: '30', price: '', notes: '',
 }
 
@@ -85,21 +85,41 @@ const DashboardAgenda = () => {
   const selectedDate = weekDays[selectedIdx]?.date ?? ''
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const formBarber  = barbers.find(b => b.id === form.barberId)
-  const formService = services.find(s => s.name === form.serviceName)
-  // Duração editável no form (padrão = tempo de corte do barbeiro / serviço / 30)
-  const slotDuration = Math.max(5, Number(form.durationMin) || formBarber?.cutDurationMin || formService?.durationMin || 30)
+  const formBarber   = barbers.find(b => b.id === form.barberId)
+  // Vários serviços somam preço e duração (ex: corte + barba + sobrancelha)
+  const formServices = services.filter(s => form.serviceNames.includes(s.name))
+  const servicesTotalPrice    = formServices.reduce((acc, s) => acc + s.price, 0)
+  const servicesTotalDuration = formServices.reduce((acc, s) => acc + s.durationMin, 0)
+  // Duração editável no form (padrão = soma dos serviços / tempo de corte / 30)
+  const slotDuration = Math.max(5, Number(form.durationMin) || servicesTotalDuration || formBarber?.cutDurationMin || 30)
 
-  // Slots do dia respeitando o tempo de corte e bloqueando os ranges ocupados.
-  // Sem corte por horário atual: o barbeiro vê o dia inteiro (09:00–00:00).
-  const bookingSlots = useMemo(() => {
-    if (!form.date) return []
-    const busy = form.barberId ? busyRanges(appointments, form.barberId, form.date) : []
-    return buildDaySlots({
-      step: slotDuration, duration: slotDuration, busy,
-      open: barbershop?.openTime, close: barbershop?.closeTime,
+  // Marca/desmarca um serviço e reajusta preço e duração pela soma
+  const toggleService = (name: string) => {
+    setForm(f => {
+      const names = f.serviceNames.includes(name)
+        ? f.serviceNames.filter(n => n !== name)
+        : [...f.serviceNames, name]
+      const picked = services.filter(s => names.includes(s.name))
+      const totalPrice = picked.reduce((acc, s) => acc + s.price, 0)
+      const totalDuration = picked.reduce((acc, s) => acc + s.durationMin, 0)
+      return {
+        ...f,
+        serviceNames: names,
+        price: names.length ? String(totalPrice) : '',
+        durationMin: names.length ? String(totalDuration) : f.durationMin,
+        time: '',
+      }
     })
-  }, [form.date, form.barberId, slotDuration, appointments, barbershop?.openTime, barbershop?.closeTime])
+  }
+
+  // Horário é livre (campo de tempo): a partir do início digitado, calcula o
+  // término (início + duração) e checa se cai em cima de um range já ocupado.
+  const bookingCheck = useMemo(() => {
+    if (!form.date || !form.time) return null
+    const busy = form.barberId ? busyRanges(appointments, form.barberId, form.date) : []
+    const end = toMin(form.time) + slotDuration
+    return { end: toHHMM(end), available: isTimeAvailable(form.time, slotDuration, busy) }
+  }, [form.date, form.time, form.barberId, slotDuration, appointments])
 
   const openNewModal = () => {
     setForm({ ...EMPTY_APT, date: selectedDate })
@@ -144,9 +164,14 @@ const DashboardAgenda = () => {
   }
 
   const handleNewAppointment = async () => {
-    if (!barbershop || !form.clientName || !form.clientPhone || !form.serviceName || !form.date || !form.time) return
+    if (!barbershop || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.date || !form.time) return
 
-    const svc = services.find(s => s.name === form.serviceName)
+    // Vários serviços viram um atendimento só: nomes juntos, preço somado
+    const picked = services.filter(s => form.serviceNames.includes(s.name))
+    const svc = picked[0]
+    const label = picked.map(s => s.name).join(' + ')
+    const category = picked.length > 1 ? 'Combo' : svc?.category
+    const totalPrice = picked.reduce((acc, s) => acc + s.price, 0)
     const brb = barbers.find(b => b.id === form.barberId)
     const duration = slotDuration
 
@@ -180,13 +205,13 @@ const DashboardAgenda = () => {
           barberId: brb?.id ?? '',
           barberName: brb?.name ?? 'A definir',
           serviceId: svc?.id ?? '',
-          serviceName: form.serviceName,
-          serviceCategory: svc?.category,
+          serviceName: label,
+          serviceCategory: category,
           date: form.date,
           time: form.time,
           durationMin: duration,
           status: 'confirmed',
-          price: form.price ? Number(form.price) : svc?.price,
+          price: form.price ? Number(form.price) : totalPrice,
         }
         if (form.date === selectedDate) {
           setAppointments(prev => [...prev, demoApt].sort((a, b) => a.time.localeCompare(b.time)))
@@ -202,14 +227,14 @@ const DashboardAgenda = () => {
         barbershop_id: barbershop.id,
         client_name: form.clientName,
         client_phone: form.clientPhone,
-        service_name: form.serviceName,
-        service_category: svc?.category ?? null,
+        service_name: label,
+        service_category: category ?? null,
         barber_id: brb?.id ?? null,
         barber_name: brb?.name ?? 'A definir',
         date: form.date,
         time: form.time,
         duration_min: duration,
-        price: form.price ? Number(form.price) : svc?.price ?? null,
+        price: form.price ? Number(form.price) : totalPrice,
         notes: form.notes.trim() || null,
         status: 'confirmed',
       })
@@ -447,27 +472,34 @@ const DashboardAgenda = () => {
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Serviço *</label>
-                    <select
-                      value={form.serviceName}
-                      onChange={e => {
-                        const svc = services.find(s => s.name === e.target.value)
-                        setForm(f => ({
-                          ...f,
-                          serviceName: e.target.value,
-                          price: svc ? String(svc.price) : f.price,
-                          // Sem barbeiro escolhido, a duração acompanha o serviço
-                          durationMin: !f.barberId && svc ? String(svc.durationMin) : f.durationMin,
-                          time: '',
-                        }))
-                      }}
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
-                    >
-                      <option value="">Selecione...</option>
-                      {services.map(s => (
-                        <option key={s.id} value={s.name}>{s.name} — R$ {s.price}</option>
-                      ))}
-                    </select>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Serviços * <span className="text-white/25">(pode marcar vários)</span></label>
+                    <div className="space-y-1.5 max-h-44 overflow-y-auto scrollbar-none">
+                      {services.map(s => {
+                        const checked = form.serviceNames.includes(s.name)
+                        return (
+                          <button
+                            type="button"
+                            key={s.id}
+                            onClick={() => toggleService(s.name)}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left transition-colors"
+                            style={checked
+                              ? { borderColor: 'rgba(245,158,11,0.5)', backgroundColor: 'rgba(245,158,11,0.08)' }
+                              : { borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}
+                          >
+                            <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${checked ? 'bg-amber-500 text-[#0a0a0a]' : 'border border-[#3a3a3a]'}`}>
+                              {checked && <Check className="w-3 h-3" />}
+                            </span>
+                            <span className="text-white text-sm font-body flex-1">{s.name}</span>
+                            <span className="text-white/40 text-xs font-body shrink-0">R$ {s.price}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {form.serviceNames.length > 0 && (
+                      <p className="text-amber-400/80 text-[11px] font-body mt-1.5">
+                        {form.serviceNames.length} serviço{form.serviceNames.length > 1 ? 's' : ''} · R$ {servicesTotalPrice}
+                      </p>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro</label>
@@ -478,8 +510,8 @@ const DashboardAgenda = () => {
                         setForm(f => ({
                           ...f,
                           barberId: e.target.value,
-                          // Duração acompanha o tempo de corte do barbeiro escolhido
-                          durationMin: b ? String(b.cutDurationMin) : f.durationMin,
+                          // Com serviços marcados, a duração é a soma deles; senão acompanha o barbeiro
+                          durationMin: f.serviceNames.length ? f.durationMin : (b ? String(b.cutDurationMin) : f.durationMin),
                           time: '',
                         }))
                       }}
@@ -503,23 +535,27 @@ const DashboardAgenda = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Horário * <span className="text-white/25">(início–fim)</span></label>
-                    <select
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Horário de início *</label>
+                    <input
+                      type="time"
+                      step="300"
                       value={form.time}
                       onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
-                    >
-                      <option value="">Selecione...</option>
-                      {bookingSlots.map(s => (
-                        <option key={s.time} value={s.time} disabled={!s.available}>
-                          {s.time} – {s.end}{s.available ? '' : ' · ocupado'}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-white/30 text-[11px] font-body mt-1.5">
-                      Bloqueia {slotDuration} min a partir do horário escolhido
-                      {!form.barberId && ' — escolha o barbeiro pra ver os ocupados'}
-                    </p>
+                      style={{ colorScheme: 'dark' }}
+                    />
+                    {bookingCheck ? (
+                      <p className={`text-[11px] font-body mt-1.5 ${bookingCheck.available ? 'text-white/30' : 'text-red-400'}`}>
+                        {bookingCheck.available
+                          ? `Termina às ${bookingCheck.end} · bloqueia ${slotDuration} min`
+                          : 'Conflito: já há atendimento nesse intervalo'}
+                        {!form.barberId && bookingCheck.available && ' — escolha o barbeiro pra checar conflitos'}
+                      </p>
+                    ) : (
+                      <p className="text-white/30 text-[11px] font-body mt-1.5">
+                        Bloqueia {slotDuration} min a partir do início
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-white/45 text-xs font-body mb-1.5">Duração (min)</label>
@@ -560,7 +596,7 @@ const DashboardAgenda = () => {
 
                 <button
                   onClick={handleNewAppointment}
-                  disabled={saving || !form.clientName || !form.clientPhone || !form.serviceName || !form.date || !form.time}
+                  disabled={saving || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.date || !form.time}
                   className="w-full py-3 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando…</> : 'Confirmar Agendamento'}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { serviceRepository } from '@/repositories/serviceRepository'
 import { isDemoMode } from '@/lib/demo'
-import { Plus, Clock, Pencil, Trash2, Check, X, ChevronDown } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopService } from '@/types/tenant'
 
@@ -54,7 +54,6 @@ function draftValid(draft: ServiceDraft): boolean {
   return (
     draft.name.trim().length > 0 &&
     Number(draft.price) > 0 &&
-    Number(draft.durationMin) > 0 &&
     resolvedCategory(draft).length > 0
   )
 }
@@ -124,32 +123,18 @@ const ServiceForm = ({ draft, onChange, onSave, onCancel, saving }: ServiceFormP
         />
       </div>
 
-      {/* Preço + Duração */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Preço (R$)</label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={draft.price}
-            onChange={e => set('price', e.target.value)}
-            placeholder="0,00"
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
-          />
-        </div>
-        <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Duração (min)</label>
-          <input
-            type="number"
-            min="1"
-            step="5"
-            value={draft.durationMin}
-            onChange={e => set('durationMin', e.target.value)}
-            placeholder="45"
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
-          />
-        </div>
+      {/* Preço */}
+      <div>
+        <label className="text-white/35 text-xs font-body mb-1.5 block">Preço (R$)</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={draft.price}
+          onChange={e => set('price', e.target.value)}
+          placeholder="0,00"
+          className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+        />
       </div>
 
       {/* Ações */}
@@ -205,7 +190,7 @@ const DashboardServicos = () => {
       name: editDraft.name.trim(),
       description: editDraft.description.trim(),
       price: Number(editDraft.price),
-      duration_min: Number(editDraft.durationMin),
+      duration_min: Number(editDraft.durationMin) || 30,
       category: resolvedCategory(editDraft),
     }
     try {
@@ -239,7 +224,9 @@ const DashboardServicos = () => {
       name: newDraft.name.trim(),
       description: newDraft.description.trim(),
       price: Number(newDraft.price),
-      duration_min: Number(newDraft.durationMin),
+      // Tempo deixou de ser configurado por serviço; mantém um padrão só p/ o
+      // cálculo de bloco na agenda. A duração real é definida no agendamento.
+      duration_min: Number(newDraft.durationMin) || 30,
       category: resolvedCategory(newDraft),
       active: true,
     }
@@ -402,11 +389,6 @@ const DashboardServicos = () => {
                           {service.description && (
                             <p className="text-white/40 text-xs font-body truncate">{service.description}</p>
                           )}
-                        </div>
-
-                        <div className="flex items-center gap-1 text-white/30 text-xs font-body shrink-0">
-                          <Clock className="w-3 h-3" />
-                          {service.durationMin} min
                         </div>
 
                         <div className="shrink-0 w-20 text-right">
