@@ -298,23 +298,22 @@ const DashboardEquipe = () => {
         </motion.button>
       </div>
 
-      {/* Modal — Convidar membro */}
+      {/* Modal — Adicionar barbeiro */}
       <AnimatePresence>
         {inviteOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-40"
-              onClick={() => setInviteOpen(false)}
-            />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div className="absolute inset-0 bg-black/70" onClick={() => setInviteOpen(false)} />
             <motion.div
               initial={{ opacity: 0, y: 24, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.97 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 flex flex-col max-h-[85vh]"
+              className="relative w-full max-w-md bg-[#111] border border-[#222] rounded-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               {/* Header fixo */}
               <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0 border-b border-[#1c1c1c]">
@@ -385,27 +384,26 @@ const DashboardEquipe = () => {
                 </button>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
 
       {/* Modal — Editar membro */}
       <AnimatePresence>
         {editingBarber && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-40"
-              onClick={() => setEditingBarber(null)}
-            />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div className="absolute inset-0 bg-black/70" onClick={() => setEditingBarber(null)} />
             <motion.div
               initial={{ opacity: 0, y: 24, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.97 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 flex flex-col max-h-[85vh]"
+              className="relative w-full max-w-md bg-[#111] border border-[#222] rounded-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
                 <h2 className="font-heading text-xl tracking-wide text-white">EDITAR MEMBRO</h2>
@@ -550,7 +548,7 @@ const DashboardEquipe = () => {
               </div>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
