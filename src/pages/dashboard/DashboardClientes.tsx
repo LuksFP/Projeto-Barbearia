@@ -681,10 +681,13 @@ const AddClientModal = ({ onClose }: { onClose: () => void }) => {
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 const DashboardClientes = () => {
-  const { clients, barbershop } = useTenant()
+  const { clients, barbershop, refreshClients } = useTenant()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<BarbershopClient | null>(null)
   const [adding, setAdding] = useState(false)
+
+  // Ao abrir a aba, rebusca do banco pra pegar quem agendou pelo site público
+  useEffect(() => { refreshClients() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||

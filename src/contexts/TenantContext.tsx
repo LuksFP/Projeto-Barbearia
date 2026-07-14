@@ -48,6 +48,7 @@ interface TenantContextType {
     membershipType?: BarbershopClient['membershipType']
     notes?: string
   }) => Promise<void>
+  refreshClients: () => Promise<void>
   updateServices: (services: BarbershopService[]) => void
   updateBarbers: (barbers: BarbershopBarber[]) => void
   updateMemberships: (memberships: BarbershopMembership[]) => void
@@ -278,6 +279,16 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     setBarbershop(mapBarbershop(row))
   }, [barbershop])
 
+  // Rebusca os clientes do banco (ex: ao abrir a aba Clientes, pra pegar também
+  // os que agendaram pelo site público desde que o painel foi carregado).
+  const refreshClients = useCallback(async () => {
+    if (!barbershop || isDemoMode()) return
+    try {
+      const rows = await clientRepository.listByBarbershop(barbershop.id)
+      setClients(rows.map(mapClient).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
+    } catch { /* silencioso */ }
+  }, [barbershop])
+
   const addClient = useCallback(async (input: {
     name: string
     phone: string
@@ -383,6 +394,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       updateBarbershop,
       addClient,
       updateClient,
+      refreshClients,
       updateServices,
       updateBarbers,
       updateMemberships,
