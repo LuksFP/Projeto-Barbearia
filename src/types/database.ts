@@ -186,7 +186,7 @@ export type Database = {
           name: string
           role: string
           specialty: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           active?: boolean
@@ -200,7 +200,7 @@ export type Database = {
           name: string
           role?: string
           specialty?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           active?: boolean
@@ -214,7 +214,7 @@ export type Database = {
           name?: string
           role?: string
           specialty?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

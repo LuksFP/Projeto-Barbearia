@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
-import { Plus, Scissors, X, Loader2, Pencil, Mail, Upload, Clock, Percent } from 'lucide-react'
+import { Plus, Scissors, X, Loader2, Pencil, Upload, Clock, Percent } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
-import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { teamRepository } from '@/repositories/teamRepository'
 import { isDemoMode } from '@/lib/demo'
 import { uploadBarberAvatar } from '@/lib/storage'
@@ -15,7 +14,6 @@ const ROLE_OPTIONS = [
 ]
 
 interface InviteForm {
-  email: string
   name: string
   specialty: string
   bio: string
@@ -35,14 +33,12 @@ const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py
 
 const DashboardEquipe = () => {
   const { barbershop, barbers, updateBarbers } = useTenant()
-  const { accessToken } = useSaasAccount()
 
   // Modal de convite
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState('')
-  const [inviteSent, setInviteSent] = useState(false)
-  const [inviteForm, setInviteForm] = useState<InviteForm>({ email: '', name: '', specialty: '', bio: '', role: 'barber' })
+  const [inviteForm, setInviteForm] = useState<InviteForm>({ name: '', specialty: '', bio: '', role: 'barber' })
 
   // Modal de edição
   const [editingBarber, setEditingBarber] = useState<BarbershopBarber | null>(null)
@@ -56,19 +52,18 @@ const DashboardEquipe = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const openInvite = () => {
-    setInviteForm({ email: '', name: '', specialty: '', bio: '', role: 'barber' })
+    setInviteForm({ name: '', specialty: '', bio: '', role: 'barber' })
     setInviteError('')
-    setInviteSent(false)
     setInviteOpen(true)
   }
 
   const handleInvite = async () => {
-    if (!barbershop || !inviteForm.email || !inviteForm.name || !inviteForm.specialty) return
+    if (!barbershop || !inviteForm.name || !inviteForm.specialty) return
     setInviting(true)
     setInviteError('')
 
     if (isDemoMode()) {
-      // Demo: adiciona localmente sem persistir nem enviar email
+      // Demo: adiciona localmente sem persistir
       const fakeBarber: BarbershopBarber = {
         id: crypto.randomUUID(),
         barbershopId: barbershop.id,
@@ -87,33 +82,32 @@ const DashboardEquipe = () => {
     }
 
     try {
-      if (!accessToken) throw new Error('Sessão expirada. Faça login novamente.')
-
-      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-barber`
-      const res = await fetch(fnUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          barbershopId: barbershop.id,
-          email: inviteForm.email.toLowerCase().trim(),
-          name: inviteForm.name.trim(),
-          specialty: inviteForm.specialty.trim(),
-          bio: inviteForm.bio.trim(),
-          role: inviteForm.role,
-        }),
+      // Cadastro direto (sem conta de login): o barbeiro já entra na equipe e
+      // fica disponível para agendamento. Sem email/convite.
+      const row = await teamRepository.create({
+        barbershop_id: barbershop.id,
+        user_id: null,
+        name: inviteForm.name.trim(),
+        specialty: inviteForm.specialty.trim(),
+        bio: inviteForm.bio.trim(),
+        role: inviteForm.role,
+        active: true,
       })
-
-      if (!res.ok) {
-        const body = await res.json() as { error?: string }
-        throw new Error(body.error ?? 'Erro ao enviar convite.')
-      }
-
-      setInviteSent(true)
+      updateBarbers([...barbers, {
+        id: row.id,
+        barbershopId: row.barbershop_id,
+        userId: row.user_id,
+        name: row.name,
+        bio: row.bio,
+        specialty: row.specialty,
+        cutDurationMin: row.cut_duration_minutes,
+        commissionPercent: row.commission_percent ?? 50,
+        avatar: row.avatar ?? undefined,
+        active: row.active,
+      }])
+      setInviteOpen(false)
     } catch (err) {
-      setInviteError(err instanceof Error ? err.message : 'Erro ao enviar convite.')
+      setInviteError(err instanceof Error ? err.message : 'Erro ao adicionar barbeiro.')
     } finally {
       setInviting(false)
     }
@@ -227,7 +221,7 @@ const DashboardEquipe = () => {
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Convidar membro
+          Adicionar barbeiro
         </button>
       </div>
 
@@ -300,7 +294,7 @@ const DashboardEquipe = () => {
           <div className="w-12 h-12 rounded-xl border border-[#2a2a2a] flex items-center justify-center">
             <Scissors className="w-5 h-5" />
           </div>
-          <span className="text-sm font-body">Convidar barbeiro</span>
+          <span className="text-sm font-body">Adicionar barbeiro</span>
         </motion.button>
       </div>
 
@@ -323,109 +317,72 @@ const DashboardEquipe = () => {
               className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[#111] border border-[#222] rounded-2xl z-50 flex flex-col max-h-[85vh]"
             >
               {/* Header fixo */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
-                <h2 className="font-heading text-xl tracking-wide text-white">CONVIDAR MEMBRO</h2>
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0 border-b border-[#1c1c1c]">
+                <h2 className="font-heading text-xl tracking-wide text-white">ADICIONAR BARBEIRO</h2>
                 <button onClick={() => setInviteOpen(false)} className="text-white/30 hover:text-white transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Body scrollável */}
-              <div className="overflow-y-auto flex-1 px-6 pb-6 scrollbar-none">
-                {inviteSent ? (
-                  <div className="text-center py-6 space-y-4">
-                    <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
-                      <Mail className="w-6 h-6 text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold font-body mb-1">Convite enviado!</p>
-                      <p className="text-white/45 text-sm font-body">
-                        {inviteForm.name} receberá um email em{' '}
-                        <span className="text-white/70">{inviteForm.email}</span> com instruções para criar a conta.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setInviteOpen(false)}
-                      className="px-6 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body hover:bg-amber-400 transition-colors"
-                    >
-                      Fechar
-                    </button>
+              <div className="overflow-y-auto flex-1 px-6 py-5 scrollbar-none">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Nome *</label>
+                    <input
+                      type="text"
+                      value={inviteForm.name}
+                      onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder="Nome do barbeiro"
+                      className={inputCls}
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {!isDemoMode() && (
-                      <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/[0.06] border border-amber-500/20">
-                        <Mail className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
-                        <p className="text-amber-300/80 text-xs font-body">
-                          O convite é enviado por email. O barbeiro cria a própria conta e já aparece vinculado à sua barbearia.
-                        </p>
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Email *</label>
-                      <input
-                        type="email"
-                        value={inviteForm.email}
-                        onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))}
-                        placeholder="barbeiro@email.com"
-                        className={inputCls}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Nome completo *</label>
-                      <input
-                        type="text"
-                        value={inviteForm.name}
-                        onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))}
-                        placeholder="Nome do barbeiro"
-                        className={inputCls}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Especialidade *</label>
-                      <input
-                        type="text"
-                        value={inviteForm.specialty}
-                        onChange={e => setInviteForm(f => ({ ...f, specialty: e.target.value }))}
-                        placeholder="Ex: Degradê, Barba, Coloração..."
-                        className={inputCls}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Função</label>
-                      <select
-                        value={inviteForm.role}
-                        onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
-                        className={inputCls}
-                      >
-                        {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Bio (opcional)</label>
-                      <textarea
-                        value={inviteForm.bio}
-                        onChange={e => setInviteForm(f => ({ ...f, bio: e.target.value }))}
-                        placeholder="Uma linha sobre o profissional..."
-                        rows={3}
-                        className={`${inputCls} resize-none`}
-                      />
-                    </div>
-
-                    {inviteError && <p className="text-red-400 text-xs font-body">{inviteError}</p>}
-
-                    <button
-                      onClick={handleInvite}
-                      disabled={inviting || !inviteForm.email || !inviteForm.name || !inviteForm.specialty}
-                      className="w-full py-3 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {inviting
-                        ? <><Loader2 className="w-4 h-4 animate-spin" />Enviando convite…</>
-                        : isDemoMode() ? 'Adicionar (demo)' : 'Enviar convite por email'
-                      }
-                    </button>
+                  <div>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Especialidade *</label>
+                    <input
+                      type="text"
+                      value={inviteForm.specialty}
+                      onChange={e => setInviteForm(f => ({ ...f, specialty: e.target.value }))}
+                      placeholder="Ex: Degradê, Barba, Coloração..."
+                      className={inputCls}
+                    />
                   </div>
-                )}
+                  <div>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Função</label>
+                    <select
+                      value={inviteForm.role}
+                      onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
+                      className={inputCls}
+                    >
+                      {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/45 text-xs font-body mb-1.5">Bio (opcional)</label>
+                    <textarea
+                      value={inviteForm.bio}
+                      onChange={e => setInviteForm(f => ({ ...f, bio: e.target.value }))}
+                      placeholder="Uma linha sobre o profissional..."
+                      rows={3}
+                      className={`${inputCls} resize-none`}
+                    />
+                  </div>
+                  {inviteError && <p className="text-red-400 text-xs font-body">{inviteError}</p>}
+                </div>
+              </div>
+
+              {/* Footer fixo — botão sempre visível */}
+              <div className="flex-shrink-0 px-6 py-4 border-t border-[#1c1c1c]">
+                <button
+                  onClick={handleInvite}
+                  disabled={inviting || !inviteForm.name || !inviteForm.specialty}
+                  className="w-full py-3 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {inviting
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />Adicionando…</>
+                    : <><Plus className="w-4 h-4" />Adicionar barbeiro</>
+                  }
+                </button>
               </div>
             </motion.div>
           </>
