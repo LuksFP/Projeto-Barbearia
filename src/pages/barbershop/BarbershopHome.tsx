@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 import { supabasePublic } from '@/lib/supabase-public'
-import { toMin, toHHMM, isTimeAvailable, DEFAULT_OPEN, DEFAULT_CLOSE, type BusyRange } from '@/lib/scheduling'
+import { buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -72,12 +72,11 @@ const BookingSection = ({
 
   // Barbeiro é obrigatório (garante a checagem de conflito por barbeiro)
   const pickedBarber = selectedBarber
-  // Vários serviços somam preço e duração (ex: barba + sobrancelha)
+  // Serviços somam preço (o tempo do bloco vem do barbeiro, não do serviço)
   const totalPrice = selectedServices.reduce((acc, s) => acc + s.price, 0)
-  const totalDuration = selectedServices.reduce((acc, s) => acc + s.durationMin, 0)
   const servicesLabel = selectedServices.map(s => s.name).join(' + ')
-  // Duração do atendimento = soma dos serviços (fallback: tempo de corte, ou 30 min)
-  const slotDuration = totalDuration || pickedBarber?.cutDurationMin || 30
+  // Duração do atendimento = tempo de corte do barbeiro (fallback 30 min)
+  const slotDuration = pickedBarber?.cutDurationMin || 30
 
   const toggleService = (svc: BarbershopService) => {
     setSelectedServices(prev =>
@@ -124,27 +123,25 @@ const BookingSection = ({
     return () => { active = false }
   }, [step, selectedDate, pickedBarber?.id, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Horário é livre: o cliente escolhe a hora que quiser. Calcula o término
-  // (início + soma dos serviços) e valida na hora — expediente, se já passou e
-  // se conflita com um atendimento do barbeiro.
-  const timeCheck = useMemo(() => {
-    if (!selectedTime) return null
-    const start = toMin(selectedTime)
-    const end = start + slotDuration
-    const openMin = toMin(barbershop.openTime || DEFAULT_OPEN)
-    let closeMin = toMin(barbershop.closeTime || DEFAULT_CLOSE)
-    if (closeMin <= openMin) closeMin += 1440   // fecha depois da meia-noite
-    const withinHours = start >= openMin && end <= closeMin
-    const now = new Date()
-    const past = selectedDate === todayStr && start < now.getHours() * 60 + now.getMinutes()
-    const free = isTimeAvailable(selectedTime, slotDuration, busy)
-    const available = withinHours && !past && free
-    const reason = !withinHours ? 'Fora do horário de funcionamento'
-      : past ? 'Esse horário já passou'
-      : !free ? 'Já há um atendimento nesse intervalo'
-      : ''
-    return { end: toHHMM(end), available, reason }
-  }, [selectedTime, slotDuration, busy, barbershop.openTime, barbershop.closeTime, selectedDate, todayStr])
+  // Horários disponíveis calculados: dentro do expediente da barbearia, no passo
+  // do tempo de corte do barbeiro, escondendo os que já passaram ou estão ocupados.
+  const slots = useMemo(() => {
+    if (!selectedDate || !pickedBarber) return []
+    return buildDaySlots({
+      step: Math.min(30, slotDuration),
+      duration: slotDuration,
+      busy,
+      now: new Date(),
+      date: selectedDate,
+      open: barbershop.openTime,
+      close: barbershop.closeTime,
+    }).filter(s => s.available)
+  }, [selectedDate, pickedBarber, slotDuration, busy, barbershop.openTime, barbershop.closeTime])
+
+  // Limpa o horário escolhido se ele saiu da lista de disponíveis
+  useEffect(() => {
+    if (selectedTime && !slots.some(s => s.time === selectedTime)) setSelectedTime('')
+  }, [slots]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetBooking = () => {
     setStep('service')
@@ -163,7 +160,7 @@ const BookingSection = ({
 
   const handleBook = async () => {
     if (selectedServices.length === 0 || !selectedDate || !selectedTime || !clientName || !clientPhone) return
-    if (timeCheck && !timeCheck.available) { setBookError('Esse horário não está disponível. Escolha outro.'); return }
+    if (!slots.some(s => s.time === selectedTime)) { setBookError('Esse horário não está mais disponível. Escolha outro.'); return }
     setSubmitting(true)
     setBookError('')
 
@@ -334,7 +331,6 @@ const BookingSection = ({
                 <span className="text-white/60">
                   {selectedServices.length} {selectedServices.length === 1 ? 'serviço' : 'serviços'} ·{' '}
                   <span className="text-white/90 font-semibold">R$ {totalPrice.toFixed(0)}</span>
-                  <span className="text-white/35"> · ~{totalDuration} min</span>
                 </span>
               ) : (
                 <span className="text-white/30">Selecione ao menos um serviço</span>
@@ -424,27 +420,32 @@ const BookingSection = ({
             <div className="mb-6">
               <label className="block text-white/50 text-xs font-body mb-2 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
-                Escolha o horário <span className="text-white/30">(bloco de {slotDuration} min)</span>
+                Horários disponíveis
                 {loadingSlots && <Loader2 className="w-3 h-3 animate-spin" />}
               </label>
-              <input
-                type="time"
-                step="300"
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-                className="w-full bg-[#161616] border rounded-xl px-4 py-3 text-white text-base font-body focus:outline-none transition-colors"
-                style={{ colorScheme: 'dark', borderColor: timeCheck && !timeCheck.available ? 'rgba(248,113,113,0.5)' : '#252525' }}
-              />
-              {timeCheck ? (
-                <p className={`text-xs font-body mt-2 flex items-center gap-1.5 ${timeCheck.available ? 'text-white/50' : 'text-red-400'}`}>
-                  {timeCheck.available ? (
-                    <><CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: primary }} /> Disponível · <span className="text-white/80 font-medium">{selectedTime} – {timeCheck.end}</span></>
-                  ) : (
-                    <><AlertCircle className="w-3.5 h-3.5 shrink-0" /> {timeCheck.reason}</>
-                  )}
-                </p>
+              {slots.length > 0 ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {slots.map((s) => {
+                    const isSel = selectedTime === s.time
+                    return (
+                      <button
+                        key={s.time}
+                        onClick={() => setSelectedTime(s.time)}
+                        className="py-2 rounded-lg font-body transition-all border"
+                        style={isSel
+                          ? { backgroundColor: primary, color: '#0a0a0a', borderColor: primary }
+                          : { backgroundColor: '#161616', color: 'rgba(255,255,255,0.65)', borderColor: '#252525' }}
+                      >
+                        <span className="block text-xs font-semibold leading-none">{s.time}</span>
+                        <span className="block text-[10px] opacity-60 leading-none mt-0.5">–{s.end}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               ) : (
-                <p className="text-white/30 text-[11px] font-body mt-2">Digite ou selecione a hora que preferir.</p>
+                <p className="text-white/35 text-xs font-body py-3">
+                  {loadingSlots ? 'Carregando horários…' : 'Nenhum horário livre nesse dia. Tente outra data.'}
+                </p>
               )}
             </div>
           )}
@@ -458,7 +459,7 @@ const BookingSection = ({
             </button>
             <button
               onClick={() => setStep('contact')}
-              disabled={!selectedDate || !selectedTime || (timeCheck ? !timeCheck.available : false)}
+              disabled={!selectedDate || !selectedTime}
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ backgroundColor: primary, color: '#0a0a0a' }}
             >
