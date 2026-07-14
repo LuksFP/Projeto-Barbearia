@@ -472,8 +472,8 @@ const DashboardAgenda = () => {
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Serviços * <span className="text-white/25">(pode marcar vários)</span></label>
-                    <div className="space-y-1.5 max-h-44 overflow-y-auto scrollbar-none">
+                    <label className="block text-white/45 text-xs font-body mb-2">Serviços * <span className="text-white/25">(pode marcar vários)</span></label>
+                    <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-none pr-0.5">
                       {services.map(s => {
                         const checked = form.serviceNames.includes(s.name)
                         return (
@@ -481,24 +481,37 @@ const DashboardAgenda = () => {
                             type="button"
                             key={s.id}
                             onClick={() => toggleService(s.name)}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left transition-colors"
+                            className="group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-all duration-150"
                             style={checked
-                              ? { borderColor: 'rgba(245,158,11,0.5)', backgroundColor: 'rgba(245,158,11,0.08)' }
-                              : { borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}
+                              ? { borderColor: 'rgba(245,158,11,0.55)', backgroundColor: 'rgba(245,158,11,0.10)', boxShadow: 'inset 0 0 0 1px rgba(245,158,11,0.12)' }
+                              : { borderColor: '#272727', backgroundColor: '#161616' }}
                           >
-                            <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${checked ? 'bg-amber-500 text-[#0a0a0a]' : 'border border-[#3a3a3a]'}`}>
-                              {checked && <Check className="w-3 h-3" />}
+                            <span
+                              className="w-[18px] h-[18px] rounded-md flex items-center justify-center shrink-0 transition-all duration-150"
+                              style={checked
+                                ? { backgroundColor: '#f59e0b', color: '#0a0a0a' }
+                                : { border: '1.5px solid #3a3a3a' }}
+                            >
+                              {checked && <Check className="w-3 h-3" strokeWidth={3} />}
                             </span>
-                            <span className="text-white text-sm font-body flex-1">{s.name}</span>
-                            <span className="text-white/40 text-xs font-body shrink-0">R$ {s.price}</span>
+                            <span className={`text-sm font-body flex-1 min-w-0 truncate transition-colors ${checked ? 'text-white font-medium' : 'text-white/70 group-hover:text-white/90'}`}>
+                              {s.name}
+                            </span>
+                            <span className="text-right shrink-0 leading-tight">
+                              <span className="block text-sm font-heading text-amber-400">R$ {s.price}</span>
+                              <span className="block text-[10px] font-body text-white/30">{s.durationMin} min</span>
+                            </span>
                           </button>
                         )
                       })}
                     </div>
                     {form.serviceNames.length > 0 && (
-                      <p className="text-amber-400/80 text-[11px] font-body mt-1.5">
-                        {form.serviceNames.length} serviço{form.serviceNames.length > 1 ? 's' : ''} · R$ {servicesTotalPrice}
-                      </p>
+                      <div className="mt-2 flex items-center justify-between px-3.5 py-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20">
+                        <span className="text-amber-400/90 text-xs font-body font-medium">
+                          {form.serviceNames.length} serviço{form.serviceNames.length > 1 ? 's' : ''} · {servicesTotalDuration} min
+                        </span>
+                        <span className="text-amber-400 text-sm font-heading">R$ {servicesTotalPrice}</span>
+                      </div>
                     )}
                   </div>
                   <div className="col-span-2">
@@ -596,7 +609,7 @@ const DashboardAgenda = () => {
 
                 <button
                   onClick={handleNewAppointment}
-                  disabled={saving || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.date || !form.time}
+                  disabled={saving || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.date || !form.time || (bookingCheck ? !bookingCheck.available : false)}
                   className="w-full py-3 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando…</> : 'Confirmar Agendamento'}
