@@ -46,9 +46,6 @@ Deno.serve(async (req) => {
   }
 
   const { plan, successUrl, cancelUrl } = body
-  console.log('DEBUG body:', JSON.stringify({ plan, successUrl, cancelUrl }))
-  console.log('DEBUG PRICE_IDS keys:', Object.keys(PRICE_IDS))
-  console.log('DEBUG priceId for plan:', PRICE_IDS[plan])
 
   const priceId = PRICE_IDS[plan]
   if (!priceId) {
@@ -69,10 +66,7 @@ Deno.serve(async (req) => {
       )
     } catch { return false }
   }
-  const successAllowed = isAllowedUrl(successUrl)
-  const cancelAllowed = isAllowedUrl(cancelUrl)
-  console.log('DEBUG url validation:', { successUrl, successAllowed, cancelUrl, cancelAllowed })
-  if (!successAllowed || !cancelAllowed) {
+  if (!isAllowedUrl(successUrl) || !isAllowedUrl(cancelUrl)) {
     return err('URL de redirecionamento inválida', 400)
   }
 
