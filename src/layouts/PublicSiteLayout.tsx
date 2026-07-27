@@ -25,6 +25,8 @@ function mapBarbershop(row: BarbershopRow): Barbershop {
     active: row.active, siteType: row.site_type as Barbershop['siteType'],
     customDomain: row.custom_domain ?? '', embedKey: row.embed_key,
     cancellationPolicy: row.cancellation_policy as CancellationPolicy | null ?? null,
+    openTime: row.open_time ?? '08:00',
+    closeTime: row.close_time ?? '20:00',
   }
 }
 
