@@ -49,14 +49,18 @@ export default async function middleware(request: Request): Promise<Response> {
   const supaKey = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
   if (!supaUrl || !supaKey) return next()
 
-  // Busca a barbearia via REST (edge-friendly, sem SDK)
+  // Busca a barbearia via RPC pública (só colunas seguras; a tabela não é
+  // legível por anon). Edge-friendly, sem SDK.
   let shop: Shop | null = null
   try {
-    const query =
-      `${supaUrl}/rest/v1/barbershops?slug=eq.${encodeURIComponent(slug)}` +
-      `&select=name,tagline,description,city,state,cover_image&limit=1`
-    const res = await fetch(query, {
-      headers: { apikey: supaKey, authorization: `Bearer ${supaKey}` },
+    const res = await fetch(`${supaUrl}/rest/v1/rpc/public_barbershop_by_slug`, {
+      method: 'POST',
+      headers: {
+        apikey: supaKey,
+        authorization: `Bearer ${supaKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ p_slug: slug }),
     })
     if (res.ok) {
       const rows = (await res.json()) as Shop[]

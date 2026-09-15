@@ -250,7 +250,9 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     if (updates.openTime !== undefined) payload.open_time = updates.openTime
     if (updates.closeTime !== undefined) payload.close_time = updates.closeTime
     const row = await barbershopRepository.update(barbershop.id, payload as BarbershopUpdate)
-    setBarbershop(mapBarbershop(row))
+    // Mantém o plano injetado da conta SaaS (o mapper traz 'pro' fixo e o
+    // efeito que injeta o plano não roda de novo depois de salvar).
+    setBarbershop(prev => ({ ...mapBarbershop(row), plan: prev?.plan ?? null }))
   }, [barbershop])
 
   // Rebusca os clientes do banco (ex: ao abrir a aba Clientes, pra pegar também

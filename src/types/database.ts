@@ -680,6 +680,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_hits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       saas_accounts: {
         Row: {
           barbershop_id: string | null
@@ -840,13 +858,44 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      hit_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
       mark_announcement_seen: { Args: { p_key: string }; Returns: undefined }
+      my_admin_barbershop_ids: { Args: never; Returns: string[] }
       my_barbershop_ids: { Args: never; Returns: string[] }
       public_barber_busy_slots: {
         Args: { p_barber_id: string; p_barbershop_id: string; p_date: string }
         Returns: {
           slot_duration: number
           slot_time: string
+        }[]
+      }
+      public_barbershop_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          accent_color: string
+          active: boolean
+          address: string
+          cancellation_policy: Json
+          city: string
+          close_time: string
+          cover_image: string
+          custom_domain: string
+          description: string
+          id: string
+          instagram: string
+          logo_text: string
+          name: string
+          open_time: string
+          phone: string
+          primary_color: string
+          site_type: string
+          slug: string
+          state: string
+          tagline: string
+          whatsapp: string
         }[]
       }
       public_barbershop_reviews: {
@@ -858,6 +907,20 @@ export type Database = {
           review_date: string
         }[]
       }
+      public_barbershop_team: {
+        Args: { p_barbershop_id: string }
+        Returns: {
+          active: boolean
+          avatar: string
+          barbershop_id: string
+          bio: string
+          cut_duration_minutes: number
+          id: string
+          name: string
+          specialty: string
+        }[]
+      }
+      request_ip: { Args: never; Returns: string }
       search_appointments_by_contact: {
         Args: { p_email?: string; p_phone?: string }
         Returns: {

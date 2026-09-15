@@ -257,8 +257,26 @@ interface SendEmailBody {
   barbershopSlug?: string
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+const EMAIL_RE = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() })
+
+  // Só as outras Edge Functions (service role) podem mandar email.
+  // verify_jwt sozinho não basta: a anon key pública também é um JWT válido.
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  if (!serviceKey || req.headers.get('Authorization') !== `Bearer ${serviceKey}`) {
+    return err('Unauthorized', 401)
+  }
 
   let body: SendEmailBody
   try {
@@ -269,6 +287,17 @@ Deno.serve(async (req) => {
 
   const { type, to } = body
   if (!to || !type) return err('to and type required')
+  if (!EMAIL_RE.test(to)) return err('Invalid recipient')
+
+  // Todo texto vindo do body entra no HTML escapado (nome de cliente é digitado
+  // por qualquer visitante no agendamento público).
+  const fields = body as unknown as Record<string, unknown>
+  for (const key of Object.keys(fields)) {
+    if (key !== 'to' && key !== 'type' && typeof fields[key] === 'string') {
+      fields[key] = escapeHtml(fields[key] as string)
+    }
+  }
+  if (body.hoursLeft !== undefined) body.hoursLeft = Number(body.hoursLeft) || 24
 
   let subject = ''
   let html = ''

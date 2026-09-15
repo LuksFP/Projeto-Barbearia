@@ -7,17 +7,21 @@ import { Menu, X, Scissors, Phone } from 'lucide-react'
 import { supabasePublic } from '@/lib/supabase-public'
 import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
 import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership } from '@/types/tenant'
-import type { Tables } from '@/types/database'
+import type { Database, Tables } from '@/types/database'
 import { mapBarbershopRow } from '@/repositories/barbershopRepository'
 import { motion, AnimatePresence } from 'framer-motion'
 
 type BarbershopRow = Tables<'barbershops'>
 type ServiceRow = Tables<'services'>
-type MemberRow = Tables<'barbershop_members'>
 type MembershipRow = Tables<'memberships'>
 
-// Site público não conhece o plano da barbearia (não lê saas_accounts).
-const mapBarbershop = (row: BarbershopRow): Barbershop => mapBarbershopRow(row, null)
+type PublicBarbershopRow =
+  Database['public']['Functions']['public_barbershop_by_slug']['Returns'][number]
+
+// Site público lê pela RPC, que não devolve colunas internas (chave PIX,
+// embed_key, conta SaaS). Elas entram vazias; o site não conhece o plano.
+const mapBarbershop = (row: PublicBarbershopRow): Barbershop =>
+  mapBarbershopRow({ ...row, saas_account_id: '', embed_key: '', club_pix_key: '', created_at: '' }, null)
 
 export interface PublicReview {
   rating: number
@@ -178,11 +182,9 @@ const PublicSiteLayout = () => {
         }
       }
 
-      const { data: bs, error } = await supabasePublic
-        .from('barbershops')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle()
+      const { data: bsRows, error } = await supabasePublic
+        .rpc('public_barbershop_by_slug', { p_slug: slug })
+      const bs = bsRows?.[0]
 
       if (cancelled) return
 
@@ -219,12 +221,7 @@ const PublicSiteLayout = () => {
           .eq('active', true)
           .order('category')
           .order('name'),
-        supabasePublic
-          .from('barbershop_members')
-          .select('*')
-          .eq('barbershop_id', bs.id)
-          .eq('active', true)
-          .order('joined_at'),
+        supabasePublic.rpc('public_barbershop_team', { p_barbershop_id: bs.id }),
         supabasePublic
           .from('memberships')
           .select('*')
@@ -240,10 +237,11 @@ const PublicSiteLayout = () => {
         id: r.id, barbershopId: r.barbershop_id, name: r.name, description: r.description,
         price: Number(r.price), durationMin: r.duration_min, category: r.category, active: r.active,
       })))
-      setBarbers((team ?? []).map((r: MemberRow) => ({
-        id: r.id, barbershopId: r.barbershop_id, userId: r.user_id, name: r.name,
+      // user_id e comissão não saem da RPC pública.
+      setBarbers((team ?? []).map(r => ({
+        id: r.id, barbershopId: r.barbershop_id, userId: null, name: r.name,
         bio: r.bio, specialty: r.specialty, cutDurationMin: r.cut_duration_minutes,
-        commissionPercent: r.commission_percent ?? 50,
+        commissionPercent: 0,
         avatar: r.avatar ?? undefined, active: r.active,
       })))
       setMemberships((mems ?? []).map((r: MembershipRow) => ({

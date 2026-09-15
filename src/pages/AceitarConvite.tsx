@@ -42,8 +42,10 @@ const AceitarConvite = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password.length < 8) {
-      setError('A senha deve ter pelo menos 8 caracteres.')
+    // Mesma regra do Supabase Auth (8+, maiúscula, número e especial).
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password)
+        || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      setError('A senha precisa de 8+ caracteres, com maiúscula, minúscula, número e caractere especial.')
       return
     }
 

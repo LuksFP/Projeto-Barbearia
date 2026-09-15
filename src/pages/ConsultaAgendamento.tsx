@@ -93,10 +93,19 @@ const ConsultaAgendamento = () => {
     if (!ratingId || rating === 0) return
     setSubmittingRating(true)
     try {
-      await supabasePublic
-        .from('appointments')
-        .update({ rating, review: review || null })
-        .eq('id', ratingId)
+      // UPDATE direto não tem policy pra anon (a nota nunca era gravada).
+      // A RPC confere o contato do agendamento antes de salvar.
+      const { error: rateErr } = await supabasePublic.rpc('submit_public_appointment_review', {
+        p_appointment_id: ratingId,
+        p_rating: rating,
+        p_review: review || undefined,
+        p_email: email || undefined,
+        p_phone: phone || undefined,
+      })
+      if (rateErr) {
+        setError('Não foi possível enviar a avaliação. Tente novamente.')
+        return
+      }
       setAppointments(prev => prev.map(a => a.id === ratingId ? { ...a, rating, review: review || null } : a))
       setRatingId(null)
       setRating(0)

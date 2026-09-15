@@ -32,7 +32,23 @@ Deno.serve(async (req) => {
     return err('Todos os campos são obrigatórios')
   }
 
+  const pwOk = password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)
+  if (!pwOk) return err('A senha precisa de 8+ caracteres, maiúscula, número e caractere especial.', 422)
+
   const admin = createAdminClient()
+
+  // 0. Limite de cadastros por IP (sem captcha, isso segura criação em massa)
+  const ip = (req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for') ?? 'unknown')
+    .split(',')[0].trim()
+  const { data: allowed, error: rlErr } = await admin.rpc('hit_rate_limit', {
+    p_key: `register:${ip}`,
+    p_limit: 5,
+    p_window_seconds: 3600,
+  })
+  if (rlErr) console.error('rate limit error:', rlErr)
+  if (allowed === false) {
+    return err('Muitos cadastros a partir desta rede. Tente novamente mais tarde.', 429)
+  }
 
   // 1. Cria o auth user via service_role (sem enviar email de confirmação)
   const { data: authData, error: authError } = await admin.auth.admin.createUser({

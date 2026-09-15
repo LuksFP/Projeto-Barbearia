@@ -55,15 +55,20 @@ Deno.serve(async (req) => {
   if (!successUrl || !cancelUrl) return err('successUrl and cancelUrl required')
 
   // Valida origens para evitar open redirect
+  // Lista fechada: '*.vercel.app' aceitava site de qualquer pessoa na Vercel.
+  const ALLOWED_ORIGINS = new Set([
+    'https://barberos.io',
+    'https://barberos-pied.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:4173',
+  ])
+  const appUrl = Deno.env.get('APP_URL')
+  if (appUrl) {
+    try { ALLOWED_ORIGINS.add(new URL(appUrl).origin) } catch { /* APP_URL inválida: ignora */ }
+  }
   const isAllowedUrl = (url: string) => {
     try {
-      const origin = new URL(url).origin
-      return (
-        origin === 'https://barberos.io' ||
-        origin.endsWith('.vercel.app') ||
-        origin === 'http://localhost:5173' ||
-        origin === 'http://localhost:4173'
-      )
+      return ALLOWED_ORIGINS.has(new URL(url).origin)
     } catch { return false }
   }
   if (!isAllowedUrl(successUrl) || !isAllowedUrl(cancelUrl)) {
