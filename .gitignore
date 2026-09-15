@@ -29,3 +29,6 @@ dist-ssr
 test-*.mjs
 audit-*.mjs
 *.png
+
+# Estado local do Supabase CLI
+supabase/.temp
