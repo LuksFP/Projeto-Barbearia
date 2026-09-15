@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Sparkles, X, ArrowRight, Check } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { supabase } from '@/lib/supabase'
@@ -93,7 +93,9 @@ const FeatureAnnouncementModal = () => {
           .select('seen_announcements')
           .eq('id', account.id)
           .maybeSingle()
-        if (data?.seen_announcements) seen = data.seen_announcements
+        // Junta com o cache local: se o RPC não gravou (ex.: barbeiro que não é
+        // dono da conta), o que foi fechado neste aparelho não volta a abrir.
+        if (data?.seen_announcements) seen = [...new Set([...seen, ...data.seen_announcements])]
       }
 
       if (cancelled) return
@@ -131,20 +133,20 @@ const FeatureAnnouncementModal = () => {
     if (target) navigate(target)
   }
 
+  // Sem AnimatePresence de propósito: em conta real a animação de saída ficava
+  // presa, o modal não sumia e cada clique só repetia o close antigo.
   return createPortal(
-    <AnimatePresence>
+    <>
       {current && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           onClick={close}
         >
           <motion.div
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/20 bg-[#121212] shadow-2xl"
@@ -211,7 +213,7 @@ const FeatureAnnouncementModal = () => {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>,
+    </>,
     document.body,
   )
 }
