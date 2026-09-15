@@ -72,6 +72,17 @@ export const appointmentRepository = {
     return data
   },
 
+  async setReminded(id: string, reminded: boolean): Promise<AppointmentRow> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({ reminded_at: reminded ? new Date().toISOString() : null } as TablesUpdate<'appointments'>)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
   async addRating(id: string, rating: number, review?: string): Promise<AppointmentRow> {
     const { data, error } = await supabase
       .from('appointments')

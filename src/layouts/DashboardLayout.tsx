@@ -27,6 +27,9 @@ import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import FeatureAnnouncementModal from '@/components/FeatureAnnouncementModal'
+import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
+import { toast } from '@/hooks/use-toast'
+import { isDemoMode } from '@/lib/demo'
 
 const navItems = [
   { to: '/dashboard', label: 'Visão Geral', icon: LayoutDashboard, end: true },
@@ -51,10 +54,28 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const DashboardLayout = () => {
-  const { barbershop, tenantUser, userRole, isLoading } = useTenant()
+  const { barbershop, tenantUser, userRole, isLoading, refreshAppointments, refreshClients } = useTenant()
   const { account } = useSaasAccount()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
+  const demo = isDemoMode()
+
+  // Painel aberto em qualquer aparelho: mantém Visão Geral/Clientes em dia e
+  // avisa quando o cliente marca pelo site (booking público entra como 'pending';
+  // a agenda interna grava 'confirmed', então não gera aviso duplicado).
+  useAppointmentsLive(barbershop?.id, event => {
+    void refreshAppointments()
+    if (event.type === 'INSERT') {
+      void refreshClients()
+      if (event.row.status === 'pending') {
+        const [, m, d] = event.row.date.split('-')
+        toast({
+          title: 'Novo agendamento',
+          description: `${event.row.client_name} · ${d}/${m} às ${event.row.time.slice(0, 5)} · ${event.row.service_name}`,
+        })
+      }
+    }
+  })
 
   // Label do trial: dias quando > 24h, horas/minutos quando falta menos de 1 dia.
   // `urgent` deixa o banner vermelho na reta final (< 6h).
@@ -208,6 +229,22 @@ const DashboardLayout = () => {
             {sidebarOpen && <X className="w-4 h-4" />}
           </button>
         </div>
+
+        {/* Banner do modo demo: nada aqui sai deste navegador */}
+        {demo && (
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-2.5 border-b shrink-0 bg-sky-500/[0.08] border-sky-500/20">
+            <p className="text-sm font-body text-sky-200/90 min-w-0">
+              <span className="font-semibold">Modo demonstração.</span>{' '}
+              O que você mexer fica só neste navegador e some ao fechar — não aparece em outro celular.
+            </p>
+            <button
+              onClick={() => navigate('/registrar')}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold font-body bg-sky-400 text-[#0a0a0a] hover:bg-sky-300 transition-colors"
+            >
+              Criar conta de verdade
+            </button>
+          </div>
+        )}
 
         {/* Banner de trial */}
         {trial !== null && (

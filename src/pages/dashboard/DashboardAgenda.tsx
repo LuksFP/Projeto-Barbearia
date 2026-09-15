@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
 import { buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
+import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
@@ -157,6 +158,16 @@ const DashboardAgenda = () => {
       .catch(() => toast({ title: 'Erro ao carregar agendamentos', variant: 'destructive' }))
       .finally(() => setLoading(false))
   }, [barbershop?.id, selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Agendamento feito em outro aparelho (site público, outro barbeiro): rebusca o dia aberto
+  useAppointmentsLive(barbershop?.id, event => {
+    if (!barbershop) return
+    if (event.type !== 'RESYNC' && event.type !== 'DELETE' && event.row.date !== selectedDate) return
+    appointmentRepository
+      .listByBarbershop(barbershop.id, selectedDate)
+      .then(rows => setAppointments(rows.map(mapAppointment)))
+      .catch(() => { /* próximo evento/foco tenta de novo */ })
+  })
 
   const handleStatusChange = async (apt: BarbershopAppointment, nextStatus: string) => {
     if (isDemoMode()) {

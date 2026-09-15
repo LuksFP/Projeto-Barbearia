@@ -64,6 +64,7 @@ function demoApptToRow(a: BarbershopAppointment, client: BarbershopClient): Appo
     user_id: null,
     duration_min: a.durationMin ?? 30,
     notes: null,
+    reminded_at: a.remindedAt ?? null,
   }
 }
 

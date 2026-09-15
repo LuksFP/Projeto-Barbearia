@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       ai_rate_limit: {
@@ -54,6 +79,7 @@ export type Database = {
           payment_status: string | null
           price: number | null
           rating: number | null
+          reminded_at: string | null
           review: string | null
           service_category: string | null
           service_id: string | null
@@ -82,6 +108,7 @@ export type Database = {
           payment_status?: string | null
           price?: number | null
           rating?: number | null
+          reminded_at?: string | null
           review?: string | null
           service_category?: string | null
           service_id?: string | null
@@ -110,6 +137,7 @@ export type Database = {
           payment_status?: string | null
           price?: number | null
           rating?: number | null
+          reminded_at?: string | null
           review?: string | null
           service_category?: string | null
           service_id?: string | null
@@ -432,6 +460,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string
+          reactivation_contacted_at: string | null
           total_visits: number
         }
         Insert: {
@@ -444,6 +473,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone: string
+          reactivation_contacted_at?: string | null
           total_visits?: number
         }
         Update: {
@@ -456,6 +486,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string
+          reactivation_contacted_at?: string | null
           total_visits?: number
         }
         Relationships: [
@@ -1077,6 +1108,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

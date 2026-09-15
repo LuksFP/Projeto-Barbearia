@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { isDemoMode } from '@/lib/demo'
 import { Users, Crown, Clock, MessageCircle, Check, CheckCircle2, AlarmClock } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useTenant } from '@/contexts/TenantContext'
@@ -92,9 +93,18 @@ const DormantRow = ({ item, barbershop, contacted, onContact }: RowProps) => {
 }
 
 const DashboardReativar = () => {
-  const { barbershop, clients } = useTenant()
+  const { barbershop, clients, updateClient, refreshClients } = useTenant()
   const [threshold, setThreshold] = useState<number>(30)
-  const [contacted, setContacted] = useState<string[]>(() => barbershop ? loadContacted(barbershop.id) : [])
+  const demo = isDemoMode()
+  // Demo: marcação local. Real: coluna clients.reactivation_contacted_at (equipe toda vê).
+  const [demoContacted, setDemoContacted] = useState<string[]>(() => barbershop && demo ? loadContacted(barbershop.id) : [])
+  const contacted = useMemo(
+    () => demo ? demoContacted : clients.filter(c => c.reactivationContactedAt).map(c => c.id),
+    [demo, demoContacted, clients],
+  )
+
+  // Pega marcações feitas por outro aparelho
+  useEffect(() => { if (!demo) void refreshClients() }, [demo, refreshClients])
 
   const dormant = useMemo<DormantClient[]>(() => {
     const now = new Date()
@@ -106,7 +116,13 @@ const DashboardReativar = () => {
 
   const markContacted = (id: string) => {
     if (!barbershop) return
-    setContacted(toggleContacted(barbershop.id, id))
+    if (demo) {
+      setDemoContacted(toggleContacted(barbershop.id, id))
+      return
+    }
+    // "Chamar de novo" só renova a data — a marcação continua valendo
+    updateClient(id, { reactivationContactedAt: new Date().toISOString() })
+      .catch(() => toast({ title: 'Não deu pra salvar a marcação', variant: 'destructive' }))
   }
 
   if (!barbershop) return null

@@ -26,6 +26,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'agenda-ao-vivo-2026-09',
+    badge: 'Novidade no ar',
+    title: 'Agenda ao vivo em todos os celulares',
+    description:
+      'Quando o cliente marca pelo site da barbearia, o horário aparece na hora no painel de toda a equipe — sem recarregar a página.',
+    steps: [
+      'Deixe a Agenda aberta no celular',
+      'Quando entrar um agendamento pelo site, aparece o aviso “Novo agendamento”',
+      'O “lembrado” dos Lembretes e o “contatado” da Reativação agora valem pra equipe toda',
+    ],
+    ctaLabel: 'Abrir a Agenda',
+    ctaTo: '/dashboard/agenda',
+  },
+  {
     key: 'ai-financeiro-2026-06',
     badge: 'Novidade no ar',
     title: 'Inteligência Artificial chegou no BarberOS',

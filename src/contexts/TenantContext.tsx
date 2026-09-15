@@ -47,8 +47,10 @@ interface TenantContextType {
     email?: string
     membershipType?: BarbershopClient['membershipType']
     notes?: string
+    reactivationContactedAt?: string | null
   }) => Promise<void>
   refreshClients: () => Promise<void>
+  refreshAppointments: () => Promise<void>
   updateServices: (services: BarbershopService[]) => void
   updateBarbers: (barbers: BarbershopBarber[]) => void
   updateMemberships: (memberships: BarbershopMembership[]) => void
@@ -125,6 +127,7 @@ export function mapAppointment(row: AppointmentRow): BarbershopAppointment {
     status: row.status as BarbershopAppointment['status'],
     membershipType: row.membership_type as BarbershopAppointment['membershipType'],
     price: row.price ?? undefined,
+    remindedAt: row.reminded_at ?? undefined,
   }
 }
 
@@ -139,6 +142,7 @@ function mapClient(row: ClientRow): BarbershopClient {
     totalVisits: row.total_visits,
     lastVisit: row.last_visit ?? '',
     notes: row.notes ?? undefined,
+    reactivationContactedAt: row.reactivation_contacted_at ?? undefined,
   }
 }
 
@@ -265,6 +269,17 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     } catch { /* silencioso */ }
   }, [barbershop])
 
+  // Rebusca os agendamentos de hoje (Visão Geral) — chamado quando entra
+  // agendamento de outro aparelho.
+  const refreshAppointments = useCallback(async () => {
+    if (!barbershop || isDemoMode()) return
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const rows = await appointmentRepository.listByBarbershop(barbershop.id, today)
+      setAppointments(rows.map(mapAppointment))
+    } catch { /* silencioso */ }
+  }, [barbershop])
+
   const addClient = useCallback(async (input: {
     name: string
     phone: string
@@ -311,6 +326,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     email?: string
     membershipType?: BarbershopClient['membershipType']
     notes?: string
+    reactivationContactedAt?: string | null
   }) => {
     const byName = (a: BarbershopClient, b: BarbershopClient) => a.name.localeCompare(b.name, 'pt-BR')
 
@@ -333,6 +349,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     if (input.email !== undefined) payload.email = input.email.trim() || null
     if (input.membershipType !== undefined) payload.membership_type = input.membershipType
     if (input.notes !== undefined) payload.notes = input.notes.trim() || null
+    if (input.reactivationContactedAt !== undefined) payload.reactivation_contacted_at = input.reactivationContactedAt
 
     const row = await clientRepository.update(id, payload)
     const mapped = mapClient(row)
@@ -371,6 +388,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       addClient,
       updateClient,
       refreshClients,
+      refreshAppointments,
       updateServices,
       updateBarbers,
       updateMemberships,

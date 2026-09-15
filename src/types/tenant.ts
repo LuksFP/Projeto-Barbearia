@@ -88,6 +88,8 @@ export interface BarbershopAppointment {
   status: 'pending' | 'confirmed' | 'done' | 'cancelled'
   membershipType?: 'vip' | 'standard'
   price?: number
+  /** Quando alguém da equipe mandou o lembrete de WhatsApp (null = ainda não). */
+  remindedAt?: string
 }
 
 export interface BarbershopClient {
@@ -100,6 +102,8 @@ export interface BarbershopClient {
   totalVisits: number
   lastVisit: string
   notes?: string
+  /** Quando alguém da equipe chamou o cliente sumido de volta. */
+  reactivationContactedAt?: string
 }
 
 export interface BarbershopMembership {

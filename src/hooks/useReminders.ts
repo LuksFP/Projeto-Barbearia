@@ -1,10 +1,12 @@
 // Lembretes de agendamento: próximos horários (hoje + amanhã), confirmar/faltou,
-// e marcação de "já lembrei". Modo real busca do Supabase; demo gera dados.
+// e marcação de "já lembrei". Modo real busca do Supabase (e a marcação fica em
+// appointments.reminded_at, visível pra equipe toda); demo gera dados locais.
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { mapAppointment } from '@/contexts/TenantContext'
 import { isDemoMode } from '@/lib/demo'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
+import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import {
   ymd, dayOffset, generateDemoUpcoming, loadReminded, toggleReminded,
 } from '@/lib/reminders'
@@ -16,24 +18,36 @@ export function useReminders() {
   const demo = isDemoMode()
 
   const [appts, setAppts] = useState<BarbershopAppointment[]>([])
-  const [reminded, setReminded] = useState<string[]>([])
+  const [demoReminded, setDemoReminded] = useState<string[]>([])
   const [ready, setReady] = useState(false)
+
+  const load = useCallback(() => {
+    if (!bsId || demo) return Promise.resolve()
+    return appointmentRepository.listByBarbershop(bsId, ymd(new Date()))
+      .then(rows => setAppts(rows.map(mapAppointment)))
+      .catch(err => { console.error('Falha ao carregar agendamentos:', err); setAppts([]) })
+  }, [bsId, demo])
 
   useEffect(() => {
     if (!bsId) return
-    setReminded(loadReminded(bsId))
     setReady(false)
 
     if (demo) {
+      setDemoReminded(loadReminded(bsId))
       setAppts(generateDemoUpcoming(bsId, barbers, services))
       setReady(true)
       return
     }
-    appointmentRepository.listByBarbershop(bsId, ymd(new Date()))
-      .then(rows => setAppts(rows.map(mapAppointment)))
-      .catch(err => { console.error('Falha ao carregar agendamentos:', err); setAppts([]) })
-      .finally(() => setReady(true))
+    load().finally(() => setReady(true))
   }, [bsId, demo, barbers.length, services.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Agendamento novo ou "lembrado" marcado em outro aparelho
+  useAppointmentsLive(bsId, () => { void load() })
+
+  const reminded = useMemo(
+    () => demo ? demoReminded : appts.filter(a => a.remindedAt).map(a => a.id),
+    [demo, demoReminded, appts],
+  )
 
   // Próximos: hoje + amanhã, ainda em aberto (pending/confirmed)
   const upcoming = useMemo(() =>
@@ -63,10 +77,20 @@ export function useReminders() {
     }
   }, [demo])
 
-  const markReminded = useCallback((id: string) => {
+  // Mandou o lembrete (ou "Lembrar de novo"): marca/renova no banco
+  const markReminded = useCallback(async (id: string) => {
     if (!bsId) return
-    setReminded(toggleReminded(bsId, id))
-  }, [bsId])
+    if (demo) {
+      setDemoReminded(toggleReminded(bsId, id))
+      return
+    }
+    try {
+      const row = await appointmentRepository.setReminded(id, true)
+      setAppts(prev => prev.map(a => a.id === id ? mapAppointment(row) : a))
+    } catch (err) {
+      console.error('Falha ao marcar lembrete:', err)
+    }
+  }, [bsId, demo])
 
   return {
     ready,
