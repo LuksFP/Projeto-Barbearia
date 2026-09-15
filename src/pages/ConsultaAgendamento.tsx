@@ -56,11 +56,22 @@ const ConsultaAgendamento = () => {
     setError('')
     try {
       const { data, error: err } = await supabasePublic.rpc('search_appointments_by_contact', {
-        p_email: em || null,
-        p_phone: ph || null,
+        p_email: em || undefined,
+        p_phone: ph || undefined,
       })
       if (err) throw err
-      setAppointments((data ?? []) as AptDisplay[])
+      // A RPC devolve appointment_date/appointment_time; a tela usa date/time.
+      // Sem esse mapeamento, date chegava undefined e o format() quebrava a página.
+      setAppointments((data ?? []).map(r => ({
+        id: r.id,
+        service_name: r.service_name,
+        date: r.appointment_date,
+        time: r.appointment_time,
+        status: r.status,
+        barber_name: r.barber_name,
+        rating: r.rating,
+        review: r.review,
+      })))
       setSearched(true)
     } catch {
       setError('Erro ao buscar agendamentos. Tente novamente.')

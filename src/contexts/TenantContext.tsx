@@ -5,7 +5,7 @@ import type {
 } from '@/types/tenant'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { supabase } from '@/lib/supabase'
-import { barbershopRepository } from '@/repositories/barbershopRepository'
+import { barbershopRepository, mapBarbershopRow, type BarbershopUpdate } from '@/repositories/barbershopRepository'
 import { serviceRepository } from '@/repositories/serviceRepository'
 import { teamRepository } from '@/repositories/teamRepository'
 import { membershipRepository } from '@/repositories/membershipRepository'
@@ -64,34 +64,8 @@ const ROLE_HIERARCHY: Record<BarbershopRole, number> = {
 
 // ─── Mappers DB row → tenant types ───────────────────────────────────────────
 
-function mapBarbershop(row: BarbershopRow): Barbershop {
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    tagline: row.tagline,
-    description: row.description,
-    phone: row.phone,
-    whatsapp: row.whatsapp,
-    address: row.address,
-    city: row.city,
-    state: row.state,
-    instagram: row.instagram,
-    primaryColor: row.primary_color,
-    accentColor: row.accent_color,
-    logoText: row.logo_text,
-    coverImage: row.cover_image ?? undefined,
-    plan: 'pro' as Barbershop['plan'],
-    active: row.active,
-    siteType: row.site_type as Barbershop['siteType'],
-    customDomain: row.custom_domain ?? '',
-    embedKey: row.embed_key,
-    cancellationPolicy: row.cancellation_policy as Barbershop['cancellationPolicy'] ?? undefined,
-    clubPixKey: row.club_pix_key ?? '',
-    openTime: row.open_time ?? '08:00',
-    closeTime: row.close_time ?? '20:00',
-  }
-}
+// O plano real vem do SaasAccountContext; aqui a barbearia entra como 'pro'.
+const mapBarbershop = (row: BarbershopRow): Barbershop => mapBarbershopRow(row, 'pro')
 
 function mapService(row: ServiceRow): BarbershopService {
   return {
@@ -275,7 +249,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     if (updates.clubPixKey !== undefined) payload.club_pix_key = updates.clubPixKey
     if (updates.openTime !== undefined) payload.open_time = updates.openTime
     if (updates.closeTime !== undefined) payload.close_time = updates.closeTime
-    const row = await barbershopRepository.update(barbershop.id, payload as any)
+    const row = await barbershopRepository.update(barbershop.id, payload as BarbershopUpdate)
     setBarbershop(mapBarbershop(row))
   }, [barbershop])
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2 } from 'lucide-react'
 import { getDefaultCancellationPolicy, isDemoMode } from '@/lib/demo'
 import type { CancellationPolicy } from '@/types/tenant'
@@ -223,6 +224,8 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
 
 const DashboardConfiguracoes = () => {
   const { barbershop, userRole, updateBarbershop } = useTenant()
+  // barbershop.plan no painel é fixo 'pro'; o plano de verdade é o da conta SaaS.
+  const { account } = useSaasAccount()
   const [policy, setPolicy] = useState<CancellationPolicy>(() =>
     barbershop?.cancellationPolicy ?? getDefaultCancellationPolicy()
   )
@@ -292,7 +295,7 @@ const DashboardConfiguracoes = () => {
         <Field label="Nome"       value={barbershop.name} />
         <Field label="Slug / URL" value={`/b/${barbershop.slug}`} hint="imutável" />
         <Field label="Tagline"    value={barbershop.tagline} />
-        <Field label="Plano"      value={barbershop.plan.toUpperCase()} hint={barbershop.active ? 'Ativo' : 'Inativo'} />
+        <Field label="Plano"      value={(account?.plan ?? 'trial').toUpperCase()} hint={barbershop.active ? 'Ativo' : 'Inativo'} />
       </Section>
 
       <Section title="Contato e Localização" icon={MapPin}>

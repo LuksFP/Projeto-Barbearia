@@ -35,6 +35,8 @@ export const MOCK_BARBERSHOPS: Barbershop[] = [
     siteType: 'generic',
     customDomain: '',
     embedKey: 'bos_corvo_demo0000000000000000',
+    openTime: '09:00',
+    closeTime: '20:00',
   },
   {
     id: 'bs-002',
@@ -57,6 +59,8 @@ export const MOCK_BARBERSHOPS: Barbershop[] = [
     siteType: 'external',
     customDomain: 'atlasbarber.com.br',
     embedKey: 'bos_atlas_demo0000000000000000',
+    openTime: '10:00',
+    closeTime: '21:00',
   },
 ]
 

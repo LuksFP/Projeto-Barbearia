@@ -6,8 +6,9 @@ import { Outlet, Link, useParams } from 'react-router-dom'
 import { Menu, X, Scissors, Phone } from 'lucide-react'
 import { supabasePublic } from '@/lib/supabase-public'
 import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
-import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership, CancellationPolicy } from '@/types/tenant'
+import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership } from '@/types/tenant'
 import type { Tables } from '@/types/database'
+import { mapBarbershopRow } from '@/repositories/barbershopRepository'
 import { motion, AnimatePresence } from 'framer-motion'
 
 type BarbershopRow = Tables<'barbershops'>
@@ -15,20 +16,8 @@ type ServiceRow = Tables<'services'>
 type MemberRow = Tables<'barbershop_members'>
 type MembershipRow = Tables<'memberships'>
 
-function mapBarbershop(row: BarbershopRow): Barbershop {
-  return {
-    id: row.id, slug: row.slug, name: row.name, tagline: row.tagline,
-    description: row.description, phone: row.phone, whatsapp: row.whatsapp,
-    address: row.address, city: row.city, state: row.state, instagram: row.instagram,
-    primaryColor: row.primary_color, accentColor: row.accent_color, logoText: row.logo_text,
-    coverImage: row.cover_image ?? undefined, plan: null,
-    active: row.active, siteType: row.site_type as Barbershop['siteType'],
-    customDomain: row.custom_domain ?? '', embedKey: row.embed_key,
-    cancellationPolicy: row.cancellation_policy as CancellationPolicy | null ?? null,
-    openTime: row.open_time ?? '08:00',
-    closeTime: row.close_time ?? '20:00',
-  }
-}
+// Site público não conhece o plano da barbearia (não lê saas_accounts).
+const mapBarbershop = (row: BarbershopRow): Barbershop => mapBarbershopRow(row, null)
 
 export interface PublicReview {
   rating: number

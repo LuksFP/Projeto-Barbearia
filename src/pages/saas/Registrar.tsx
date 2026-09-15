@@ -10,6 +10,7 @@ import { motion } from 'framer-motion'
 
 const Registrar = () => {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const plano = (searchParams.get('plano') ?? 'pro') as SaasPlan
   const planConfig = SAAS_PLANS.find(p => p.id === plano) ?? SAAS_PLANS[1]
 

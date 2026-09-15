@@ -92,7 +92,7 @@ const DashboardPersonalizar = () => {
   const supportsExternalSite = draft.plan === 'premium'
 
   const handleField = (name: keyof Barbershop, val: string) => {
-    setDraft(prev => ({ ...prev, [name]: val }))
+    setDraft(prev => (prev ? { ...prev, [name]: val } : prev))
   }
 
   const handleSave = async () => {
@@ -483,7 +483,7 @@ const team = await BarberOS.getTeam()`
               <div className="grid grid-cols-2 gap-3">
                 {/* Opção: Genérico */}
                 <button
-                  onClick={() => setDraft(p => ({ ...p, siteType: 'generic' }))}
+                  onClick={() => setDraft(p => (p ? { ...p, siteType: 'generic' } : p))}
                   className={`p-4 rounded-xl border text-left transition-all ${
                     draft.siteType !== 'external'
                       ? 'border-amber-500/35 bg-amber-500/[0.06]'
@@ -507,7 +507,7 @@ const team = await BarberOS.getTeam()`
 
                 {/* Opção: Externo */}
                 <button
-                  onClick={() => setDraft(p => ({ ...p, siteType: 'external' }))}
+                  onClick={() => setDraft(p => (p ? { ...p, siteType: 'external' } : p))}
                   disabled={!supportsExternalSite}
                   className={`p-4 rounded-xl border text-left transition-all ${
                     draft.siteType === 'external'

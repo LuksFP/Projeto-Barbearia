@@ -18,7 +18,7 @@ export interface Barbershop {
   accentColor: string
   logoText: string          // fallback quando não há logo
   coverImage?: string
-  plan: 'basic' | 'pro' | 'premium'
+  plan: 'basic' | 'pro' | 'premium' | null   // null no site público (não lê saas_accounts)
   active: boolean
   // Site
   siteType: 'generic' | 'external'
@@ -26,8 +26,10 @@ export interface Barbershop {
   embedKey?: string
   cancellationPolicy?: CancellationPolicy | null
   clubPixKey?: string       // chave PIX usada nas cobranças do Clube VIP
-  openTime?: string         // horário de abertura 'HH:MM'
-  closeTime?: string        // horário de fechamento 'HH:MM'
+  // Obrigatórios de propósito: se ficarem opcionais, um mapper pode esquecer
+  // deles em silêncio e a barbearia volta a abrir 08:00 pra quem agenda.
+  openTime: string          // horário de abertura 'HH:MM'
+  closeTime: string         // horário de fechamento 'HH:MM'
 }
 
 export interface BarbershopMember {
@@ -60,7 +62,7 @@ export interface BarbershopService {
 export interface BarbershopBarber {
   id: string
   barbershopId: string
-  userId: string
+  userId: string | null     // null = barbeiro cadastrado direto, sem conta de login
   name: string
   bio: string
   specialty: string

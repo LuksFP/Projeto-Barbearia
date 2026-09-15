@@ -103,13 +103,13 @@ const revealUp = {
 const liftCard = {
   y: -8,
   scale: 1.012,
-  transition: { duration: 0.22, ease: 'easeOut' },
+  transition: { duration: 0.22, ease: 'easeOut' as const },
 }
 
 const iconFloat = {
   y: -3,
   scale: 1.06,
-  transition: { duration: 0.22, ease: 'easeOut' },
+  transition: { duration: 0.22, ease: 'easeOut' as const },
 }
 
 const ParallaxCard = ({

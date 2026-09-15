@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_rate_limit: {
+        Row: {
+          count: number
+          fn: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          fn: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          fn?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           barber_id: string | null
@@ -28,18 +49,18 @@ export type Database = {
           id: string
           membership_type: string | null
           notes: string | null
-          price: number | null
+          paid_at: string | null
           payment_method: string | null
           payment_status: string | null
+          price: number | null
           rating: number | null
           review: string | null
-          paid_at: string | null
           service_category: string | null
           service_id: string | null
           service_name: string
+          status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
-          status: string
           time: string
           user_id: string | null
         }
@@ -56,18 +77,18 @@ export type Database = {
           id?: string
           membership_type?: string | null
           notes?: string | null
-          price?: number | null
+          paid_at?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          price?: number | null
           rating?: number | null
           review?: string | null
-          paid_at?: string | null
           service_category?: string | null
           service_id?: string | null
           service_name: string
+          status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
-          status?: string
           time: string
           user_id?: string | null
         }
@@ -84,18 +105,18 @@ export type Database = {
           id?: string
           membership_type?: string | null
           notes?: string | null
-          price?: number | null
+          paid_at?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          price?: number | null
           rating?: number | null
           review?: string | null
-          paid_at?: string | null
           service_category?: string | null
           service_id?: string | null
           service_name?: string
+          status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
-          status?: string
           time?: string
           user_id?: string | null
         }
@@ -122,6 +143,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      auth_audit_log: {
+        Row: {
+          created_at: string
+          email: string
+          event: string
+          id: string
+          ip: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event: string
+          id?: string
+          ip?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event?: string
+          id?: string
+          ip?: string | null
+        }
+        Relationships: []
       }
       barbershop_invites: {
         Row: {
@@ -233,9 +278,8 @@ export type Database = {
           address: string
           cancellation_policy: Json | null
           city: string
-          club_pix_key: string
-          open_time: string
           close_time: string
+          club_pix_key: string
           cover_image: string | null
           created_at: string
           custom_domain: string | null
@@ -245,6 +289,7 @@ export type Database = {
           instagram: string
           logo_text: string
           name: string
+          open_time: string
           phone: string
           primary_color: string
           saas_account_id: string
@@ -260,9 +305,8 @@ export type Database = {
           address?: string
           cancellation_policy?: Json | null
           city?: string
-          club_pix_key?: string
-          open_time?: string
           close_time?: string
+          club_pix_key?: string
           cover_image?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -272,6 +316,7 @@ export type Database = {
           instagram?: string
           logo_text?: string
           name: string
+          open_time?: string
           phone?: string
           primary_color?: string
           saas_account_id: string
@@ -287,9 +332,8 @@ export type Database = {
           address?: string
           cancellation_policy?: Json | null
           city?: string
-          club_pix_key?: string
-          open_time?: string
           close_time?: string
+          club_pix_key?: string
           cover_image?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -299,6 +343,7 @@ export type Database = {
           instagram?: string
           logo_text?: string
           name?: string
+          open_time?: string
           phone?: string
           primary_color?: string
           saas_account_id?: string
@@ -477,6 +522,99 @@ export type Database = {
           },
         ]
       }
+      frete_log_registros: {
+        Row: {
+          caminhao_desc: string | null
+          caminhao_placa: string | null
+          container1: string | null
+          container2: string | null
+          created_at: string | null
+          data: string | null
+          destino: string | null
+          id: string
+          janela_fim: string | null
+          janela_ini: string | null
+          motorista: string | null
+          observacoes: string | null
+          origem: string | null
+          terminal: string | null
+          terminal_ativo: boolean | null
+          tipo_calculo: string | null
+          tipo_trabalho: string | null
+          titulo: string
+          updated_at: string | null
+          user_id: string
+          valor_bruto: number | null
+        }
+        Insert: {
+          caminhao_desc?: string | null
+          caminhao_placa?: string | null
+          container1?: string | null
+          container2?: string | null
+          created_at?: string | null
+          data?: string | null
+          destino?: string | null
+          id?: string
+          janela_fim?: string | null
+          janela_ini?: string | null
+          motorista?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          terminal?: string | null
+          terminal_ativo?: boolean | null
+          tipo_calculo?: string | null
+          tipo_trabalho?: string | null
+          titulo?: string
+          updated_at?: string | null
+          user_id: string
+          valor_bruto?: number | null
+        }
+        Update: {
+          caminhao_desc?: string | null
+          caminhao_placa?: string | null
+          container1?: string | null
+          container2?: string | null
+          created_at?: string | null
+          data?: string | null
+          destino?: string | null
+          id?: string
+          janela_fim?: string | null
+          janela_ini?: string | null
+          motorista?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          terminal?: string | null
+          terminal_ativo?: boolean | null
+          tipo_calculo?: string | null
+          tipo_trabalho?: string | null
+          titulo?: string
+          updated_at?: string | null
+          user_id?: string
+          valor_bruto?: number | null
+        }
+        Relationships: []
+      }
+      frete_log_terminais: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       memberships: {
         Row: {
           active: boolean
@@ -524,6 +662,24 @@ export type Database = {
           },
         ]
       }
+      processed_stripe_events: {
+        Row: {
+          event_id: string
+          processed_at: string
+          type: string | null
+        }
+        Insert: {
+          event_id: string
+          processed_at?: string
+          type?: string | null
+        }
+        Update: {
+          event_id?: string
+          processed_at?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
       saas_accounts: {
         Row: {
           barbershop_id: string | null
@@ -532,6 +688,7 @@ export type Database = {
           cancel_at: string | null
           created_at: string
           id: string
+          last_login_at: string | null
           owner_name: string
           plan: string | null
           plan_started_at: string | null
@@ -540,6 +697,7 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           trial_ends_at: string | null
+          trial_reminder_sent_at: string | null
           user_id: string
         }
         Insert: {
@@ -549,6 +707,7 @@ export type Database = {
           cancel_at?: string | null
           created_at?: string
           id?: string
+          last_login_at?: string | null
           owner_name: string
           plan?: string | null
           plan_started_at?: string | null
@@ -557,6 +716,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
+          trial_reminder_sent_at?: string | null
           user_id: string
         }
         Update: {
@@ -566,6 +726,7 @@ export type Database = {
           cancel_at?: string | null
           created_at?: string
           id?: string
+          last_login_at?: string | null
           owner_name?: string
           plan?: string | null
           plan_started_at?: string | null
@@ -574,9 +735,18 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
+          trial_reminder_sent_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "saas_accounts_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {
@@ -627,11 +797,94 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      my_barbershop_ids: { Args: never; Returns: string[] }
+      ai_gate: { Args: { p_fn: string; p_limit: number }; Returns: string }
+      appointment_time_range: {
+        Args: { p_date: string; p_dur: number; p_time: string }
+        Returns: unknown
+      }
+      assert_barbershop_owner: {
+        Args: { p_barbershop_id: string }
+        Returns: undefined
+      }
+      create_saas_account: {
+        Args: {
+          p_barb_name: string
+          p_barb_slug: string
+          p_embed_key: string
+          p_owner_name: string
+          p_user_id: string
+        }
+        Returns: {
+          barbershop_id: string | null
+          barbershop_name: string
+          barbershop_slug: string
+          cancel_at: string | null
+          created_at: string
+          id: string
+          last_login_at: string | null
+          owner_name: string
+          plan: string | null
+          plan_started_at: string | null
+          plan_status: string | null
+          seen_announcements: string[]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          trial_reminder_sent_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "saas_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       mark_announcement_seen: { Args: { p_key: string }; Returns: undefined }
+      my_barbershop_ids: { Args: never; Returns: string[] }
       public_barber_busy_slots: {
-        Args: { p_barbershop_id: string; p_barber_id: string; p_date: string }
-        Returns: { slot_time: string; slot_duration: number }[]
+        Args: { p_barber_id: string; p_barbershop_id: string; p_date: string }
+        Returns: {
+          slot_duration: number
+          slot_time: string
+        }[]
+      }
+      public_barbershop_reviews: {
+        Args: { p_barbershop_id: string }
+        Returns: {
+          client_label: string
+          rating: number
+          review: string
+          review_date: string
+        }[]
+      }
+      search_appointments_by_contact: {
+        Args: { p_email?: string; p_phone?: string }
+        Returns: {
+          appointment_date: string
+          appointment_time: string
+          barber_name: string
+          id: string
+          payment_status: string
+          rating: number
+          review: string
+          service_name: string
+          status: string
+        }[]
+      }
+      submit_public_appointment_review: {
+        Args: {
+          p_appointment_id: string
+          p_email?: string
+          p_phone?: string
+          p_rating: number
+          p_review?: string
+        }
+        Returns: {
+          id: string
+          rating: number
+          review: string
+        }[]
       }
     }
     Enums: {
@@ -644,18 +897,19 @@ export type Database = {
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -679,11 +933,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -704,11 +958,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -724,3 +978,43 @@ export type TablesUpdate<
       ? U
       : never
     : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

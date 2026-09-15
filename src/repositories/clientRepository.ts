@@ -39,16 +39,14 @@ export const clientRepository = {
   },
 
   async incrementVisit(id: string): Promise<void> {
-    const { error } = await supabase.rpc('increment_client_visits' as never, { client_id: id })
-    if (error) {
-      // fallback manual se a RPC não existir ainda
-      const { data: client } = await supabase.from('clients').select('total_visits').eq('id', id).single()
-      if (client) {
-        await supabase
-          .from('clients')
-          .update({ total_visits: client.total_visits + 1, last_visit: new Date().toISOString().split('T')[0] })
-          .eq('id', id)
-      }
+    // A RPC increment_client_visits nunca existiu no banco: a chamada falhava
+    // sempre e caía aqui. Vai direto.
+    const { data: client } = await supabase.from('clients').select('total_visits').eq('id', id).single()
+    if (client) {
+      await supabase
+        .from('clients')
+        .update({ total_visits: client.total_visits + 1, last_visit: new Date().toISOString().split('T')[0] })
+        .eq('id', id)
     }
   },
 }

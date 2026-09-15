@@ -62,6 +62,8 @@ function demoApptToRow(a: BarbershopAppointment, client: BarbershopClient): Appo
     stripe_checkout_session_id: null,
     stripe_payment_intent_id: null,
     user_id: null,
+    duration_min: a.durationMin ?? 30,
+    notes: null,
   }
 }
 

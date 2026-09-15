@@ -8,7 +8,7 @@ interface ImageWithSkeletonProps {
   alt: string;
   className?: string;
   skeletonClassName?: string;
-  aspectRatio?: 'square' | 'video' | '4/3' | 'auto';
+  aspectRatio?: 'square' | 'video' | '4/3' | '4/5' | 'auto';
 }
 
 const ImageWithSkeleton = ({
@@ -27,6 +27,7 @@ const ImageWithSkeleton = ({
     square: 'aspect-square',
     video: 'aspect-video',
     '4/3': 'aspect-[4/3]',
+    '4/5': 'aspect-[4/5]',
     auto: '',
   };
 
