@@ -118,9 +118,11 @@ const App = () => (
                     <TenantProvider>
                       <Suspense fallback={<PageFallback />}>
                       <Routes>
-                        {/* ── Landing do SaaS ── Header + Footer do projeto */}
+                        {/* ── Landing do SaaS ── menu e rodapé próprios (src/components/landing) */}
+                        <Route path="/" element={<Index />} />
+
+                        {/* ── Páginas com o Header + Footer do projeto */}
                         <Route element={<LandingLayout />}>
-                          <Route path="/" element={<Index />} />
                           <Route path="/sobre" element={<Sobre />} />
                           <Route path="/cortes" element={<Cortes />} />
                           <Route path="/tipos-cabelo" element={<TiposCabelo />} />

@@ -1,0 +1,215 @@
+/* Landing do BarberOS — prints do produto e abertura. Variáveis e base em landing.css. */
+
+/* ── Telas (prints do produto) ─────────────────────────────────── */
+
+.lp-tela {
+  margin: 0;
+}
+
+.lp-tela img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(200, 163, 90, 0.22);
+  border-radius: 10px;
+  background: #0b0b0b;
+  box-shadow:
+    0 50px 110px -45px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.lp-tela--celular img {
+  border: 5px solid #1c1813;
+  border-radius: 26px;
+  outline: 1px solid rgba(200, 163, 90, 0.28);
+}
+
+/* No celular o print inteiro do painel fica ilegível: corta a barra lateral e aproxima o conteúdo. */
+@media (max-width: 1023px) {
+  .lp-tela:not(.lp-tela--celular) > div {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 1px solid rgba(200, 163, 90, 0.22);
+    border-radius: 10px;
+    background: #0b0b0b;
+  }
+
+  .lp-tela:not(.lp-tela--celular) img {
+    width: 185%;
+    max-width: none;
+    margin-left: -36%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* ── Abertura ──────────────────────────────────────────────────── */
+
+.lp-hero {
+  position: relative;
+  padding: clamp(7rem, 12vw, 9.5rem) var(--gut) 0;
+}
+
+.lp-hero__marco {
+  position: absolute;
+  top: 42vh;
+  left: 0;
+}
+
+.lp-hero__abre {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--osso-2);
+}
+
+.lp-hero__abre span {
+  margin-right: 0.7em;
+  color: var(--latao);
+}
+
+.lp-hero__titulo {
+  margin-top: 1.4rem;
+  font-family: 'Fraunces', 'Cormorant Garamond', serif;
+  font-size: clamp(2.6rem, 6.7vw, 6.9rem);
+  font-weight: 560;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+.lp-hero__linha {
+  display: block;
+  overflow: hidden;
+  padding: 0.06em 0.12em 0.14em 0;
+}
+
+.lp-hero__linha > span {
+  display: block;
+}
+
+.lp-hero__corpo {
+  display: grid;
+  gap: 3rem;
+  margin-top: clamp(2rem, 4vw, 3.2rem);
+}
+
+.lp-hero__texto .lp-miudo {
+  max-width: 21rem;
+}
+
+.lp-hero__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.3rem 1.9rem;
+  margin: 2.1rem 0 1.5rem;
+}
+
+.lp-hero__palco {
+  position: relative;
+  margin-right: calc(var(--gut) * -1);
+  padding-bottom: 9%;
+}
+
+.lp-hero__painel {
+  width: 112%;
+}
+
+.lp-hero__celular {
+  position: absolute;
+  left: 3%;
+  bottom: 0;
+  width: 34%;
+}
+
+@media (min-width: 1024px) {
+  .lp-hero__corpo {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: 2.5rem;
+  }
+
+  .lp-hero__texto {
+    padding-top: 1.2rem;
+  }
+
+  .lp-hero__palco {
+    margin-top: -1.5rem;
+  }
+
+  .lp-hero__painel {
+    width: 108%;
+  }
+
+  .lp-hero__celular {
+    left: -5%;
+    width: 23%;
+  }
+}
+
+/* régua do dia: o índice da página */
+.lp-regua {
+  margin-top: clamp(2.5rem, 4vw, 3.5rem);
+  border-top: 1px solid var(--fio);
+}
+
+.lp-regua__titulo {
+  padding: 0.9rem 0 0.4rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--osso-2);
+}
+
+.lp-regua ol {
+  display: flex;
+  margin-right: calc(var(--gut) * -1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.lp-regua ol::-webkit-scrollbar {
+  display: none;
+}
+
+.lp-regua li {
+  flex: 1 0 9.4rem;
+  border-left: 1px solid var(--fio);
+}
+
+.lp-regua a {
+  display: block;
+  padding: 0.75rem 0.9rem 1.1rem;
+  transition: background-color 0.4s ease;
+}
+
+.lp-regua__hora {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 1.05rem;
+  color: var(--latao);
+  transition: transform 0.4s var(--saida);
+}
+
+.lp-regua__nome {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.93rem;
+  line-height: 1.35;
+  color: var(--osso-2);
+  transition: color 0.3s ease;
+}
+
+.lp-regua a:hover {
+  background: rgba(200, 163, 90, 0.07);
+}
+
+.lp-regua a:hover .lp-regua__hora {
+  transform: translateX(6px);
+}
+
+.lp-regua a:hover .lp-regua__nome {
+  color: var(--osso);
+}

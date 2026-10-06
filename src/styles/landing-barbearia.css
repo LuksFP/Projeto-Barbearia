@@ -1,0 +1,219 @@
+/* Landing do BarberOS — os sinais de barbearia: toldo, piso xadrez, selo de vitrine,
+   azulejo e ferramentas. Variáveis em landing.css. */
+
+.lp-icone {
+  width: 1.6rem;
+  height: 1.6rem;
+  flex-shrink: 0;
+}
+
+/* ── Azulejo de metrô na parede (bem de leve, atrás de tudo) ───── */
+
+.lp-azulejo {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='88'%3E%3Cpath d='M0 .5h132M0 44.5h132M.5 0v44M66.5 44v44' stroke='%23ece3d2' stroke-opacity='.07' fill='none'/%3E%3C/svg%3E");
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 78%);
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 78%);
+}
+
+/* ── Filete com ferramenta ─────────────────────────────────────── */
+
+.lp-filete {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: currentColor;
+}
+
+.lp-filete i {
+  flex: 1;
+  height: 5px;
+  border-block: 1px solid currentColor;
+  opacity: 0.55;
+}
+
+.lp-carimbo .lp-icone {
+  align-self: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--latao);
+  opacity: 0.85;
+}
+
+/* ── Selo de vitrine ───────────────────────────────────────────── */
+
+.lp-selo-vitrine {
+  position: absolute;
+  z-index: 3;
+  top: -2.6rem;
+  right: 6%;
+  display: grid;
+  place-items: center;
+  width: clamp(6.2rem, 11vw, 9.6rem);
+  aspect-ratio: 1;
+  color: var(--latao);
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.7));
+  transform: rotate(-8deg);
+  transition: transform 0.6s var(--mola);
+}
+
+.lp-hero__palco:hover .lp-selo-vitrine {
+  transform: rotate(4deg) scale(1.05);
+}
+
+.lp-selo-vitrine svg:first-child {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+
+.lp-selo-vitrine > .lp-icone {
+  grid-area: 1 / 1;
+  width: 34%;
+  height: 34%;
+}
+
+.lp-selo-vitrine__fundo {
+  fill: var(--tinta);
+  stroke: var(--latao);
+  stroke-width: 1.5;
+}
+
+.lp-selo-vitrine__aro {
+  fill: none;
+  stroke: var(--latao);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.lp-selo-vitrine__gira {
+  transform-origin: 100px 100px;
+  animation: lp-gira 26s linear infinite;
+}
+
+.lp-selo-vitrine text {
+  fill: var(--latao);
+  font-family: 'DM Mono', monospace;
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+@keyframes lp-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Toldo ─────────────────────────────────────────────────────── */
+
+.lp-toldo {
+  position: relative;
+  z-index: 2;
+  max-width: 84rem;
+  margin: 0 auto -1.5rem;
+  filter: drop-shadow(0 22px 22px rgba(0, 0, 0, 0.6));
+}
+
+.lp-toldo > div {
+  --faixa: 38px;
+  --barra: 19px;
+  height: 4.4rem;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.38), transparent 30%, rgba(0, 0, 0, 0.16) 100%),
+    repeating-linear-gradient(90deg, var(--vinho) 0 var(--faixa), #f0e8d7 var(--faixa) calc(var(--faixa) * 2));
+  -webkit-mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--barra)) no-repeat,
+    radial-gradient(circle at 50% 0, #000 calc(var(--barra) - 0.5px), transparent var(--barra)) bottom left / var(--faixa) var(--barra) repeat-x;
+  mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--barra)) no-repeat,
+    radial-gradient(circle at 50% 0, #000 calc(var(--barra) - 0.5px), transparent var(--barra)) bottom left / var(--faixa) var(--barra) repeat-x;
+  transform-origin: top center;
+  animation: lp-brisa 7s ease-in-out infinite;
+}
+
+@keyframes lp-brisa {
+  50% {
+    transform: skewX(-0.7deg) scaleY(1.03);
+  }
+}
+
+/* ── Tabela: cantoneiras e ferramentas ─────────────────────────── */
+
+.lp-folha__filete {
+  margin: 0.2rem 0 1.4rem;
+  color: var(--tinta-2);
+}
+
+.lp-folha__filete .lp-icone {
+  width: 2rem;
+  height: 2rem;
+  color: var(--vinho);
+}
+
+.lp-plano__nome {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lp-plano__nome .lp-icone {
+  width: 1.75rem;
+  height: 1.75rem;
+  opacity: 0.8;
+  transition: transform 0.5s var(--mola);
+}
+
+.lp-plano:hover .lp-plano__nome .lp-icone {
+  transform: rotate(-14deg) scale(1.12);
+}
+
+/* cantoneiras da moldura */
+.lp-folha::after {
+  content: '';
+  position: absolute;
+  inset: clamp(0.5rem, 1.1vw, 0.95rem);
+  background:
+    radial-gradient(circle at 0 0, transparent 13px, rgba(23, 19, 14, 0.6) 13.5px 15px, transparent 15.5px) top left,
+    radial-gradient(circle at 100% 0, transparent 13px, rgba(23, 19, 14, 0.6) 13.5px 15px, transparent 15.5px) top right,
+    radial-gradient(circle at 0 100%, transparent 13px, rgba(23, 19, 14, 0.6) 13.5px 15px, transparent 15.5px) bottom left,
+    radial-gradient(circle at 100% 100%, transparent 13px, rgba(23, 19, 14, 0.6) 13.5px 15px, transparent 15.5px) bottom right;
+  background-size: 22px 22px;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* ── Piso xadrez ───────────────────────────────────────────────── */
+
+.lp-piso {
+  height: clamp(9rem, 24vw, 19rem);
+  margin: clamp(3.5rem, 7vw, 6rem) calc(var(--gut) * -1) 0 calc((var(--gut) + var(--trilho)) * -1);
+  overflow: hidden;
+  perspective: 560px;
+  perspective-origin: 50% 0%;
+  -webkit-mask-image: linear-gradient(180deg, transparent 4%, #000 62%);
+  mask-image: linear-gradient(180deg, transparent 4%, #000 62%);
+}
+
+.lp-piso > div {
+  width: 220%;
+  height: 260%;
+  margin-left: -60%;
+  background: repeating-conic-gradient(#d8cdb8 0 25%, #14110d 0 50%) 0 0 / clamp(84px, 9vw, 132px) clamp(84px, 9vw, 132px);
+  transform: rotateX(64deg);
+  transform-origin: 50% 0%;
+}
+
+.lp-fim {
+  padding-bottom: 0;
+}
+
+.lp-rodape {
+  margin-top: 0;
+  background: #14110d;
+}
+
+.lp-rodape__linha {
+  border-top: 0;
+}

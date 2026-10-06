@@ -1,0 +1,314 @@
+/* Landing do BarberOS — conversa do lembrete, régua de comissão e escolha de plano.
+   Variáveis em landing.css. */
+
+/* ── Lembrete + conversa ───────────────────────────────────────── */
+
+.lp-lembrar {
+  display: grid;
+  gap: 1.2rem;
+}
+
+@media (min-width: 1024px) {
+  .lp-lembrar {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+}
+
+.lp-zap {
+  display: flex;
+  flex-direction: column;
+  min-height: 18rem;
+  overflow: hidden;
+  border: 1px solid rgba(120, 175, 135, 0.3);
+  border-radius: 14px;
+  background: #0f1512;
+}
+
+.lp-zap header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.92rem;
+}
+
+.lp-zap__avatar {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: #2c4a3a;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.lp-zap__conversa {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 0.9rem;
+}
+
+.lp-zap__vazio {
+  max-width: 25ch;
+  margin: auto;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--osso-2);
+}
+
+.lp-zap__vazio b {
+  color: var(--osso);
+}
+
+.lp-zap__balao {
+  max-width: 88%;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.lp-zap__balao--ida {
+  align-self: flex-end;
+  border-bottom-right-radius: 3px;
+  background: #1f5c45;
+  color: #eef7f1;
+}
+
+.lp-zap__balao--volta {
+  align-self: flex-start;
+  border-bottom-left-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lp-zap__digitando {
+  display: flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lp-zap__digitando i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--osso-2);
+  animation: lp-pulso 0.9s ease-in-out infinite;
+}
+
+.lp-zap__digitando i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.lp-zap__digitando i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ── Régua de comissão ─────────────────────────────────────────── */
+
+.lp-comissao {
+  max-width: 30rem;
+  margin-top: 2.2rem;
+  padding: 1.2rem 1.25rem 1.1rem;
+  border: 1px solid rgba(200, 163, 90, 0.3);
+  border-radius: 14px;
+  background: rgba(18, 17, 15, 0.75);
+}
+
+.lp-comissao label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: 'Fraunces', serif;
+  font-size: 1.22rem;
+  font-weight: 560;
+}
+
+.lp-comissao label span {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--osso-2);
+}
+
+.lp-comissao__regua {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.9rem;
+}
+
+.lp-comissao input {
+  flex: 1;
+  height: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--latao) var(--posicao), rgba(236, 227, 210, 0.2) var(--posicao));
+  cursor: grab;
+}
+
+.lp-comissao input::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  -webkit-appearance: none;
+  border: 4px solid var(--tinta);
+  border-radius: 50%;
+  background: var(--latao);
+  box-shadow: 0 0 0 1px var(--latao);
+  transition: transform 0.2s var(--mola);
+}
+
+.lp-comissao input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 4px solid var(--tinta);
+  border-radius: 50%;
+  background: var(--latao);
+  box-shadow: 0 0 0 1px var(--latao);
+}
+
+.lp-comissao input:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.lp-comissao output {
+  min-width: 3.3ch;
+  font-family: 'DM Mono', monospace;
+  font-size: 1.5rem;
+  text-align: right;
+  color: var(--latao);
+}
+
+.lp-comissao__barra {
+  height: 10px;
+  margin-top: 1rem;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(236, 227, 210, 0.18);
+}
+
+.lp-comissao__barra i {
+  display: block;
+  width: var(--parte);
+  height: 100%;
+  background-image: var(--listras);
+  background-size: 50.91px 50.91px;
+  transition: width 0.35s var(--saida);
+}
+
+.lp-comissao dl {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.8rem;
+}
+
+.lp-comissao dl div:last-child {
+  text-align: right;
+}
+
+.lp-comissao dt {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--osso-2);
+}
+
+.lp-comissao dd {
+  font-family: 'Fraunces', serif;
+  font-size: 1.65rem;
+  font-weight: 560;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-comissao > p {
+  margin-top: 0.7rem;
+  font-size: 0.82rem;
+  color: var(--osso-2);
+}
+
+/* ── Escolha de plano (na folha de papel) ──────────────────────── */
+
+@media (min-width: 900px) {
+  .lp-folha__topo {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+    align-items: end;
+  }
+}
+
+.lp-escolha__titulo {
+  font-family: 'Fraunces', serif;
+  font-size: 1.3rem;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--vinho);
+}
+
+.lp-escolha fieldset {
+  margin-top: 0.9rem;
+}
+
+.lp-escolha legend {
+  margin-bottom: 0.45rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(23, 19, 14, 0.72);
+}
+
+.lp-escolha button {
+  margin: 0.2rem 0.35rem 0.2rem 0;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(23, 19, 14, 0.55);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s var(--mola);
+}
+
+.lp-escolha button:hover {
+  background: rgba(23, 19, 14, 0.09);
+  transform: translateY(-2px);
+}
+
+.lp-escolha button[aria-pressed='true'] {
+  background: var(--tinta-2);
+  color: var(--papel);
+}
+
+.lp .lp-folha :focus-visible {
+  outline-color: var(--vinho);
+}
+
+.lp-plano {
+  transition: opacity 0.45s ease;
+}
+
+.lp-plano[data-apagado='true'] {
+  opacity: 0.42;
+}
+
+.lp-plano[data-apagado='true']:hover,
+.lp-plano[data-apagado='true']:focus-within {
+  opacity: 1;
+}
+
+.lp-plano[data-escolhido='true'] .lp-plano__nome {
+  color: var(--vinho);
+}

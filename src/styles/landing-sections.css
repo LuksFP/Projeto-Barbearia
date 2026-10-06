@@ -1,0 +1,256 @@
+/* Landing do BarberOS — os capítulos do dia. Variáveis e base em landing.css. */
+
+/* ── Capítulos ─────────────────────────────────────────────────── */
+
+.lp-cap {
+  padding: clamp(6rem, 13vw, 11.5rem) var(--gut) 0;
+  scroll-margin-top: 1rem;
+}
+
+.lp-carimbo {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.8rem, 2vw, 1.5rem);
+  margin-bottom: clamp(2.4rem, 5vw, 4.5rem);
+}
+
+.lp-carimbo__hora {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--latao);
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-carimbo__fio {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(200, 163, 90, 0.7), rgba(200, 163, 90, 0));
+  transform-origin: left;
+}
+
+.lp-carimbo__rotulo {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--osso-2);
+  white-space: nowrap;
+}
+
+.lp-cap__grade {
+  display: grid;
+  gap: 3.2rem;
+  align-items: center;
+}
+
+.lp-cap__grade > .lp-cap__texto {
+  order: -1;
+}
+
+@media (min-width: 1024px) {
+  .lp-cap__grade {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2.5rem, 5vw, 5.5rem);
+  }
+
+  .lp-cap__grade--inverte {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  .lp-cap__grade--estreita {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  }
+
+  .lp-cap__grade > .lp-cap__texto {
+    order: 0;
+  }
+}
+
+.lp-pontos {
+  margin-top: 2.3rem;
+  max-width: 30rem;
+}
+
+.lp-pontos li {
+  display: grid;
+  grid-template-columns: 2.7rem 1fr;
+  align-items: baseline;
+  padding: 0.95rem 0;
+  border-top: 1px solid var(--fio);
+}
+
+.lp-pontos li:last-child {
+  border-bottom: 1px solid var(--fio);
+}
+
+.lp-pontos span {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--latao);
+}
+
+.lp-pontos p {
+  font-size: 1.03rem;
+  line-height: 1.55;
+}
+
+.lp-pontos small {
+  margin-left: 0.4em;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--latao);
+  white-space: nowrap;
+}
+
+/* 09:12 — dois celulares, um por cima do outro */
+.lp-dupla {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  padding-bottom: 4%;
+}
+
+.lp-dupla__tras {
+  grid-area: 1 / 1 / 2 / 7;
+  transform: rotate(-4deg);
+  filter: brightness(0.72);
+}
+
+.lp-dupla__frente {
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 5 / 2 / 13;
+  margin-top: 26%;
+}
+
+@media (min-width: 1024px) {
+  .lp-dupla__tras {
+    grid-column: 2 / 7;
+  }
+
+  .lp-dupla__frente {
+    grid-column: 6 / 12;
+  }
+}
+
+/* 10:30 — a tela da equipe encosta no poste, a agenda pousa por cima */
+.lp-pilha {
+  position: relative;
+  margin-left: calc(var(--gut) * -1 + 0.5rem);
+}
+
+@media (min-width: 1024px) {
+  .lp-pilha {
+    padding-bottom: 20%;
+  }
+}
+
+.lp-pilha__base {
+  width: 100%;
+}
+
+.lp-pilha__cima {
+  position: relative;
+  z-index: 1;
+  margin: -16% 0 0 calc(var(--gut) + 6%);
+}
+
+@media (min-width: 1024px) {
+  .lp-pilha__cima {
+    position: absolute;
+    right: -3%;
+    bottom: 0;
+    width: 62%;
+    margin: 0;
+  }
+}
+
+/* 14:05 — manchete, tela larga e o aparte dos sumidos */
+.lp-cap__manchete {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.lp-cap__larga {
+  margin: clamp(2.6rem, 5vw, 4.5rem) -1.5vw 0;
+}
+
+.lp-aparte {
+  display: grid;
+  gap: 2.4rem;
+  margin-top: 3rem;
+}
+
+.lp-aparte__chamada {
+  font-family: 'Fraunces', 'Cormorant Garamond', serif;
+  font-size: clamp(1.9rem, 3.2vw, 2.9rem);
+  font-style: italic;
+  line-height: 1;
+  color: var(--latao);
+}
+
+@media (min-width: 1024px) {
+  .lp-cap__manchete {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    align-items: end;
+    gap: 4rem;
+  }
+
+  .lp-cap__manchete .lp-corpo {
+    margin-top: 0;
+    padding-bottom: 0.6rem;
+  }
+
+  .lp-aparte {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+    gap: 5rem;
+    align-items: center;
+    margin-top: 5.5rem;
+    padding-left: 6%;
+  }
+
+  .lp-aparte__tela {
+    position: relative;
+    z-index: 2;
+    margin-right: calc(var(--gut) * -0.5);
+  }
+}
+
+/* 17:40 e 20:10 — telas que saem da página */
+.lp-cap__vaza {
+  width: calc(100% + var(--gut));
+}
+
+.lp-cap__vaza--esquerda {
+  margin-left: calc(var(--gut) * -1 + 0.5rem);
+  width: calc(100% + var(--gut) - 0.5rem);
+}
+
+/* 23:47 — a noite */
+.lp-cap--noite {
+  position: relative;
+  padding-bottom: clamp(5rem, 10vw, 9rem);
+}
+
+.lp-noite__hora {
+  position: absolute;
+  right: -5vw;
+  bottom: 4%;
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(8rem, 33vw, 33rem);
+  line-height: 0.8;
+  letter-spacing: -0.07em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(236, 227, 210, 0.13);
+  pointer-events: none;
+  user-select: none;
+}
+
+.lp-noite__texto {
+  position: relative;
+  z-index: 1;
+  min-height: 46vh;
+}
