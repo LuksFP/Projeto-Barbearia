@@ -82,11 +82,4 @@ export const Toldo = () => (
   </div>
 )
 
-/** Piso xadrez em perspectiva, sumindo no escuro. */
-export const Piso = () => (
-  <div className="lp-piso" aria-hidden>
-    <div />
-  </div>
-)
-
 export type { Ferramenta }

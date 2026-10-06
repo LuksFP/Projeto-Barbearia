@@ -17,7 +17,6 @@ export const MARCOS: Marco[] = [
   { id: 'clube', hora: '17:40', rotulo: 'fim de tarde' },
   { id: 'caixa', hora: '20:10', rotulo: 'fechando o caixa' },
   { id: 'noite', hora: '23:47', rotulo: 'porta fechada' },
-  { id: 'amanha', hora: '07:58', rotulo: 'amanhã cedo', diaSeguinte: true },
 ]
 
 export const paraMinutos = (hora: string, diaSeguinte = false): number => {
@@ -45,8 +44,8 @@ export const rotuloDe = (minutos: number): string => {
   return atual.rotulo
 }
 
-/** O que a régua do topo mostra: os capítulos do dia, sem a abertura e sem o "amanhã". */
-export const REGUA = MARCOS.filter((marco) => marco.id !== 'abertura' && !marco.diaSeguinte)
+/** O que a régua do topo mostra: os capítulos do dia, sem a abertura. */
+export const REGUA = MARCOS.filter((marco) => marco.id !== 'abertura')
 
 export const REGUA_TITULOS: Record<string, string> = {
   link: 'Agendamento pelo link',

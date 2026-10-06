@@ -1,4 +1,4 @@
-/* Landing do BarberOS — tabela de preços, perguntas, fechamento e rodapé. Variáveis em landing.css. */
+/* Landing do BarberOS — tabela de preços, perguntas e rodapé. Variáveis em landing.css. */
 
 /* ── Tabela de preços (folha de papel na parede) ───────────────── */
 
@@ -260,28 +260,7 @@
   line-height: 1.7;
 }
 
-/* ── Fechamento e rodapé ───────────────────────────────────────── */
-
-.lp-fim {
-  padding: clamp(7rem, 14vw, 12rem) var(--gut) 0;
-}
-
-.lp-fim__titulo {
-  max-width: 13ch;
-  font-family: 'Fraunces', 'Cormorant Garamond', serif;
-  font-size: clamp(2.6rem, 7.4vw, 7.4rem);
-  font-weight: 560;
-  line-height: 0.98;
-  letter-spacing: -0.03em;
-}
-
-.lp-fim__acoes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1.4rem 2.2rem;
-  margin-top: clamp(2.2rem, 4vw, 3.6rem);
-}
+/* ── Rodapé ───────────────────────────────────────── */
 
 .lp-rodape {
   margin-top: clamp(6rem, 11vw, 10rem);
@@ -313,24 +292,4 @@
 
 .lp-rodape__linha .lp-link:hover {
   color: var(--osso);
-}
-
-/* a marca gigante, cortada pela borda de baixo */
-.lp-rodape__marca {
-  height: 0.6em;
-  margin-top: 1.2rem;
-  font-family: 'Fraunces', 'Cormorant Garamond', serif;
-  font-size: 18vw;
-  font-weight: 600;
-  line-height: 0.82;
-  letter-spacing: -0.045em;
-  text-align: center;
-  white-space: nowrap;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(200, 163, 90, 0.42);
-  user-select: none;
-}
-
-.lp-rodape__marca em {
-  color: transparent;
 }

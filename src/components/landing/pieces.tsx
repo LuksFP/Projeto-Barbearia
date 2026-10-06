@@ -14,7 +14,6 @@ const FERRAMENTA: Record<string, Ferramenta> = {
   clube: 'tesoura',
   caixa: 'pente',
   noite: 'navalha',
-  amanha: 'tesoura',
 }
 
 /** Carimbo de hora que abre cada capítulo. Também é o marco que o relógio da página lê. */
