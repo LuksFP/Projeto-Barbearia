@@ -29,7 +29,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import FeatureAnnouncementModal from '@/components/FeatureAnnouncementModal'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { toast } from '@/hooks/use-toast'
-import { isDemoMode } from '@/lib/demo'
+import { clearDemoSession, getDemoPlan, isDemoMode } from '@/lib/demo'
 
 const navItems = [
   { to: '/dashboard', label: 'Visão Geral', icon: LayoutDashboard, end: true },
@@ -59,6 +59,14 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const demo = isDemoMode()
+
+  // O cadastro devolve pro painel quem já está logado — e o demo conta como logado.
+  // Por isso sai do demo antes, com carga completa pro contexto reler a sessão.
+  const sairDoDemoParaCadastro = () => {
+    const plano = getDemoPlan()
+    clearDemoSession()
+    window.location.assign(plano ? `/registrar?plano=${plano}` : '/registrar')
+  }
 
   // Painel aberto em qualquer aparelho: mantém Visão Geral/Clientes em dia e
   // avisa quando o cliente marca pelo site (booking público entra como 'pending';
@@ -238,7 +246,7 @@ const DashboardLayout = () => {
               O que você mexer fica só neste navegador e some ao fechar — não aparece em outro celular.
             </p>
             <button
-              onClick={() => navigate('/registrar')}
+              onClick={sairDoDemoParaCadastro}
               className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold font-body bg-sky-400 text-[#0a0a0a] hover:bg-sky-300 transition-colors"
             >
               Criar conta de verdade
