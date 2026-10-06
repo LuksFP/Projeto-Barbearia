@@ -311,6 +311,20 @@
   box-shadow: 0 18px 40px -18px rgba(200, 163, 90, 0.55);
 }
 
+.lp-botao--contorno {
+  border-color: rgba(200, 163, 90, 0.7);
+  color: var(--latao);
+  transition:
+    transform 0.18s var(--mola),
+    background-color 0.3s var(--saida),
+    color 0.3s var(--saida);
+}
+
+.lp-botao--contorno:hover {
+  background: rgba(200, 163, 90, 0.12);
+  color: var(--osso);
+}
+
 .lp-botao--tinta {
   width: 100%;
   background: var(--tinta-2);

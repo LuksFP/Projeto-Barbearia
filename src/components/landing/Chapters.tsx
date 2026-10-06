@@ -1,17 +1,12 @@
 import type { ReactNode } from 'react'
-import painelCobrancas from '@/assets/landing/painel-cobrancas.webp'
-import painelEquipe from '@/assets/landing/painel-equipe.webp'
-import painelFinanceiro from '@/assets/landing/painel-financeiro.webp'
-import painelReativar from '@/assets/landing/painel-reativar.webp'
-import siteHome from '@/assets/landing/site-home.webp'
-import { Acende, Carimbo, Tela } from './pieces'
+import Clipe from './Clipe'
+import { Acende, Carimbo } from './pieces'
 import SimAgenda from './SimAgenda'
 import SimAgendar from './SimAgendar'
 import SimComissao from './SimComissao'
 import SimLembrete from './SimLembrete'
 
-const PAINEL = { largura: 2000, altura: 1250 }
-const CELULAR = { largura: 780, altura: 1688 }
+const PAINEL = { largura: 1500, altura: 844 }
 
 /** Lista numerada em vez de cartões: o número é a hierarquia. */
 const Pontos = ({ itens }: { itens: ReactNode[] }) => (
@@ -48,18 +43,9 @@ const Chapters = () => (
           />
         </Acende>
 
-        <div className="lp-dupla">
-          <Tela
-            src={siteHome}
-            alt="Página inicial da barbearia no celular, com endereço, chamada e botão Agendar agora"
-            className="lp-tela--celular lp-dupla__tras"
-            abre="direita"
-            {...CELULAR}
-          />
-          <div className="lp-dupla__frente">
-            <p className="lp-mexa">Mexe aqui: marque um horário</p>
-            <SimAgendar />
-          </div>
+        <div className="lp-solo">
+          <p className="lp-mexa">Mexe aqui: marque um horário</p>
+          <SimAgendar />
         </div>
       </div>
     </section>
@@ -68,14 +54,9 @@ const Chapters = () => (
     <section className="lp-cap lp-cap--equipe" id="equipe">
       <Carimbo id="equipe" />
       <div className="lp-cap__grade lp-cap__grade--inverte">
-        <div className="lp-pilha">
-          <Tela
-            src={painelEquipe}
-            alt="Tela Equipe do painel: cada barbeiro com tempo de atendimento e percentual de comissão"
-            className="lp-pilha__base"
-            {...PAINEL}
-          />
-          <SimAgenda className="lp-pilha__cima" />
+        <div className="lp-solo lp-solo--largo">
+          <p className="lp-mexa">O que você marcou cai aqui</p>
+          <SimAgenda />
         </div>
 
         <Acende className="lp-cap__texto">
@@ -114,18 +95,16 @@ const Chapters = () => (
       <SimLembrete />
 
       <div className="lp-aparte">
-        <Acende className="lp-aparte__texto">
+        <Acende>
           <p className="lp-aparte__chamada">E quem sumiu?</p>
           <p className="lp-corpo">
-            Cliente que não aparece há 30, 45, 60 ou 90 dias entra numa lista à parte, com o tempo desde a última visita.
-            Um botão chama de volta.
+            Cliente que não aparece há 30, 45, 60 ou 90 dias entra numa lista à parte, com o tempo desde a última
+            visita. Um botão chama de volta.
           </p>
         </Acende>
-        <Tela
-          src={painelReativar}
-          alt="Tela Reativação: clientes que não voltam há meses, com botão Chamar de volta"
-          className="lp-aparte__tela"
-          abre="direita"
+        <Clipe
+          nome="clipe-reativar"
+          descricao="Tela Reativação: clique em Chamar de volta e o cliente fica marcado como contatado"
           {...PAINEL}
         />
       </div>
@@ -152,11 +131,9 @@ const Chapters = () => (
           />
         </Acende>
 
-        <Tela
-          src={painelCobrancas}
-          alt="Aba Cobranças do Clube VIP: assinantes atrasados com botões WhatsApp, Boleto e Dar baixa"
-          className="lp-cap__vaza"
-          abre="direita"
+        <Clipe
+          nome="clipe-clube"
+          descricao="Aba Cobranças do Clube VIP: clique em Dar baixa num assinante atrasado e ele sai da lista de atraso"
           {...PAINEL}
         />
       </div>
@@ -166,10 +143,9 @@ const Chapters = () => (
     <section className="lp-cap lp-cap--caixa" id="caixa">
       <Carimbo id="caixa" />
       <div className="lp-cap__grade lp-cap__grade--inverte">
-        <Tela
-          src={painelFinanceiro}
-          alt="Tela Financeiro: resumo do mês, receita, atendimentos, ticket médio e gráfico de receita por mês"
-          className="lp-cap__vaza lp-cap__vaza--esquerda"
+        <Clipe
+          nome="clipe-caixa"
+          descricao="Tela Financeiro: resumo do mês escrito por IA e, em seguida, a tabela de comissão por barbeiro"
           {...PAINEL}
         />
 
@@ -199,15 +175,24 @@ const Chapters = () => (
       <p className="lp-noite__hora" aria-hidden>
         23:47
       </p>
-      <Acende className="lp-noite__texto">
-        <h2 className="lp-h2 lp-h2--largo">
-          A barbearia dorme. <em>O link, não.</em>
-        </h2>
-        <p className="lp-corpo">
-          O agendamento fica aberto 24 horas. Quem lembrou do corte à meia-noite marca na hora, e amanhã cedo o horário
-          já está na agenda.
-        </p>
-      </Acende>
+      <div className="lp-noite__grade">
+        <Acende className="lp-noite__texto">
+          <h2 className="lp-h2 lp-h2--largo">
+            A barbearia dorme. <em>O link, não.</em>
+          </h2>
+          <p className="lp-corpo">
+            O agendamento fica aberto 24 horas. Quem lembrou do corte à meia-noite marca na hora, e amanhã cedo o
+            horário já está na agenda.
+          </p>
+        </Acende>
+        <Clipe
+          nome="clipe-celular"
+          largura={462}
+          altura={902}
+          className="lp-clipe--fone"
+          descricao="Celular com o agendamento online: serviço, barbeiro, horário e a tela de Agendado"
+        />
+      </div>
     </section>
   </>
 )

@@ -1,11 +1,10 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import painelVisaoGeral from '@/assets/landing/painel-visao-geral.webp'
-import siteAgendar from '@/assets/landing/site-agendar.webp'
+import Clipe from './Clipe'
 import { minutosDe, REGUA, REGUA_TITULOS } from './content'
 import { Selo } from './Ornamentos'
-import { Botao, Tela } from './pieces'
+import { Botao } from './pieces'
 import { useLandingCta } from './useLandingCta'
 
 const SAIDA = [0.16, 1, 0.3, 1] as const
@@ -20,8 +19,7 @@ const Hero = () => {
   const parado = useReducedMotion()
   const palco = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: palco, offset: ['start end', 'end start'] })
-  const sobePainel = useTransform(scrollYProgress, [0, 1], parado ? [0, 0] : [40, -50])
-  const sobeCelular = useTransform(scrollYProgress, [0, 1], parado ? [0, 0] : [110, -130])
+  const sobeVideo = useTransform(scrollYProgress, [0, 1], parado ? [0, 0] : [26, -26])
 
   return (
     <section className="lp-hero" id="abertura">
@@ -62,6 +60,9 @@ const Hero = () => {
             <Botao onClick={() => irParaPlano('basic')}>
               {isLoggedIn ? 'Abrir o painel' : 'Começar 2 dias grátis'}
             </Botao>
+            <a href="#planos" className="lp-botao lp-botao--contorno">
+              <span>Ver planos</span>
+            </a>
             <Link to="/demo/pro" className="lp-link lp-link--seta">
               Ver o painel por dentro
             </Link>
@@ -72,26 +73,18 @@ const Hero = () => {
 
         <div className="lp-hero__palco" ref={palco}>
           <Selo />
-          <motion.div style={{ y: sobePainel }} className="lp-hero__painel">
-            <Tela
-              src={painelVisaoGeral}
-              alt="Visão geral do painel BarberOS: agendamentos de hoje, clientes ativos, assinantes do clube e receita do mês"
-              largura={2000}
-              altura={1250}
-              abre="direita"
-              prioridade
-            />
+          <motion.div style={{ y: sobeVideo }}>
+            <div className="lp-video" id="video">
+              <Clipe
+                nome="tutorial-barberos"
+                largura={1920}
+                altura={1080}
+                controles
+                descricao="Tutorial do BarberOS em 37 segundos: agendamento pelo link, agenda, lembretes, clube e financeiro"
+              />
+            </div>
           </motion.div>
-          <motion.div style={{ y: sobeCelular }} className="lp-hero__celular">
-            <Tela
-              src={siteAgendar}
-              alt="Página pública de uma barbearia no celular, na etapa de escolher os serviços do agendamento"
-              largura={780}
-              altura={1688}
-              className="lp-tela--celular"
-              prioridade
-            />
-          </motion.div>
+          <p className="lp-miudo lp-hero__nota">37 segundos · gravado no próprio BarberOS, na conta de demonstração</p>
         </div>
       </div>
 

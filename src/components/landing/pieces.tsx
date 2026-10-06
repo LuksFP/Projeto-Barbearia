@@ -1,5 +1,5 @@
-import { useRef, type ReactNode } from 'react'
-import { motion, useInView, useReducedMotion } from 'framer-motion'
+import type { ReactNode } from 'react'
+import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { MARCOS, paraMinutos } from './content'
 import { Icone, type Ferramenta } from './Ornamentos'
@@ -36,47 +36,6 @@ export const Carimbo = ({ id, nota }: { id: string; nota?: string }) => {
       {FERRAMENTA[id] && <Icone tipo={FERRAMENTA[id]} />}
       <span className="lp-carimbo__rotulo">{nota ?? marco.rotulo}</span>
     </div>
-  )
-}
-
-interface TelaProps {
-  src: string
-  alt: string
-  largura: number
-  altura: number
-  className?: string
-  /** De que lado a tela "abre", como uma capa sendo puxada. */
-  abre?: 'esquerda' | 'direita'
-  prioridade?: boolean
-}
-
-/** Print real do produto, revelado por um corte lateral em vez de fade. */
-export const Tela = ({ src, alt, largura, altura, className = '', abre = 'esquerda', prioridade = false }: TelaProps) => {
-  const parado = useReducedMotion()
-  // Quem observa a entrada na tela é a figure: o navegador não enxerga um elemento 100% recortado.
-  const figura = useRef<HTMLElement>(null)
-  const visivel = useInView(figura, { once: true, margin: '-10% 0px' })
-  // margens negativas no corte pra sombra da tela não ser decepada
-  const aberto = 'inset(-12% -12% -28% -12%)'
-  const fechado = abre === 'esquerda' ? 'inset(-12% 100% -28% -12%)' : 'inset(-12% -12% -28% 100%)'
-
-  return (
-    <figure className={`lp-tela ${className}`} ref={figura}>
-      <motion.div
-        initial={parado ? false : { clipPath: fechado }}
-        animate={{ clipPath: visivel || parado ? aberto : fechado }}
-        transition={{ duration: 1.25, ease: SAIDA }}
-      >
-        <img
-          src={src}
-          alt={alt}
-          width={largura}
-          height={altura}
-          loading={prioridade ? 'eager' : 'lazy'}
-          decoding="async"
-        />
-      </motion.div>
-    </figure>
   )
 }
 

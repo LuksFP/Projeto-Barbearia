@@ -106,82 +106,30 @@
   white-space: nowrap;
 }
 
-/* 09:12 — dois celulares, um por cima do outro */
-.lp-dupla {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  padding-bottom: 4%;
+/* 09:12 e 10:30 — a simulação sozinha no lugar dos prints */
+.lp-solo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.lp-dupla__tras {
-  grid-area: 1 / 1 / 2 / 7;
-  transform: rotate(-4deg);
-  filter: brightness(0.72);
-}
-
-.lp-dupla__frente {
-  position: relative;
-  z-index: 1;
-  grid-area: 1 / 5 / 2 / 13;
-  margin-top: 26%;
-}
-
-@media (min-width: 1024px) {
-  .lp-dupla__tras {
-    grid-column: 2 / 7;
-  }
-
-  .lp-dupla__frente {
-    grid-column: 6 / 12;
-  }
-}
-
-/* 10:30 — a tela da equipe encosta no poste, a agenda pousa por cima */
-.lp-pilha {
-  position: relative;
-  margin-left: calc(var(--gut) * -1 + 0.5rem);
-}
-
-@media (min-width: 1024px) {
-  .lp-pilha {
-    padding-bottom: 20%;
-  }
-}
-
-.lp-pilha__base {
+.lp-solo--largo {
+  align-items: stretch;
   width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
 }
 
-.lp-pilha__cima {
-  position: relative;
-  z-index: 1;
-  margin: -16% 0 0 calc(var(--gut) + 6%);
-}
-
-@media (min-width: 1024px) {
-  .lp-pilha__cima {
-    position: absolute;
-    right: -3%;
-    bottom: 0;
-    width: 62%;
-    margin: 0;
-  }
-}
-
-/* 14:05 — manchete, tela larga e o aparte dos sumidos */
+/* 14:05 — manchete, simulação e o aparte dos sumidos */
 .lp-cap__manchete {
   display: grid;
   gap: 0.5rem;
 }
 
-.lp-cap__larga {
-  margin: clamp(2.6rem, 5vw, 4.5rem) -1.5vw 0;
-}
-
 .lp-aparte {
   display: grid;
-  gap: 2.4rem;
-  margin-top: 3rem;
+  gap: 2.2rem;
+  margin-top: 3.5rem;
 }
 
 .lp-aparte__chamada {
@@ -206,27 +154,11 @@
 
   .lp-aparte {
     grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
-    gap: 5rem;
     align-items: center;
-    margin-top: 5.5rem;
+    gap: 5rem;
+    margin-top: 5rem;
     padding-left: 6%;
   }
-
-  .lp-aparte__tela {
-    position: relative;
-    z-index: 2;
-    margin-right: calc(var(--gut) * -0.5);
-  }
-}
-
-/* 17:40 e 20:10 — telas que saem da página */
-.lp-cap__vaza {
-  width: calc(100% + var(--gut));
-}
-
-.lp-cap__vaza--esquerda {
-  margin-left: calc(var(--gut) * -1 + 0.5rem);
-  width: calc(100% + var(--gut) - 0.5rem);
 }
 
 /* 23:47 — a noite */
@@ -249,8 +181,22 @@
   user-select: none;
 }
 
-.lp-noite__texto {
+.lp-noite__grade {
   position: relative;
   z-index: 1;
-  min-height: 46vh;
+  display: grid;
+  gap: 3rem;
+  justify-items: start;
+}
+
+@media (min-width: 1024px) {
+  .lp-noite__grade {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    align-items: center;
+    gap: 4rem;
+  }
+
+  .lp-noite__grade .lp-clipe--fone {
+    justify-self: center;
+  }
 }
