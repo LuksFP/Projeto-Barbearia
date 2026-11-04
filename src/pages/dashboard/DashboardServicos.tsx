@@ -54,6 +54,7 @@ function draftValid(draft: ServiceDraft): boolean {
   return (
     draft.name.trim().length > 0 &&
     Number(draft.price) > 0 &&
+    Number(draft.durationMin) > 0 &&
     resolvedCategory(draft).length > 0
   )
 }
@@ -123,18 +124,33 @@ const ServiceForm = ({ draft, onChange, onSave, onCancel, saving }: ServiceFormP
         />
       </div>
 
-      {/* Preço */}
-      <div>
-        <label className="text-white/35 text-xs font-body mb-1.5 block">Preço (R$)</label>
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          value={draft.price}
-          onChange={e => set('price', e.target.value)}
-          placeholder="0,00"
-          className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
-        />
+      {/* Preço + Duração */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-white/35 text-xs font-body mb-1.5 block">Preço (R$)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={draft.price}
+            onChange={e => set('price', e.target.value)}
+            placeholder="0,00"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+          />
+        </div>
+        <div>
+          <label className="text-white/35 text-xs font-body mb-1.5 block">Duração (min)</label>
+          <input
+            type="number"
+            min="5"
+            step="5"
+            value={draft.durationMin}
+            onChange={e => set('durationMin', e.target.value)}
+            placeholder="30"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+          />
+          <p className="text-white/25 text-[11px] font-body mt-1">Soma no total quando o cliente escolhe vários.</p>
+        </div>
       </div>
 
       {/* Ações */}
@@ -224,8 +240,7 @@ const DashboardServicos = () => {
       name: newDraft.name.trim(),
       description: newDraft.description.trim(),
       price: Number(newDraft.price),
-      // Tempo deixou de ser configurado por serviço; mantém um padrão só p/ o
-      // cálculo de bloco na agenda. A duração real é definida no agendamento.
+      // Duração por serviço: soma no total do agendamento quando há vários.
       duration_min: Number(newDraft.durationMin) || 30,
       category: resolvedCategory(newDraft),
       active: true,
@@ -386,6 +401,7 @@ const DashboardServicos = () => {
                             }`}>
                               {service.category}
                             </span>
+                            <span className="text-xs text-white/35 font-body tabular-nums">{service.durationMin} min</span>
                           </div>
                           {service.description && (
                             <p className="text-white/40 text-xs font-body truncate">{service.description}</p>

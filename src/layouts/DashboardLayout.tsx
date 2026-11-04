@@ -53,6 +53,82 @@ const ROLE_LABELS: Record<string, string> = {
   receptionist: 'Recepcionista',
 }
 
+// Componente estável (fora do render do layout) — definir inline fazia a sidebar
+// remontar a cada state change e engolir o clique de navegação no celular.
+interface SidebarContentProps {
+  barbershop: { name: string; city: string; state: string; logoText?: string }
+  tenantUser: { name: string } | null
+  userRole: string | null
+  onNavigate: () => void
+  onSignOut: () => void
+}
+
+const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOut }: SidebarContentProps) => (
+  <div className="flex flex-col h-full">
+    {/* Workspace header */}
+    <div className="p-5 border-b border-[#1f1f1f]">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-500/[0.15] border border-amber-500/30">
+          <ScissorsIcon className="w-4 h-4 text-amber-400" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white truncate font-heading tracking-wide">
+            {barbershop.name}
+          </p>
+          <p className="text-xs text-white/40 font-body truncate">{barbershop.city}, {barbershop.state}</p>
+        </div>
+        <ChevronDown className="w-4 h-4 text-white/30 ml-auto shrink-0" />
+      </div>
+    </div>
+
+    {/* Nav */}
+    <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar-none">
+      {navItems.map(item => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.end}
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-body transition-all ${
+              isActive
+                ? 'bg-gradient-to-r from-amber-400/[0.13] to-transparent text-amber-300 font-medium shadow-[inset_3px_0_0_0_#C9A84C]'
+                : 'text-white/45 hover:text-white/80 hover:bg-white/[0.04]'
+            }`
+          }
+        >
+          <item.icon className="w-4 h-4 shrink-0" />
+          {item.label}
+        </NavLink>
+      ))}
+    </nav>
+
+    {/* User section */}
+    <div className="p-4 border-t border-[#1f1f1f]">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+          <span className="text-amber-400 text-xs font-bold font-heading">
+            {tenantUser?.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm text-white font-body truncate">{tenantUser?.name}</p>
+          <p className="text-xs text-amber-400 font-body">
+            {userRole ? ROLE_LABELS[userRole] : '—'}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onSignOut}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/45 hover:text-white/80 hover:bg-white/[0.04] transition-all font-body"
+      >
+        <LogOut className="w-4 h-4" />
+        Sair do painel
+      </button>
+    </div>
+  </div>
+)
+
 const DashboardLayout = () => {
   const { barbershop, tenantUser, userRole, isLoading, refreshAppointments, refreshClients } = useTenant()
   const { account } = useSaasAccount()
@@ -122,77 +198,19 @@ const DashboardLayout = () => {
     )
   }
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Workspace header */}
-      <div className="p-5 border-b border-[#1f1f1f]">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-500/[0.15] border border-amber-500/30">
-            <ScissorsIcon className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate font-heading tracking-wide">
-              {barbershop.name}
-            </p>
-            <p className="text-xs text-white/40 font-body truncate">{barbershop.city}, {barbershop.state}</p>
-          </div>
-          <ChevronDown className="w-4 h-4 text-white/30 ml-auto shrink-0" />
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar-none">
-        {navItems.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-body transition-all ${
-                isActive
-                  ? 'bg-gradient-to-r from-amber-400/[0.13] to-transparent text-amber-300 font-medium shadow-[inset_3px_0_0_0_#C9A84C]'
-                  : 'text-white/45 hover:text-white/80 hover:bg-white/[0.04]'
-              }`
-            }
-          >
-            <item.icon className="w-4 h-4 shrink-0" />
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* User section */}
-      <div className="p-4 border-t border-[#1f1f1f]">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-            <span className="text-amber-400 text-xs font-bold font-heading">
-              {tenantUser?.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-            </span>
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm text-white font-body truncate">{tenantUser?.name}</p>
-            <p className="text-xs text-amber-400 font-body">
-              {userRole ? ROLE_LABELS[userRole] : '—'}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => navigate('/')}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/45 hover:text-white/80 hover:bg-white/[0.04] transition-all font-body"
-        >
-          <LogOut className="w-4 h-4" />
-          Sair do painel
-        </button>
-      </div>
-    </div>
-  )
+  const sidebarProps: SidebarContentProps = {
+    barbershop,
+    tenantUser: tenantUser ?? null,
+    userRole: userRole ?? null,
+    onNavigate: () => setSidebarOpen(false),
+    onSignOut: () => navigate('/'),
+  }
 
   return (
     <div className="flex h-screen bg-[#0d0d0d] text-white overflow-hidden">
       {/* Sidebar desktop */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col bg-[#080808] border-r border-[#1f1f1f]">
-        <SidebarContent />
+        <SidebarContent {...sidebarProps} />
       </aside>
 
       {/* Sidebar mobile overlay */}
@@ -213,7 +231,7 @@ const DashboardLayout = () => {
               transition={{ type: 'tween', duration: 0.2 }}
               className="fixed top-0 left-0 bottom-0 z-50 w-60 bg-[#080808] border-r border-[#1f1f1f] md:hidden"
             >
-              <SidebarContent />
+              <SidebarContent {...sidebarProps} />
             </motion.aside>
           </>
         )}
@@ -279,7 +297,7 @@ const DashboardLayout = () => {
         )}
 
         {/* Página */}
-        <main className="flex-1 overflow-y-auto scrollbar-none p-6">
+        <main className="flex-1 overflow-y-auto scrollbar-none p-4 sm:p-6">
           <Outlet />
         </main>
       </div>
