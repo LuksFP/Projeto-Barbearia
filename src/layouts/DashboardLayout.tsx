@@ -1,8 +1,8 @@
 // Layout do dashboard da barbearia — sidebar + área de conteúdo
 // Representa a operação diária de UMA barbearia por vez (multi-tenant)
 
-import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   CalendarDays,
@@ -134,7 +134,14 @@ const DashboardLayout = () => {
   const { account } = useSaasAccount()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const demo = isDemoMode()
+
+  // Fecha o menu sempre que a rota muda — garante que o drawer do celular não
+  // fique travado aberto se o clique de fechar se perder no toque.
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [location.pathname])
 
   // O cadastro devolve pro painel quem já está logado — e o demo conta como logado.
   // Por isso sai do demo antes, com carga completa pro contexto reler a sessão.
