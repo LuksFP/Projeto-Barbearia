@@ -72,11 +72,12 @@ const BookingSection = ({
 
   // Barbeiro é obrigatório (garante a checagem de conflito por barbeiro)
   const pickedBarber = selectedBarber
-  // Serviços somam preço (o tempo do bloco vem do barbeiro, não do serviço)
+  // Serviços somam preço e tempo (cada serviço tem sua duração)
   const totalPrice = selectedServices.reduce((acc, s) => acc + s.price, 0)
   const servicesLabel = selectedServices.map(s => s.name).join(' + ')
-  // Duração do atendimento = tempo de corte do barbeiro (fallback 30 min)
-  const slotDuration = pickedBarber?.cutDurationMin || 30
+  // Duração do atendimento = soma dos serviços escolhidos; sem serviços, tempo de corte do barbeiro (fallback 30 min)
+  const servicesTotalDuration = selectedServices.reduce((acc, s) => acc + (s.durationMin || 0), 0)
+  const slotDuration = servicesTotalDuration > 0 ? servicesTotalDuration : (pickedBarber?.cutDurationMin || 30)
 
   const toggleService = (svc: BarbershopService) => {
     setSelectedServices(prev =>
