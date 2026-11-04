@@ -14,6 +14,16 @@ import { createAdminClient, corsHeaders, json, err } from '../_shared/supabase-a
 // Janela de antecedência: avisa quando faltam <= 24h para o fim do trial.
 const WINDOW_HOURS = 24
 
+// Comparação em tempo constante: não revela o segredo pelo tempo de resposta.
+function safeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder()
+  const x = enc.encode(a)
+  const y = enc.encode(b)
+  let diff = x.length ^ y.length
+  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0)
+  return diff === 0
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() })
   if (req.method !== 'POST') return err('Method not allowed', 405)
@@ -21,7 +31,7 @@ Deno.serve(async (req) => {
   // Autenticação: header secreto compartilhado com o cron
   const secret = Deno.env.get('CRON_SECRET')
   const provided = req.headers.get('x-cron-secret')
-  if (!secret || provided !== secret) return err('Unauthorized', 401)
+  if (!secret || !provided || !safeEqual(provided, secret)) return err('Unauthorized', 401)
 
   const supabase = createAdminClient()
 
