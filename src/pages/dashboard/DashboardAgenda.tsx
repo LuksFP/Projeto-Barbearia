@@ -502,40 +502,37 @@ const DashboardAgenda = () => {
               animate={{ y: 0, scale: 1 }}
               exit={{ y: 12, scale: 0.97 }}
               transition={{ duration: 0.2 }}
-              className="relative w-full max-w-md bg-[#111] border border-[#222] rounded-2xl p-6 overflow-y-auto scrollbar-none max-h-[90vh]"
+              className="relative w-full max-w-3xl bg-[#111] border border-[#222] rounded-2xl overflow-hidden flex flex-col max-h-[92vh]"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-heading text-xl tracking-wide text-white">NOVO AGENDAMENTO</h2>
-                <button onClick={() => setModalOpen(false)} className="text-white/30 hover:text-white transition-colors">
+              {/* Cabeçalho */}
+              <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-[#1f1f1f]">
+                <div>
+                  <p className="text-amber-500/80 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Agenda</p>
+                  <h2 className="font-heading text-2xl tracking-wide text-white leading-none mt-1">NOVO AGENDAMENTO</h2>
+                </div>
+                <button onClick={() => setModalOpen(false)} aria-label="Fechar" className="text-white/30 hover:text-white transition-colors p-1 -mr-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {clients.length > 0 && (
-                    <div className="col-span-2">
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Cliente já cadastrado</label>
-                      {(() => {
-                        const chosen = clients.find(c => c.name === form.clientName && c.phone === form.clientPhone)
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => setClientPickerOpen(o => !o)}
-                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-colors focus-visible:outline-none"
-                            style={chosen
-                              ? { borderColor: 'rgba(245,158,11,0.45)', backgroundColor: 'rgba(245,158,11,0.08)' }
-                              : { borderColor: '#272727', backgroundColor: '#161616' }}
-                          >
-                            <span className={`text-sm font-body flex-1 min-w-0 truncate ${chosen ? 'text-white font-medium' : 'text-white/40'}`}>
-                              {chosen ? chosen.name : `Escolher entre os ${clients.length} clientes…`}
-                            </span>
-                            {chosen && <span className="text-white/40 text-xs font-body shrink-0">{chosen.phone}</span>}
-                            <ChevronDown className={`w-4 h-4 text-white/40 shrink-0 transition-transform duration-200 ${clientPickerOpen ? 'rotate-180' : ''}`} />
-                          </button>
-                        )
-                      })()}
-                      {clientPickerOpen && (
+              {/* Corpo: quem/o quê à esquerda, quando à direita (painel mais escuro) */}
+              <div className="flex-1 overflow-y-auto scrollbar-none grid lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="p-6 space-y-6">
+                  <section className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-white/35 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Cliente</h3>
+                      {clients.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setClientPickerOpen(o => !o)}
+                          className="flex items-center gap-1 text-xs font-body text-amber-400 hover:text-amber-300 transition-colors"
+                        >
+                          Já é cliente? Buscar ({clients.length})
+                          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${clientPickerOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+                    </div>
+                    {clientPickerOpen && (
                         <div className="mt-2 space-y-1.5 max-h-52 overflow-y-auto scrollbar-none pr-0.5">
                           {clients.map(c => (
                             <button
@@ -553,10 +550,9 @@ const DashboardAgenda = () => {
                           ))}
                         </div>
                       )}
-                      <p className="text-white/25 text-[11px] font-body mt-1.5 px-1">Cliente novo? Preencha nome e telefone abaixo.</p>
-                    </div>
-                  )}
-                  <div className="col-span-2 relative">
+
+                    <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="relative">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Nome do cliente *</label>
                     <input
                       type="text"
@@ -585,7 +581,7 @@ const DashboardAgenda = () => {
                       </ul>
                     )}
                   </div>
-                  <div className="col-span-2 relative">
+                  <div className="relative">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Telefone *</label>
                     <input
                       type="tel"
@@ -614,7 +610,12 @@ const DashboardAgenda = () => {
                       </ul>
                     )}
                   </div>
-                  <div className="col-span-2">
+                    </div>
+                  </section>
+
+                  <section className="space-y-3">
+                    <h3 className="text-white/35 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Atendimento</h3>
+                  <div>
                     <label className="block text-white/45 text-xs font-body mb-1.5">Serviços *</label>
                     {/* Trigger do accordion — fechado mostra só o resumo */}
                     <button
@@ -677,7 +678,7 @@ const DashboardAgenda = () => {
                       </div>
                     )}
                   </div>
-                  <div className="col-span-2">
+                  <div>
                     <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro *</label>
                     <div className="relative">
 <select
@@ -701,84 +702,114 @@ const DashboardAgenda = () => {
                     </select>
 <ChevronDown className="w-4 h-4 text-white/40 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
 </div>
-                    <p className="text-white/30 text-[11px] font-body mt-1.5">Obrigatório — é o que garante que ninguém marque em cima do horário de outro.</p>
+                    <p className="text-white/30 text-[11px] font-body mt-1.5">Garante que ninguém marque em cima do horário de outro.</p>
                   </div>
-                  <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Data *</label>
+                    <div>
+                      <label className="block text-white/45 text-xs font-body mb-1.5">Observação <span className="text-white/25">(vai para o cadastro do cliente)</span></label>
+                      <textarea
+                        value={form.notes}
+                        onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                        rows={2}
+                        placeholder="Ex: pai e filho, cabelo cacheado…"
+                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors resize-none"
+                      />
+                    </div>
+                  </section>
+                </div>
+
+                <div className="p-6 space-y-5 bg-[#0d0d0d] lg:border-l border-t lg:border-t-0 border-[#1f1f1f]">
+                  <section className="space-y-3">
+                    <h3 className="text-white/35 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Quando</h3>
                     <input
                       type="date"
+                      aria-label="Data"
                       min={todayStr}
                       value={form.date}
                       onChange={e => setForm(f => ({ ...f, date: e.target.value, time: '' }))}
-                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                       style={{ colorScheme: 'dark' }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Horário * <span className="text-white/25">(início–fim)</span></label>
-                    <div className="relative">
-<select
-                      value={form.time}
-                      onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
-                      disabled={!form.date || !form.barberId}
-                      className="appearance-none pr-9 w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors disabled:opacity-50"
-                    >
-                      <option value="">
-                        {!form.barberId ? 'Escolha o barbeiro' : !form.date ? 'Escolha a data' : daySlots.length ? 'Selecione…' : 'Sem horários livres nesse dia'}
-                      </option>
-                      {daySlots.map(s => (
-                        <option key={s.time} value={s.time}>{s.time} – {s.end}</option>
-                      ))}
-                    </select>
-<ChevronDown className="w-4 h-4 text-white/40 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-</div>
-                    <p className="text-white/30 text-[11px] font-body mt-1.5">
-                      Bloco de {slotDuration} min · só aparecem horários livres do barbeiro
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Duração (min)</label>
-                    <input
-                      type="number"
-                      min="5"
-                      step="5"
-                      value={form.durationMin}
-                      onChange={e => setForm(f => ({ ...f, durationMin: e.target.value, time: '' }))}
-                      placeholder="30"
-                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Valor (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={form.price}
-                      onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                      placeholder="0,00"
-                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Observação</label>
-                    <textarea
-                      value={form.notes}
-                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                      rows={2}
-                      placeholder="Ex: pai e filho, cliente do plano, cabelo cacheado…"
-                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors resize-none"
-                    />
-                    <p className="text-white/25 text-[11px] font-body mt-1.5">Vai para a descrição do cliente na aba Clientes.</p>
-                  </div>
-                </div>
+                    {!form.barberId || !form.date ? (
+                      <p className="rounded-xl border border-dashed border-[#2a2a2a] px-4 py-6 text-center text-white/35 text-xs font-body">
+                        {!form.barberId ? 'Escolha o barbeiro para ver os horários livres.' : 'Escolha a data para ver os horários livres.'}
+                      </p>
+                    ) : daySlots.length === 0 ? (
+                      <p className="rounded-xl border border-dashed border-red-400/25 px-4 py-6 text-center text-red-300/70 text-xs font-body">
+                        Sem horários livres nesse dia. Tente outra data.
+                      </p>
+                    ) : (
+                      <div>
+                        <p className="text-white/45 text-xs font-body mb-2">Horários livres <span className="text-white/25">· bloco de {slotDuration} min</span></p>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {daySlots.map(sl => {
+                            const on = form.time === sl.time
+                            return (
+                              <button
+                                type="button"
+                                key={sl.time}
+                                onClick={() => setForm(f => ({ ...f, time: sl.time }))}
+                                aria-pressed={on}
+                                className={`py-2 rounded-lg border text-sm font-heading tracking-wide tabular-nums transition-colors focus-visible:outline-none ${on
+                                  ? 'bg-amber-500 border-amber-500 text-[#0a0a0a]'
+                                  : 'bg-[#161616] border-[#272727] text-white/70 hover:border-amber-500/40 hover:text-white'}`}
+                              >
+                                {sl.time}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </section>
 
+                  <section className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-white/45 text-xs font-body mb-1.5">Duração (min)</label>
+                      <input
+                        type="number"
+                        min="5"
+                        step="5"
+                        value={form.durationMin}
+                        onChange={e => setForm(f => ({ ...f, durationMin: e.target.value, time: '' }))}
+                        placeholder="30"
+                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/45 text-xs font-body mb-1.5">Valor (R$)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={form.price}
+                        onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                        placeholder="0,00"
+                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                      />
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              {/* Rodapé fixo: resumo + confirmar */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 px-6 py-4 border-t border-[#1f1f1f] bg-[#111]">
+                <p className="flex-1 min-w-0 text-xs font-body text-white/45 leading-relaxed">
+                  {[
+                    form.clientName.trim() || null,
+                    form.date ? new Date(form.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).replace('.', '') : null,
+                    form.time ? `${form.time}${bookingCheck ? '–' + bookingCheck.end : ''}` : null,
+                    barbers.find(b => b.id === form.barberId)?.name ?? null,
+                  ].filter(Boolean).join(' · ') || 'Preencha os dados ao lado para marcar.'}
+                  {(form.price || servicesTotalPrice > 0) && (
+                    <span className="text-amber-400 font-heading text-sm ml-2">R$ {form.price || servicesTotalPrice}</span>
+                  )}
+                </p>
                 <button
                   onClick={handleNewAppointment}
                   disabled={saving || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.barberId || !form.date || !form.time || (bookingCheck ? !bookingCheck.available : false)}
-                  className="w-full py-3 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="sm:min-w-[220px] py-3 px-6 rounded-xl bg-amber-500 text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-amber-400 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando…</> : 'Confirmar Agendamento'}
+                  {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando…</> : 'Confirmar agendamento'}
                 </button>
               </div>
             </motion.div>
