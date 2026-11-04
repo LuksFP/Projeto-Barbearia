@@ -17,6 +17,7 @@ export interface SaasAccount {
   planStartedAt: string | null
   trialEndsAt: string | null
   cancelAt: string | null
+  pastDueSince: string | null
   createdAt: string
 }
 

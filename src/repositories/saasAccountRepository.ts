@@ -130,6 +130,7 @@ function mapAccount(row: SaasAccountRow, email: string): SaasAccount {
     planStartedAt: row.plan_started_at,
     trialEndsAt: row.trial_ends_at ?? null,
     cancelAt: row.cancel_at ?? null,
+    pastDueSince: row.past_due_since ?? null,
     createdAt: row.created_at,
   }
 }

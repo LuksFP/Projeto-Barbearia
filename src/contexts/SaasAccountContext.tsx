@@ -24,6 +24,9 @@ export const useSaasAccount = () => {
   return ctx
 }
 
+// Dias de acesso mantidos depois da 1ª falha de cobrança
+const PAST_DUE_GRACE_MS = 3 * 24 * 60 * 60 * 1000
+
 function mapRowToAccount(row: NonNullable<Awaited<ReturnType<typeof saasAccountRepository.getByUserId>>>, email: string): SaasAccount {
   return {
     id: row.id,
@@ -38,6 +41,7 @@ function mapRowToAccount(row: NonNullable<Awaited<ReturnType<typeof saasAccountR
     planStartedAt: row.plan_started_at,
     trialEndsAt: row.trial_ends_at ?? null,
     cancelAt: row.cancel_at ?? null,
+    pastDueSince: row.past_due_since ?? null,
     createdAt: row.created_at,
   }
 }
@@ -137,6 +141,10 @@ export const SaasAccountProvider = ({ children }: { children: ReactNode }) => {
     || (account?.planStatus === 'cancelling'
         && !!account?.cancelAt
         && new Date(account.cancelAt) > new Date())
+    // past_due: o Stripe ainda está retentando a cobrança → carência de 3 dias
+    || (account?.planStatus === 'past_due'
+        && !!account?.pastDueSince
+        && Date.now() - new Date(account.pastDueSince).getTime() < PAST_DUE_GRACE_MS)
 
   return (
     <SaasAccountContext.Provider value={{

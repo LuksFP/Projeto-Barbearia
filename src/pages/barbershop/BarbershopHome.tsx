@@ -204,7 +204,7 @@ const BookingSection = ({
       setBookError(
         overlap
           ? 'Esse horário acabou de ser reservado para esse barbeiro. Escolha outro horário.'
-          : msg.includes('Muitos agendamentos')
+          : /Muitos agendamentos|já passou|fora do expediente|Preço inválido|inválido para esta barbearia/.test(msg)
             ? msg
             : 'Não foi possível criar o agendamento. Tente novamente.',
       )

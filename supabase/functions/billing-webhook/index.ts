@@ -29,6 +29,17 @@ function toPlanStatus(status: Stripe.Subscription.Status): string {
   }
 }
 
+// Registra quando a conta entrou em past_due (só na 1ª falha; as seguintes não
+// renovam a carência). O front dá alguns dias de acesso a partir desta data.
+async function markPastDue(supabase: ReturnType<typeof createAdminClient>, accountId: string) {
+  const { error } = await supabase
+    .from('saas_accounts')
+    .update({ past_due_since: new Date().toISOString() })
+    .eq('id', accountId)
+    .is('past_due_since', null)
+  if (error) throw new Error(`markPastDue: ${error.message}`)
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return err('Method not allowed', 405)
 
@@ -78,9 +89,11 @@ Deno.serve(async (req) => {
         const plan      = session.metadata?.plan
         const subId     = session.subscription as string
 
+        // Lança (em vez de break): o catch abaixo desfaz o claim e devolve 500,
+        // então o Stripe reenvia. Com break o evento ficava "processado" e o
+        // cliente pagava sem o plano ativar.
         if (!accountId || !plan) {
-          console.error('Missing client_reference_id or plan metadata')
-          break
+          throw new Error('checkout.session.completed sem client_reference_id ou metadata.plan')
         }
 
         const { error } = await supabase
@@ -90,13 +103,11 @@ Deno.serve(async (req) => {
             plan_status: 'active',
             plan_started_at: new Date().toISOString(),
             stripe_subscription_id: subId,
+            past_due_since: null,
           })
           .eq('id', accountId)
 
-        if (error) {
-          console.error('activate plan error:', error)
-          break
-        }
+        if (error) throw new Error(`activate plan: ${error.message}`)
         console.log(`Plan ${plan} activated for account ${accountId}`)
 
         // Email de boas-vindas
@@ -127,10 +138,12 @@ Deno.serve(async (req) => {
       if (!accountId) break
 
       const update: Record<string, string | null> = {}
+      let nextStatus: string
 
       if (sub.cancel_at_period_end) {
         // Cancelamento agendado — mantém acesso até o fim do período
-        update.plan_status = 'cancelling'
+        nextStatus = 'cancelling'
+        update.plan_status = nextStatus
         update.cancel_at   = sub.cancel_at
           ? new Date(sub.cancel_at * 1000).toISOString()
           : sub.current_period_end
@@ -138,18 +151,23 @@ Deno.serve(async (req) => {
             : null
       } else {
         // Cancelamento revertido ou status normal
-        update.plan_status = toPlanStatus(sub.status)
+        nextStatus = toPlanStatus(sub.status)
+        update.plan_status = nextStatus
         update.cancel_at   = null
       }
 
       if (plan) update.plan = plan
+      // Fora de past_due a carência zera; em past_due preserva o início (abaixo)
+      if (nextStatus !== 'past_due') update.past_due_since = null
 
       const { error } = await supabase
         .from('saas_accounts')
         .update(update)
         .eq('id', accountId)
 
-      if (error) console.error('subscription updated error:', error)
+      if (error) throw new Error(`subscription updated: ${error.message}`)
+
+      if (nextStatus === 'past_due') await markPastDue(supabase, accountId)
       break
     }
 
@@ -166,10 +184,12 @@ Deno.serve(async (req) => {
         .maybeSingle()
 
       if (account) {
-        await supabase
+        const { error: pdErr } = await supabase
           .from('saas_accounts')
           .update({ plan_status: 'past_due' })
           .eq('id', account.id)
+        if (pdErr) throw new Error(`payment_failed: ${pdErr.message}`)
+        await markPastDue(supabase, account.id as string)
 
         // Email de pagamento falhou
         const emailTo = (invoice.customer_email) as string | null

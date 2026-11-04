@@ -78,11 +78,18 @@ Deno.serve(async (req) => {
   // ── Conta SaaS ────────────────────────────────────────────────────────────
   const { data: account, error: accErr } = await supabase
     .from('saas_accounts')
-    .select('id, owner_name, stripe_customer_id')
+    .select('id, owner_name, stripe_customer_id, stripe_subscription_id, plan_status')
     .eq('user_id', user.id)
     .maybeSingle()
 
   if (accErr || !account) return err('SaaS account not found', 404)
+
+  // Já tem assinatura viva: trocar de plano é pelo billing-update-subscription,
+  // senão o cliente acabaria com duas assinaturas cobrando.
+  if (account.stripe_subscription_id
+      && ['active', 'past_due', 'cancelling'].includes(account.plan_status as string)) {
+    return err('Você já tem uma assinatura. Troque de plano pela página Assinatura.', 409)
+  }
 
   // ── Cliente Stripe (cria se não existir) ──────────────────────────────────
   let customerId = account.stripe_customer_id as string | null

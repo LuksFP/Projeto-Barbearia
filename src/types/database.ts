@@ -747,6 +747,7 @@ export type Database = {
           stripe_subscription_id: string | null
           trial_ends_at: string | null
           trial_reminder_sent_at: string | null
+          past_due_since: string | null
           user_id: string
         }
         Insert: {
@@ -766,6 +767,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
           trial_reminder_sent_at?: string | null
+          past_due_since?: string | null
           user_id: string
         }
         Update: {
@@ -785,6 +787,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
           trial_reminder_sent_at?: string | null
+          past_due_since?: string | null
           user_id?: string
         }
         Relationships: [
@@ -880,6 +883,7 @@ export type Database = {
           stripe_subscription_id: string | null
           trial_ends_at: string | null
           trial_reminder_sent_at: string | null
+          past_due_since: string | null
           user_id: string
         }
         SetofOptions: {
