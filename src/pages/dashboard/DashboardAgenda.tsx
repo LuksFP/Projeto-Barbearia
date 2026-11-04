@@ -71,6 +71,7 @@ const EMPTY_APT: NewAptForm = {
 const DashboardAgenda = () => {
   const { barbershop, barbers, services, clients, addClient, refreshClients, appointments: demoAppointments } = useTenant()
   const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
+  const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [weekOffset, setWeekOffset]     = useState(0)
   const [selectedIdx, setSelectedIdx]   = useState(todayIndex)
   const [filterBarber, setFilterBarber] = useState<string>('all')
@@ -100,6 +101,7 @@ const DashboardAgenda = () => {
   const pickClient = (c: { name: string; phone: string }) => {
     setForm(f => ({ ...f, clientName: c.name, clientPhone: c.phone }))
     setSuggestField(null)
+    setClientPickerOpen(false)
   }
 
   const [servicesOpen, setServicesOpen] = useState(false)   // accordion da lista de serviços
@@ -160,6 +162,7 @@ const DashboardAgenda = () => {
   const openNewModal = () => {
     setForm({ ...EMPTY_APT, date: selectedDate })
     setServicesOpen(false)
+    setClientPickerOpen(false)
     setModalOpen(true)
     // Pega também quem agendou pelo site público desde que o painel abriu
     void refreshClients()
@@ -513,20 +516,44 @@ const DashboardAgenda = () => {
                   {clients.length > 0 && (
                     <div className="col-span-2">
                       <label className="block text-white/45 text-xs font-body mb-1.5">Cliente já cadastrado</label>
-                      <select
-                        value={clients.find(c => c.name === form.clientName && c.phone === form.clientPhone)?.id ?? ''}
-                        onChange={e => {
-                          const c = clients.find(x => x.id === e.target.value)
-                          if (c) setForm(f => ({ ...f, clientName: c.name, clientPhone: c.phone }))
-                        }}
-                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
-                      >
-                        <option value="">Escolher cliente salvo… ({clients.length})</option>
-                        {clients.map(c => (
-                          <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>
-                        ))}
-                      </select>
-                      <p className="text-white/25 text-[11px] font-body mt-1.5">Ou digite abaixo para cliente novo.</p>
+                      {(() => {
+                        const chosen = clients.find(c => c.name === form.clientName && c.phone === form.clientPhone)
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setClientPickerOpen(o => !o)}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-colors focus-visible:outline-none"
+                            style={chosen
+                              ? { borderColor: 'rgba(245,158,11,0.45)', backgroundColor: 'rgba(245,158,11,0.08)' }
+                              : { borderColor: '#272727', backgroundColor: '#161616' }}
+                          >
+                            <span className={`text-sm font-body flex-1 min-w-0 truncate ${chosen ? 'text-white font-medium' : 'text-white/40'}`}>
+                              {chosen ? chosen.name : `Escolher entre os ${clients.length} clientes…`}
+                            </span>
+                            {chosen && <span className="text-white/40 text-xs font-body shrink-0">{chosen.phone}</span>}
+                            <ChevronDown className={`w-4 h-4 text-white/40 shrink-0 transition-transform duration-200 ${clientPickerOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                        )
+                      })()}
+                      {clientPickerOpen && (
+                        <div className="mt-2 space-y-1.5 max-h-52 overflow-y-auto scrollbar-none pr-0.5">
+                          {clients.map(c => (
+                            <button
+                              type="button"
+                              key={c.id}
+                              onClick={() => pickClient(c)}
+                              className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl border border-[#272727] bg-[#161616] hover:border-amber-500/40 hover:bg-amber-500/5 text-left transition-colors"
+                            >
+                              <span className="w-7 h-7 rounded-full bg-[#222] text-white/60 group-hover:text-amber-400 flex items-center justify-center text-[11px] font-heading shrink-0 transition-colors">
+                                {c.name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                              </span>
+                              <span className="text-sm font-body text-white/80 group-hover:text-white flex-1 min-w-0 truncate">{c.name}</span>
+                              <span className="text-xs font-body text-white/35 shrink-0">{c.phone}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-white/25 text-[11px] font-body mt-1.5 px-1">Cliente novo? Preencha nome e telefone abaixo.</p>
                     </div>
                   )}
                   <div className="col-span-2 relative">
@@ -539,7 +566,7 @@ const DashboardAgenda = () => {
                       onBlur={() => setSuggestField(null)}
                       autoComplete="off"
                       placeholder="Nome completo"
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                     />
                     {suggestField === 'name' && clientSuggestions.length > 0 && (
                       <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-[#2a2a2a] bg-[#161616] shadow-xl overflow-hidden">
@@ -568,7 +595,7 @@ const DashboardAgenda = () => {
                       onBlur={() => setSuggestField(null)}
                       autoComplete="off"
                       placeholder="(00) 00000-0000"
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                     />
                     {suggestField === 'phone' && clientSuggestions.length > 0 && (
                       <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-[#2a2a2a] bg-[#161616] shadow-xl overflow-hidden">
@@ -652,7 +679,8 @@ const DashboardAgenda = () => {
                   </div>
                   <div className="col-span-2">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro *</label>
-                    <select
+                    <div className="relative">
+<select
                       value={form.barberId}
                       onChange={e => {
                         const b = barbers.find(x => x.id === e.target.value)
@@ -664,13 +692,15 @@ const DashboardAgenda = () => {
                           time: '',
                         }))
                       }}
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
+                      className={`appearance-none pr-9 w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-sm font-body focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors ${form.barberId ? 'text-white' : 'text-white/40'}`}
                     >
                       <option value="">Selecione o barbeiro…</option>
                       {barbers.map(b => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
                     </select>
+<ChevronDown className="w-4 h-4 text-white/40 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+</div>
                     <p className="text-white/30 text-[11px] font-body mt-1.5">Obrigatório — é o que garante que ninguém marque em cima do horário de outro.</p>
                   </div>
                   <div>
@@ -680,25 +710,28 @@ const DashboardAgenda = () => {
                       min={todayStr}
                       value={form.date}
                       onChange={e => setForm(f => ({ ...f, date: e.target.value, time: '' }))}
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                       style={{ colorScheme: 'dark' }}
                     />
                   </div>
                   <div>
                     <label className="block text-white/45 text-xs font-body mb-1.5">Horário * <span className="text-white/25">(início–fim)</span></label>
-                    <select
+                    <div className="relative">
+<select
                       value={form.time}
                       onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
                       disabled={!form.date || !form.barberId}
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a] disabled:opacity-50"
+                      className="appearance-none pr-9 w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors disabled:opacity-50"
                     >
                       <option value="">
-                        {!form.barberId ? 'Escolha o barbeiro primeiro' : !form.date ? 'Escolha a data primeiro' : daySlots.length ? 'Selecione…' : 'Sem horários livres nesse dia'}
+                        {!form.barberId ? 'Escolha o barbeiro' : !form.date ? 'Escolha a data' : daySlots.length ? 'Selecione…' : 'Sem horários livres nesse dia'}
                       </option>
                       {daySlots.map(s => (
                         <option key={s.time} value={s.time}>{s.time} – {s.end}</option>
                       ))}
                     </select>
+<ChevronDown className="w-4 h-4 text-white/40 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+</div>
                     <p className="text-white/30 text-[11px] font-body mt-1.5">
                       Bloco de {slotDuration} min · só aparecem horários livres do barbeiro
                     </p>
@@ -712,7 +745,7 @@ const DashboardAgenda = () => {
                       value={form.durationMin}
                       onChange={e => setForm(f => ({ ...f, durationMin: e.target.value, time: '' }))}
                       placeholder="30"
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                     />
                   </div>
                   <div>
@@ -724,7 +757,7 @@ const DashboardAgenda = () => {
                       value={form.price}
                       onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
                       placeholder="0,00"
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                     />
                   </div>
                   <div className="col-span-2">
@@ -734,7 +767,7 @@ const DashboardAgenda = () => {
                       onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                       rows={2}
                       placeholder="Ex: pai e filho, cliente do plano, cabelo cacheado…"
-                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a] resize-none"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors resize-none"
                     />
                     <p className="text-white/25 text-[11px] font-body mt-1.5">Vai para a descrição do cliente na aba Clientes.</p>
                   </div>
