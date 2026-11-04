@@ -54,6 +54,7 @@ function draftValid(draft: ServiceDraft): boolean {
   return (
     draft.name.trim().length > 0 &&
     Number(draft.price) > 0 &&
+    Number(draft.durationMin) > 0 &&
     resolvedCategory(draft).length > 0
   )
 }
@@ -400,6 +401,7 @@ const DashboardServicos = () => {
                             }`}>
                               {service.category}
                             </span>
+                            <span className="text-xs text-white/35 font-body tabular-nums">{service.durationMin} min</span>
                           </div>
                           {service.description && (
                             <p className="text-white/40 text-xs font-body truncate">{service.description}</p>
