@@ -25,7 +25,6 @@ import {
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { motion, AnimatePresence } from 'framer-motion'
 import FeatureAnnouncementModal from '@/components/FeatureAnnouncementModal'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { toast } from '@/hooks/use-toast'
@@ -220,29 +219,23 @@ const DashboardLayout = () => {
         <SidebarContent {...sidebarProps} />
       </aside>
 
-      {/* Sidebar mobile overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/60 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: -240 }}
-              animate={{ x: 0 }}
-              exit={{ x: -240 }}
-              transition={{ type: 'tween', duration: 0.2 }}
-              className="fixed top-0 left-0 bottom-0 z-50 w-60 bg-[#080808] border-r border-[#1f1f1f] md:hidden"
-            >
-              <SidebarContent {...sidebarProps} />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Sidebar mobile — transição CSS pura (sem AnimatePresence, que travava
+          montado ao não conseguir animar a saída de um Fragment). O estado
+          controla direto: fechado = fora da tela + sem captura de clique. */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/60 md:hidden transition-opacity duration-200 ${
+          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden={!sidebarOpen}
+      />
+      <aside
+        className={`fixed top-0 left-0 bottom-0 z-50 w-60 bg-[#080808] border-r border-[#1f1f1f] md:hidden transition-transform duration-200 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+        }`}
+      >
+        <SidebarContent {...sidebarProps} />
+      </aside>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
