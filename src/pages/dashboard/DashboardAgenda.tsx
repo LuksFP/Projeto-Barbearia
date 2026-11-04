@@ -70,6 +70,7 @@ const EMPTY_APT: NewAptForm = {
 
 const DashboardAgenda = () => {
   const { barbershop, barbers, services, clients, addClient, appointments: demoAppointments } = useTenant()
+  const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
   const [weekOffset, setWeekOffset]     = useState(0)
   const [selectedIdx, setSelectedIdx]   = useState(todayIndex)
   const [filterBarber, setFilterBarber] = useState<string>('all')
@@ -81,6 +82,26 @@ const DashboardAgenda = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<NewAptForm>(EMPTY_APT)
+  // Clientes já cadastrados que batem com o que está sendo digitado (nome ou telefone)
+  const clientSuggestions = useMemo(() => {
+    if (!suggestField) return []
+    const plain = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    const q = plain((suggestField === 'name' ? form.clientName : form.clientPhone).trim())
+    const qDigits = q.replace(/\D/g, '')
+    if (q.length < 2) return []
+    return clients
+      .filter(c => suggestField === 'name'
+        ? plain(c.name).includes(q)
+        : qDigits.length >= 2 && c.phone.replace(/\D/g, '').includes(qDigits))
+      .filter(c => !(c.name === form.clientName && c.phone === form.clientPhone))
+      .slice(0, 5)
+  }, [suggestField, form.clientName, form.clientPhone, clients])
+
+  const pickClient = (c: { name: string; phone: string }) => {
+    setForm(f => ({ ...f, clientName: c.name, clientPhone: c.phone }))
+    setSuggestField(null)
+  }
+
   const [servicesOpen, setServicesOpen] = useState(false)   // accordion da lista de serviços
 
   const weekDays    = getWeekDays(weekOffset)
@@ -403,7 +424,7 @@ const DashboardAgenda = () => {
                 key={apt.id}
                 className="p-4 rounded-xl bg-[#161616] border border-[#262626] hover:bg-[#1c1c1c] hover:border-[#303030] transition-all"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   <span className="font-heading text-xl text-white/60 w-14 shrink-0 text-center">
                     {apt.time}
                   </span>
@@ -417,15 +438,18 @@ const DashboardAgenda = () => {
                       )}
                     </p>
                   </div>
-                  {apt.membershipType === 'vip' && (
-                    <span className="flex items-center gap-1 text-amber-400 text-xs px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                      <Crown className="w-2.5 h-2.5" />
-                      VIP
-                    </span>
-                  )}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${status.bg} ${status.color}`}>
-                    {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <StatusIcon className="w-3 h-3" />}
-                    {status.label}
+                  {/* No celular as etiquetas descem pra uma linha própria; senão comem o nome */}
+                  <div className="flex items-center gap-2 max-sm:w-full max-sm:pl-[74px]">
+                    {apt.membershipType === 'vip' && (
+                      <span className="flex items-center gap-1 text-amber-400 text-xs px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                        <Crown className="w-2.5 h-2.5" />
+                        VIP
+                      </span>
+                    )}
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${status.bg} ${status.color}`}>
+                      {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <StatusIcon className="w-3 h-3" />}
+                      {status.label}
+                    </div>
                   </div>
                 </div>
 
@@ -484,25 +508,63 @@ const DashboardAgenda = () => {
 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2">
+                  <div className="col-span-2 relative">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Nome do cliente *</label>
                     <input
                       type="text"
                       value={form.clientName}
-                      onChange={e => setForm(f => ({ ...f, clientName: e.target.value }))}
+                      onChange={e => { setForm(f => ({ ...f, clientName: e.target.value })); setSuggestField('name') }}
+                      onFocus={() => setSuggestField('name')}
+                      onBlur={() => setSuggestField(null)}
+                      autoComplete="off"
                       placeholder="Nome completo"
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
                     />
+                    {suggestField === 'name' && clientSuggestions.length > 0 && (
+                      <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-[#2a2a2a] bg-[#161616] shadow-xl overflow-hidden">
+                        {clientSuggestions.map(c => (
+                          <li key={c.id}>
+                            <button
+                              type="button"
+                              onMouseDown={e => { e.preventDefault(); pickClient(c) }}
+                              className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors"
+                            >
+                              <span className="text-white text-sm font-body truncate">{c.name}</span>
+                              <span className="text-white/40 text-xs font-body shrink-0">{c.phone}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-2 relative">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Telefone *</label>
                     <input
                       type="tel"
                       value={form.clientPhone}
-                      onChange={e => setForm(f => ({ ...f, clientPhone: e.target.value }))}
+                      onChange={e => { setForm(f => ({ ...f, clientPhone: e.target.value })); setSuggestField('phone') }}
+                      onFocus={() => setSuggestField('phone')}
+                      onBlur={() => setSuggestField(null)}
+                      autoComplete="off"
                       placeholder="(00) 00000-0000"
                       className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-[#3a3a3a]"
                     />
+                    {suggestField === 'phone' && clientSuggestions.length > 0 && (
+                      <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-[#2a2a2a] bg-[#161616] shadow-xl overflow-hidden">
+                        {clientSuggestions.map(c => (
+                          <li key={c.id}>
+                            <button
+                              type="button"
+                              onMouseDown={e => { e.preventDefault(); pickClient(c) }}
+                              className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors"
+                            >
+                              <span className="text-white text-sm font-body truncate">{c.name}</span>
+                              <span className="text-white/40 text-xs font-body shrink-0">{c.phone}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Serviços *</label>
