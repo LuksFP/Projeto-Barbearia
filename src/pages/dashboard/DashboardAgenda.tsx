@@ -69,7 +69,7 @@ const EMPTY_APT: NewAptForm = {
 }
 
 const DashboardAgenda = () => {
-  const { barbershop, barbers, services, clients, addClient, appointments: demoAppointments } = useTenant()
+  const { barbershop, barbers, services, clients, addClient, refreshClients, appointments: demoAppointments } = useTenant()
   const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
   const [weekOffset, setWeekOffset]     = useState(0)
   const [selectedIdx, setSelectedIdx]   = useState(todayIndex)
@@ -161,6 +161,8 @@ const DashboardAgenda = () => {
     setForm({ ...EMPTY_APT, date: selectedDate })
     setServicesOpen(false)
     setModalOpen(true)
+    // Pega também quem agendou pelo site público desde que o painel abriu
+    void refreshClients()
   }
 
   useEffect(() => {
@@ -508,6 +510,25 @@ const DashboardAgenda = () => {
 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
+                  {clients.length > 0 && (
+                    <div className="col-span-2">
+                      <label className="block text-white/45 text-xs font-body mb-1.5">Cliente já cadastrado</label>
+                      <select
+                        value={clients.find(c => c.name === form.clientName && c.phone === form.clientPhone)?.id ?? ''}
+                        onChange={e => {
+                          const c = clients.find(x => x.id === e.target.value)
+                          if (c) setForm(f => ({ ...f, clientName: c.name, clientPhone: c.phone }))
+                        }}
+                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body focus:outline-none focus:border-[#3a3a3a]"
+                      >
+                        <option value="">Escolher cliente salvo… ({clients.length})</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>
+                        ))}
+                      </select>
+                      <p className="text-white/25 text-[11px] font-body mt-1.5">Ou digite abaixo para cliente novo.</p>
+                    </div>
+                  )}
                   <div className="col-span-2 relative">
                     <label className="block text-white/45 text-xs font-body mb-1.5">Nome do cliente *</label>
                     <input
