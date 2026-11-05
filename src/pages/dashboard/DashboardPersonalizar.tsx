@@ -178,12 +178,12 @@ const team = await BarberOS.getTeam()`
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-white/30 text-sm font-body mb-1">Site público</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">PERSONALIZAR</h1>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 flex-wrap">
           <a
             href={previewUrl}
             target="_blank"

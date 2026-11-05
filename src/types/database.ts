@@ -711,6 +711,50 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          barbershop_id: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          barbershop_id: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          barbershop_id?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limit_hits: {
         Row: {
           count: number
@@ -739,6 +783,7 @@ export type Database = {
           id: string
           last_login_at: string | null
           owner_name: string
+          past_due_since: string | null
           plan: string | null
           plan_started_at: string | null
           plan_status: string | null
@@ -747,7 +792,6 @@ export type Database = {
           stripe_subscription_id: string | null
           trial_ends_at: string | null
           trial_reminder_sent_at: string | null
-          past_due_since: string | null
           user_id: string
         }
         Insert: {
@@ -759,6 +803,7 @@ export type Database = {
           id?: string
           last_login_at?: string | null
           owner_name: string
+          past_due_since?: string | null
           plan?: string | null
           plan_started_at?: string | null
           plan_status?: string | null
@@ -767,7 +812,6 @@ export type Database = {
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
           trial_reminder_sent_at?: string | null
-          past_due_since?: string | null
           user_id: string
         }
         Update: {
@@ -779,6 +823,7 @@ export type Database = {
           id?: string
           last_login_at?: string | null
           owner_name?: string
+          past_due_since?: string | null
           plan?: string | null
           plan_started_at?: string | null
           plan_status?: string | null
@@ -787,7 +832,6 @@ export type Database = {
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
           trial_reminder_sent_at?: string | null
-          past_due_since?: string | null
           user_id?: string
         }
         Relationships: [
@@ -875,6 +919,7 @@ export type Database = {
           id: string
           last_login_at: string | null
           owner_name: string
+          past_due_since: string | null
           plan: string | null
           plan_started_at: string | null
           plan_status: string | null
@@ -883,7 +928,6 @@ export type Database = {
           stripe_subscription_id: string | null
           trial_ends_at: string | null
           trial_reminder_sent_at: string | null
-          past_due_since: string | null
           user_id: string
         }
         SetofOptions: {

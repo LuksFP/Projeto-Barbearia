@@ -30,6 +30,8 @@ dist-ssr
 test-*.mjs
 audit-*.mjs
 *.png
+!public/icon-*.png
+!public/apple-touch-icon.png
 
 # Estado local do Supabase CLI
 supabase/.temp

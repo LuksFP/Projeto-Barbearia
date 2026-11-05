@@ -44,6 +44,11 @@ function fmt(n: number): string {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 0 })
 }
 
+// "16,2 mil" em vez de "16.200" — cabe na barra estreita do histórico no celular.
+function fmtCompact(n: number): string {
+  return n.toLocaleString('pt-BR', { notation: 'compact', maximumFractionDigits: 1 })
+}
+
 // ─── Comparativo mensal ──────────────────────────────────────────────────────
 
 const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
@@ -161,14 +166,17 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
       {months.length >= 3 && (
         <div className="p-5 rounded-xl bg-[#161616] border border-[#262626]">
           <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body mb-4">Histórico</p>
-          <div className="flex items-end gap-3 h-20">
+          <div className="flex items-end gap-1.5 sm:gap-3 h-20">
             {months.map((m, i) => {
               const maxTotal = Math.max(...months.map(x => x.total))
               const heightPct = maxTotal > 0 ? (m.total / maxTotal) * 100 : 0
               const isLast = i === months.length - 1
               return (
-                <div key={m.month} className="flex-1 flex flex-col items-center gap-1.5">
-                  <span className="text-[10px] font-body text-white/30">R$ {fmt(m.total)}</span>
+                <div
+                  key={m.month}
+                  className={`flex-1 min-w-0 flex-col items-center gap-1.5 ${i < months.length - 6 ? 'hidden sm:flex' : 'flex'}`}
+                >
+                  <span className="text-[10px] font-body text-white/30 whitespace-nowrap">R$ {fmtCompact(m.total)}</span>
                   <div className="w-full rounded-t flex items-end justify-center" style={{ height: 48 }}>
                     <div
                       className={`w-full rounded transition-all ${isLast ? 'bg-amber-500/70' : 'bg-white/10'}`}
@@ -366,7 +374,7 @@ const DashboardOverview = () => {
       </AnimatePresence>
 
       {/* Site strip */}
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-[#161616] border border-[#262626]">
+      <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-[#161616] border border-[#262626]">
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
           barbershop?.siteType === 'external'
             ? 'bg-blue-500/15 border border-blue-500/25'
@@ -376,8 +384,8 @@ const DashboardOverview = () => {
             ? <Link2 className="w-3.5 h-3.5 text-blue-400" />
             : <Globe className="w-3.5 h-3.5 text-emerald-400" />}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white/70 text-sm font-body">
+        <div className="flex-1 min-w-[12rem]">
+          <p className="text-white/70 text-sm font-body break-words">
             {barbershop?.siteType === 'external'
               ? <>Site vinculado — <span className="text-white/50 font-mono text-xs">{barbershop?.customDomain || 'domínio não configurado'}</span></>
               : <>Site genérico — <span className="text-white/50 font-mono text-xs">barberos.io/b/{barbershop?.slug}</span></>}

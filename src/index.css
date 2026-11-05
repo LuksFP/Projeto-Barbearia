@@ -901,3 +901,18 @@ All colors MUST be HSL.
   background: rgba(140, 140, 140, 0.55);
   background-clip: padding-box;
 }
+
+/* Celular: campo com fonte < 16px faz o iPhone dar zoom ao tocar e a tela fica
+   "dançando" de lado. 16px no toque evita o zoom; no desktop vale o tamanho do design. */
+@media (max-width: 767px) and (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}

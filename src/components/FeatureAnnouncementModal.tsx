@@ -26,6 +26,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'som-moeda-agendamento-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Plim! BarberOS virou app e avisa cada agendamento',
+    description:
+      'Cliente marcou pelo site: com o painel aberto toca som de moeda; com ele fechado chega notificação no celular, igual app de venda.',
+    steps: [
+      'Abra o menu e toque em “Instalar app no celular” (no iPhone: Compartilhar → Adicionar à Tela de Início)',
+      'Toque no sino e permita as notificações — ele toca o som de teste',
+      'Pronto: cada agendamento novo chega com nome, horário e valor, mesmo com o app fechado',
+    ],
+    ctaLabel: 'Abrir a Agenda',
+    ctaTo: '/dashboard/agenda',
+  },
+  {
     key: 'agenda-ao-vivo-2026-09',
     badge: 'Novidade no ar',
     title: 'Agenda ao vivo em todos os celulares',

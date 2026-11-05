@@ -12,7 +12,6 @@ import {
   Crown,
   Settings,
   Menu,
-  X,
   LogOut,
   ChevronDown,
   Scissors as ScissorsIcon,
@@ -28,6 +27,10 @@ import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import FeatureAnnouncementModal from '@/components/FeatureAnnouncementModal'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { toast } from '@/hooks/use-toast'
+import BookingAlertToggle from '@/components/dashboard/BookingAlertToggle'
+import InstallAppButton from '@/components/dashboard/InstallAppButton'
+import { alertNewBooking, notifyPermission, readAlertPrefs, unlockAudio, warmUpNotifications } from '@/lib/bookingAlert'
+import { enablePush } from '@/lib/push'
 import { clearDemoSession, getDemoPlan, isDemoMode } from '@/lib/demo'
 
 const navItems = [
@@ -60,9 +63,11 @@ interface SidebarContentProps {
   userRole: string | null
   onNavigate: () => void
   onSignOut: () => void
+  /** null no demo: sem usuário real pra receber push. */
+  pushBarbershopId: string | null
 }
 
-const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOut }: SidebarContentProps) => (
+const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOut, pushBarbershopId }: SidebarContentProps) => (
   <div className="flex flex-col h-full">
     {/* Workspace header */}
     <div className="p-5 border-b border-[#1f1f1f]">
@@ -117,6 +122,8 @@ const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOu
           </p>
         </div>
       </div>
+      <InstallAppButton />
+      <BookingAlertToggle barbershopId={pushBarbershopId} />
       <button
         onClick={onSignOut}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/45 hover:text-white/80 hover:bg-white/[0.04] transition-all font-body"
@@ -153,16 +160,41 @@ const DashboardLayout = () => {
   // Painel aberto em qualquer aparelho: mantém Visão Geral/Clientes em dia e
   // avisa quando o cliente marca pelo site (booking público entra como 'pending';
   // a agenda interna grava 'confirmed', então não gera aviso duplicado).
+  // Navegador só toca som depois de um toque na página: libera o áudio no
+  // primeiro toque/clique, pra o aviso de moeda funcionar mesmo sem mexer no sino.
+  useEffect(() => {
+    warmUpNotifications()
+    const unlock = () => unlockAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
+
+  // Aparelho que já ligou os avisos: mantém a inscrição de push salva pra esta
+  // barbearia (troca de conta, inscrição renovada pelo navegador etc.).
+  const pushBarbershopId = demo ? null : barbershop?.id ?? null
+  useEffect(() => {
+    if (!pushBarbershopId) return
+    if (!readAlertPrefs().sound || notifyPermission() !== 'granted') return
+    void enablePush(pushBarbershopId)
+  }, [pushBarbershopId])
+
   useAppointmentsLive(barbershop?.id, event => {
     void refreshAppointments()
     if (event.type === 'INSERT') {
       void refreshClients()
       if (event.row.status === 'pending') {
         const [, m, d] = event.row.date.split('-')
-        toast({
-          title: 'Novo agendamento',
-          description: `${event.row.client_name} · ${d}/${m} às ${event.row.time.slice(0, 5)} · ${event.row.service_name}`,
-        })
+        const price = Number(event.row.price)
+        const valor = price > 0
+          ? ` · ${price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+          : ''
+        const description = `${event.row.client_name} · ${d}/${m} às ${event.row.time.slice(0, 5)} · ${event.row.service_name}${valor}`
+        toast({ title: 'Novo agendamento!', description })
+        alertNewBooking('Novo agendamento!', description, `agendamento-${event.row.id}`)
       }
     }
   })
@@ -210,10 +242,11 @@ const DashboardLayout = () => {
     userRole: userRole ?? null,
     onNavigate: () => setSidebarOpen(false),
     onSignOut: () => navigate('/'),
+    pushBarbershopId,
   }
 
   return (
-    <div className="flex h-screen bg-[#0d0d0d] text-white overflow-hidden">
+    <div className="flex h-screen h-dvh bg-[#0d0d0d] text-white overflow-hidden">
       {/* Sidebar desktop */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col bg-[#080808] border-r border-[#1f1f1f]">
         <SidebarContent {...sidebarProps} />
@@ -230,7 +263,7 @@ const DashboardLayout = () => {
         aria-hidden={!sidebarOpen}
       />
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-60 bg-[#080808] border-r border-[#1f1f1f] md:hidden transition-transform duration-200 ${
+        className={`fixed top-0 left-0 bottom-0 z-50 w-60 max-w-[85vw] bg-[#080808] border-r border-[#1f1f1f] md:hidden transition-transform duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         }`}
       >
@@ -243,17 +276,15 @@ const DashboardLayout = () => {
         <div className="md:hidden flex items-center gap-4 px-4 h-14 border-b border-[#1f1f1f] bg-[#080808] shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-white/60 hover:text-white"
+            aria-label="Abrir menu"
+            className="w-10 h-10 -ml-2 flex items-center justify-center text-white/60 hover:text-white"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <span className="font-heading text-lg tracking-wide text-amber-400">{barbershop.logoText}</span>
-          <button
-            className="ml-auto text-white/40 hover:text-white/70"
-            onClick={() => setSidebarOpen(false)}
-          >
-            {sidebarOpen && <X className="w-4 h-4" />}
-          </button>
+          <span className="font-heading text-lg tracking-wide text-amber-400 truncate min-w-0">{barbershop.logoText}</span>
+          <div className="ml-auto shrink-0">
+            <BookingAlertToggle barbershopId={pushBarbershopId} compact />
+          </div>
         </div>
 
         {/* Banner do modo demo: nada aqui sai deste navegador */}
@@ -297,7 +328,7 @@ const DashboardLayout = () => {
         )}
 
         {/* Página */}
-        <main className="flex-1 overflow-y-auto scrollbar-none p-4 sm:p-6">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain scrollbar-none p-4 sm:p-6">
           <Outlet />
         </main>
       </div>
