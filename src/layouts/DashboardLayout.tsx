@@ -145,8 +145,10 @@ const DashboardLayout = () => {
 
   // Fecha o menu sempre que a rota muda — garante que o drawer do celular não
   // fique travado aberto se o clique de fechar se perder no toque.
+  // No celular a página inteira rola, então trocar de tela volta pro topo.
   useEffect(() => {
     setSidebarOpen(false)
+    window.scrollTo(0, 0)
   }, [location.pathname])
 
   // O cadastro devolve pro painel quem já está logado — e o demo conta como logado.
@@ -246,7 +248,10 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="flex h-screen h-dvh bg-[#0d0d0d] text-white overflow-hidden">
+    // Celular: quem rola é a própria página (rolagem nativa — no Android uma
+    // caixa interna com overflow travava o arrasto e não escondia a barra do
+    // Chrome). Desktop: tela fixa com só o conteúdo rolando ao lado do menu.
+    <div className="flex min-h-dvh md:h-dvh bg-[#0d0d0d] text-white overflow-x-clip md:overflow-hidden">
       {/* Sidebar desktop */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col bg-[#080808] border-r border-[#1f1f1f]">
         <SidebarContent {...sidebarProps} />
@@ -271,9 +276,9 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 md:overflow-hidden">
         {/* Topbar mobile */}
-        <div className="md:hidden flex items-center gap-4 px-4 h-14 border-b border-[#1f1f1f] bg-[#080808] shrink-0">
+        <div className="md:hidden sticky top-0 z-30 flex items-center gap-4 px-4 h-14 border-b border-[#1f1f1f] bg-[#080808] shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Abrir menu"
@@ -328,7 +333,7 @@ const DashboardLayout = () => {
         )}
 
         {/* Página */}
-        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain scrollbar-none p-4 sm:p-6">
+        <main className="flex-1 min-w-0 overflow-x-clip md:overflow-y-auto md:overflow-x-hidden md:overscroll-y-contain scrollbar-none p-4 sm:p-6">
           <Outlet />
         </main>
       </div>
