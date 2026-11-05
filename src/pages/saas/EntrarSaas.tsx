@@ -2,9 +2,32 @@ import { useState } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { supabase } from '@/lib/supabase'
+import { supabase, rememberSession, setRememberSession } from '@/lib/supabase'
 import { getAuthErrorMessage } from '@/lib/authErrors'
 import { motion } from 'framer-motion'
+
+const LAST_EMAIL_KEY = 'barberos:ultimo-email'
+
+function readLastEmail(): string {
+  try {
+    return localStorage.getItem(LAST_EMAIL_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+/** Pede pro navegador salvar login e senha (Chrome/Edge/Android). No Safari e
+ *  Firefox o próprio formulário com autocomplete já dispara o "Salvar senha". */
+async function offerToSaveCredentials(form: HTMLFormElement): Promise<void> {
+  const PC = (window as unknown as { PasswordCredential?: new (f: HTMLFormElement) => Credential })
+    .PasswordCredential
+  if (!PC || !navigator.credentials?.store) return
+  try {
+    await navigator.credentials.store(new PC(form))
+  } catch {
+    /* usuário recusou ou navegador não deixou: segue o login */
+  }
+}
 
 const EntrarSaas = () => {
   const navigate = useNavigate()
@@ -12,7 +35,8 @@ const EntrarSaas = () => {
   const [searchParams] = useSearchParams()
   const senhaAlterada = searchParams.get('senha') === 'alterada'
 
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(readLastEmail)
+  const [remember, setRemember] = useState(rememberSession)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -22,10 +46,19 @@ const EntrarSaas = () => {
     e.preventDefault()
     setError('')
     if (!email || !password) { setError('Preencha email e senha.'); return }
+    const form = e.currentTarget as HTMLFormElement
+    setRememberSession(remember)
     setLoading(true)
     try {
       const result = await login(email, password)
       if (result === true) {
+        try {
+          if (remember) localStorage.setItem(LAST_EMAIL_KEY, email.trim())
+          else localStorage.removeItem(LAST_EMAIL_KEY)
+        } catch {
+          /* sem storage */
+        }
+        if (remember) await offerToSaveCredentials(form)
         // Hard reload garante que onAuthStateChange carrega a conta antes do SaasGuard rodar
         window.location.replace('/dashboard')
         return
@@ -82,6 +115,7 @@ const EntrarSaas = () => {
             type="button"
             onClick={async () => {
               try {
+                setRememberSession(remember)
                 await supabase.auth.signInWithOAuth({
                   provider: 'google',
                   options: { redirectTo: `${window.location.origin}/dashboard` },
@@ -102,12 +136,17 @@ const EntrarSaas = () => {
             <div className="flex-1 h-px bg-white/8" />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} method="post" action="/entrar" className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-white/40 font-body tracking-wide uppercase">Email</label>
+              <label htmlFor="login-email" className="text-xs font-semibold text-white/40 font-body tracking-wide uppercase">Email</label>
               <input
+                id="login-email"
+                name="email"
                 type="email"
-                autoComplete="email"
+                inputMode="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                autoComplete="username"
                 placeholder="rafael@barbearia.com"
                 value={email}
                 onChange={e => { setEmail(e.target.value); setError('') }}
@@ -116,9 +155,11 @@ const EntrarSaas = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-white/40 font-body tracking-wide uppercase">Senha</label>
+              <label htmlFor="login-senha" className="text-xs font-semibold text-white/40 font-body tracking-wide uppercase">Senha</label>
               <div className="relative">
                 <input
+                  id="login-senha"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="Sua senha"
@@ -129,12 +170,23 @@ const EntrarSaas = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? 'Esconder senha' : 'Mostrar senha'}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
+
+            <label className="flex items-center gap-2.5 cursor-pointer select-none w-fit">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={e => setRemember(e.target.checked)}
+                className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
+              />
+              <span className="text-white/50 text-sm font-body">Salvar login e senha neste aparelho</span>
+            </label>
 
             {error && <p className="text-red-400 text-sm font-body">{error}</p>}
 
