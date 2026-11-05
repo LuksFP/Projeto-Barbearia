@@ -3,6 +3,7 @@ import {
   Clock, CheckCircle2, AlertCircle, Globe, Link2,
   ExternalLink, PartyPopper, DollarSign, Copy, Check,
 } from 'lucide-react'
+import { openOutsideApp } from '@/lib/pwaHead'
 import { toast } from '@/hooks/use-toast'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
@@ -406,6 +407,7 @@ const DashboardOverview = () => {
             ? `https://${barbershop.customDomain}`
             : `/b/${barbershop?.slug}`}
           target="_blank" rel="noopener noreferrer"
+          onClick={openOutsideApp}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/40 hover:text-white hover:border-[#333] text-xs font-body transition-all shrink-0"
         >
           <ExternalLink className="w-3 h-3" />

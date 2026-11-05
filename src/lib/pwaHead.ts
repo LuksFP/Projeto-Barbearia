@@ -32,3 +32,28 @@ export function syncPwaHead(pathname: string): void {
     document.head.appendChild(el)
   }
 }
+
+/** Rodando como app instalado (tela cheia, sem barra do navegador)? */
+export function isStandaloneApp(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true
+  )
+}
+
+/**
+ * onClick dos links pro site do cliente ("Ver site"). No navegador comum o
+ * target="_blank" já resolve. Dentro do app instalado no Android, o link
+ * abriria na própria janela do app — aqui ele vai pro Chrome de verdade, via
+ * intent. (Sem Chrome, o fallback abre a URL normal.)
+ */
+export function openOutsideApp(e: { currentTarget: HTMLAnchorElement; preventDefault(): void }): void {
+  if (!isStandaloneApp() || !/Android/i.test(navigator.userAgent)) return
+  const url = new URL(e.currentTarget.href, window.location.href)
+  if (url.protocol !== 'https:') return
+  e.preventDefault()
+  window.location.href =
+    `intent://${url.host}${url.pathname}${url.search}${url.hash}` +
+    `#Intent;scheme=https;package=com.android.chrome;` +
+    `S.browser_fallback_url=${encodeURIComponent(url.href)};end`
+}

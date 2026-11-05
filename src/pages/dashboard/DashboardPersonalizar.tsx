@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { openOutsideApp } from '@/lib/pwaHead'
 import { useTenant } from '@/contexts/TenantContext'
 import {
   ExternalLink, Palette, Type, Phone, Image, Check, RefreshCw,
@@ -186,6 +187,7 @@ const team = await BarberOS.getTeam()`
         <div className="flex items-center gap-3 flex-wrap">
           <a
             href={previewUrl}
+            onClick={openOutsideApp}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
@@ -551,6 +553,7 @@ const team = await BarberOS.getTeam()`
                     </button>
                     <a
                       href={previewUrl}
+                      onClick={openOutsideApp}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
