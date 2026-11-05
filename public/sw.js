@@ -59,7 +59,14 @@ self.addEventListener('push', event => {
       // página aberta (ex.: site da barbearia) não conta: aí a notificação aparece.
       const visible = list.some(c => c.visibilityState === 'visible' && isPainel(c.url))
       // O teste do sino aparece sempre: é justamente pra ver a notificação.
-      if (visible && options.tag !== 'teste-aviso') return undefined
+      if (visible && options.tag !== 'teste-aviso') {
+        // Painel na frente: ele toca a moeda. Avisa por aqui também, caso o
+        // tempo real tenha caído (celular dormiu) — o painel ignora repetido.
+        list
+          .filter(c => c.visibilityState === 'visible' && isPainel(c.url))
+          .forEach(c => c.postMessage({ type: 'novo-agendamento', title, body: options.body, tag: options.tag }))
+        return undefined
+      }
       return self.registration.showNotification(title, options)
     }),
   )

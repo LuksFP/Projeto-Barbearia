@@ -29,7 +29,7 @@ import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { toast } from '@/hooks/use-toast'
 import BookingAlertToggle from '@/components/dashboard/BookingAlertToggle'
 import InstallAppButton from '@/components/dashboard/InstallAppButton'
-import { alertNewBooking, notifyPermission, readAlertPrefs, unlockAudio, warmUpNotifications } from '@/lib/bookingAlert'
+import { alertNewBooking, listenPushWhileOpen, notifyPermission, readAlertPrefs, unlockAudio, warmUpNotifications } from '@/lib/bookingAlert'
 import { enablePush } from '@/lib/push'
 import { clearDemoSession, getDemoPlan, isDemoMode } from '@/lib/demo'
 
@@ -166,12 +166,16 @@ const DashboardLayout = () => {
   // primeiro toque/clique, pra o aviso de moeda funcionar mesmo sem mexer no sino.
   useEffect(() => {
     warmUpNotifications()
+    // Todo toque reativa o áudio: o Android suspende o som quando o app vai
+    // pro fundo, e a moeda precisa estar pronta quando o barbeiro volta.
     const unlock = () => unlockAudio()
-    window.addEventListener('pointerdown', unlock, { once: true })
-    window.addEventListener('keydown', unlock, { once: true })
+    window.addEventListener('pointerdown', unlock)
+    window.addEventListener('keydown', unlock)
+    const stopPush = listenPushWhileOpen((title, description) => toast({ title, description }))
     return () => {
       window.removeEventListener('pointerdown', unlock)
       window.removeEventListener('keydown', unlock)
+      stopPush()
     }
   }, [])
 
@@ -195,8 +199,9 @@ const DashboardLayout = () => {
           ? ` · ${price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
           : ''
         const description = `${event.row.client_name} · ${d}/${m} às ${event.row.time.slice(0, 5)} · ${event.row.service_name}${valor}`
-        toast({ title: 'Novo agendamento!', description })
-        alertNewBooking('Novo agendamento!', description, `agendamento-${event.row.id}`)
+        if (alertNewBooking('Novo agendamento!', description, `agendamento-${event.row.id}`)) {
+          toast({ title: 'Novo agendamento!', description })
+        }
       }
     }
   })

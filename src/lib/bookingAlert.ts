@@ -6,8 +6,9 @@
 // página, por isso `unlockAudio` é chamado no primeiro toque/clique do painel.
 //
 // Com o navegador fechado quem avisa é o Web Push (src/lib/push.ts +
-// edge function push-new-booking) — aí toca o som padrão do celular, não a moeda:
-// navegador nenhum deixa o site escolher o som da notificação.
+// edge function push-new-booking) — aí toca o som de notificação do celular:
+// navegador nenhum deixa o site escolher. No Android dá pra pôr a moeda como
+// som da notificação do app (arquivo public/som-moeda.mp3, botão no menu).
 
 const PREFS_KEY = 'barberos:booking-alert'
 
@@ -169,11 +170,35 @@ async function showSystemNotification(title: string, body: string, tag: string) 
 
 // ─── Tudo junto ──────────────────────────────────────────────────────────────
 
-// `tag` igual ao do push do servidor: se os dois chegarem, um substitui o outro.
-export function alertNewBooking(title: string, body: string, tag: string) {
+// O mesmo agendamento pode chegar pelo tempo real E pelo push (service worker):
+// toca uma vez só.
+const recentTags = new Map<string, number>()
+
+/** true se é aviso novo (aí quem chamou mostra o toast); false se repetido. */
+export function alertNewBooking(title: string, body: string, tag: string): boolean {
+  const now = Date.now()
+  for (const [k, at] of recentTags) if (now - at > 120_000) recentTags.delete(k)
+  if (recentTags.has(tag)) return false
+  recentTags.set(tag, now)
+
   if (readAlertPrefs().sound) playCoinSound()
   if ('vibrate' in navigator) navigator.vibrate([90, 60, 140])
   // Com o painel na frente, o toast já aparece; a notificação do sistema é pra
   // quando o barbeiro está em outra aba/app.
   if (document.visibilityState !== 'visible') void showSystemNotification(title, body, tag)
+  return true
+}
+
+/** Push que chegou com o painel aberto: o service worker repassa pra cá. */
+export function listenPushWhileOpen(onNew: (title: string, body: string) => void): () => void {
+  if (!('serviceWorker' in navigator)) return () => {}
+  const handler = (e: MessageEvent) => {
+    const d: unknown = e.data
+    if (!d || typeof d !== 'object' || (d as { type?: unknown }).type !== 'novo-agendamento') return
+    const { title, body, tag } = d as { title?: unknown; body?: unknown; tag?: unknown }
+    if (typeof title !== 'string' || typeof body !== 'string' || typeof tag !== 'string') return
+    if (alertNewBooking(title, body, tag)) onNew(title, body)
+  }
+  navigator.serviceWorker.addEventListener('message', handler)
+  return () => navigator.serviceWorker.removeEventListener('message', handler)
 }

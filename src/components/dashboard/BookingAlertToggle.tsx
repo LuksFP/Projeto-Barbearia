@@ -2,7 +2,7 @@
 // push no aparelho com o navegador fechado. Ao ligar, toca o som uma vez — serve
 // de teste e libera o áudio do navegador (que só toca depois de um toque).
 import { useState } from 'react'
-import { Bell, BellOff } from 'lucide-react'
+import { Bell, BellOff, Download } from 'lucide-react'
 import {
   notifyPermission,
   playCoinSound,
@@ -20,6 +20,8 @@ interface Props {
   barbershopId: string | null
   compact?: boolean
 }
+
+const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
 
 const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
   const [on, setOn] = useState(() => readAlertPrefs().sound)
@@ -90,6 +92,7 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
   }
 
   return (
+    <>
     <button
       type="button"
       onClick={() => void toggle()}
@@ -107,6 +110,25 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
         {on ? 'Ligado' : 'Desligado'}
       </span>
     </button>
+    {on && isAndroid && (
+      <a
+        href="/som-moeda.mp3"
+        download="som-moeda-barberos.mp3"
+        onClick={() =>
+          toast({
+            title: 'Som de moeda baixado',
+            description:
+              'Pra tocar a moeda mesmo com o app fechado: Configurações do celular → Apps → BarberOS → Notificações → Som → escolha “som-moeda-barberos” (em Downloads).',
+            duration: 15000,
+          })
+        }
+        className="w-full flex items-center gap-2 px-3 py-1.5 mb-1 rounded-lg text-xs text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-all font-body"
+      >
+        <Download className="w-3.5 h-3.5 shrink-0" />
+        Moeda também com o app fechado
+      </a>
+    )}
+    </>
   )
 }
 
