@@ -72,6 +72,19 @@ export const appointmentRepository = {
     return data
   },
 
+  /** Apaga de vez. Devolve quantos saíram: RLS só deixa dono/admin, e pra
+   *  quem não pode o Supabase não dá erro — só apaga 0. */
+  async remove(ids: string[]): Promise<number> {
+    if (!ids.length) return 0
+    const { data, error } = await supabase
+      .from('appointments')
+      .delete()
+      .in('id', ids)
+      .select('id')
+    if (error) throw error
+    return data?.length ?? 0
+  },
+
   async setReminded(id: string, reminded: boolean): Promise<AppointmentRow> {
     const { data, error } = await supabase
       .from('appointments')

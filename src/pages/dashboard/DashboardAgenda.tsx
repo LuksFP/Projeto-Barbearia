@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -70,7 +70,7 @@ const EMPTY_APT: NewAptForm = {
 }
 
 const DashboardAgenda = () => {
-  const { barbershop, barbers, services, clients, addClient, refreshClients, appointments: demoAppointments } = useTenant()
+  const { barbershop, barbers, services, clients, addClient, refreshClients, appointments: demoAppointments, isAdmin } = useTenant()
   const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [weekOffset, setWeekOffset]     = useState(0)
@@ -79,6 +79,16 @@ const DashboardAgenda = () => {
   const [appointments, setAppointments] = useState<BarbershopAppointment[]>([])
   const [loading, setLoading]           = useState(false)
   const [updatingId, setUpdatingId]     = useState<string | null>(null)
+  // Apagar pede dois toques: o 1º arma ("Confirmar?"), o 2º apaga. Desarma sozinho.
+  const [armedDelete, setArmedDelete]   = useState<string | null>(null)
+  const [deleting, setDeleting]         = useState(false)
+  const canDelete = isAdmin || isDemoMode()
+
+  useEffect(() => {
+    if (!armedDelete) return
+    const t = setTimeout(() => setArmedDelete(null), 4000)
+    return () => clearTimeout(t)
+  }, [armedDelete])
 
   // Modal "Novo agendamento"
   const [modalOpen, setModalOpen] = useState(false)
@@ -226,6 +236,31 @@ const DashboardAgenda = () => {
     }
   }
 
+  // Só agendamento cancelado pode ser apagado (o resto entra no faturamento).
+  const handleDelete = async (ids: string[], key: string) => {
+    if (!ids.length) return
+    if (armedDelete !== key) { setArmedDelete(key); return }
+    setArmedDelete(null)
+    if (isDemoMode()) {
+      setAppointments(prev => prev.filter(a => !ids.includes(a.id)))
+      return
+    }
+    setDeleting(true)
+    try {
+      const removed = await appointmentRepository.remove(ids)
+      if (removed === 0) {
+        toast({ title: 'Não deu pra apagar', description: 'Só o dono ou um administrador pode apagar agendamentos.', variant: 'destructive' })
+        return
+      }
+      setAppointments(prev => prev.filter(a => !ids.includes(a.id)))
+      toast({ title: removed === 1 ? 'Agendamento apagado' : `${removed} agendamentos apagados` })
+    } catch {
+      toast({ title: 'Erro ao apagar', variant: 'destructive' })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const handleNewAppointment = async () => {
     if (!barbershop || !form.clientName || !form.clientPhone || form.serviceNames.length === 0 || !form.barberId || !form.date || !form.time) return
 
@@ -349,6 +384,8 @@ const DashboardAgenda = () => {
     a => filterBarber === 'all' || a.barberId === filterBarber
   )
 
+  const cancelledIds = filtered.filter(a => a.status === 'cancelled').map(a => a.id)
+
   const grouped = filtered.reduce<Record<string, BarbershopAppointment[]>>((acc, apt) => {
     if (!acc[apt.barberName]) acc[apt.barberName] = []
     acc[apt.barberName].push(apt)
@@ -442,6 +479,26 @@ const DashboardAgenda = () => {
         </p>
       )}
 
+      {/* Limpa os cancelados do dia (e do barbeiro filtrado) de uma vez */}
+      {!loading && canDelete && cancelledIds.length > 1 && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => void handleDelete(cancelledIds, 'all')}
+            disabled={deleting}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-body font-semibold border transition-all disabled:opacity-40 ${
+              armedDelete === 'all'
+                ? 'bg-red-500 text-white border-red-500'
+                : 'text-red-400/80 border-red-400/20 hover:bg-red-400/10'
+            }`}
+          >
+            {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            {armedDelete === 'all'
+              ? `Toque de novo pra apagar ${cancelledIds.length}`
+              : `Apagar cancelados (${cancelledIds.length})`}
+          </button>
+        </div>
+      )}
+
       {/* Lista agrupada por barbeiro */}
       {!loading && Object.entries(grouped).map(([barberName, apts]) => (
         <motion.div key={barberName} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
@@ -507,6 +564,24 @@ const DashboardAgenda = () => {
                         {label}
                       </button>
                     ))}
+                  </div>
+                )}
+
+                {/* Cancelado: pode apagar (dono/admin) */}
+                {apt.status === 'cancelled' && canDelete && (
+                  <div className="flex items-center gap-2 mt-3 pl-[74px]">
+                    <button
+                      onClick={() => void handleDelete([apt.id], apt.id)}
+                      disabled={deleting}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-body font-semibold border transition-all disabled:opacity-40 ${
+                        armedDelete === apt.id
+                          ? 'bg-red-500 text-white border-red-500'
+                          : 'text-white/40 border-[#2a2a2a] hover:text-red-400 hover:border-red-400/30'
+                      }`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      {armedDelete === apt.id ? 'Confirmar exclusão' : 'Apagar'}
+                    </button>
                   </div>
                 )}
               </div>
