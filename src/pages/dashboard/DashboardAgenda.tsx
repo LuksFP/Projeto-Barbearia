@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -9,6 +9,7 @@ import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
 import { buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
+import { buildBookingConfirmation, waUrl } from '@/lib/whatsapp'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
@@ -83,6 +84,11 @@ const DashboardAgenda = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<NewAptForm>(EMPTY_APT)
+  // Depois de salvar: tela de "Agendado" com o botão que abre o WhatsApp do
+  // cliente já com a confirmação escrita. Precisa ser um toque do barbeiro —
+  // abrir sozinho depois do salvamento o celular bloqueia como pop-up.
+  const [justBooked, setJustBooked] = useState<{ clientName: string; summary: string; waHref: string } | null>(null)
+  useEffect(() => { if (!modalOpen) setJustBooked(null) }, [modalOpen])
   // Clientes já cadastrados que batem com o que está sendo digitado (nome ou telefone)
   const clientSuggestions = useMemo(() => {
     if (!suggestField) return []
@@ -250,6 +256,30 @@ const DashboardAgenda = () => {
       }
     }
 
+    const finishBooked = () => {
+      const price = form.price ? Number(form.price) : totalPrice
+      const waHref = waUrl(form.clientPhone, buildBookingConfirmation({
+        clientName: form.clientName,
+        shopName: barbershop.name,
+        date: form.date,
+        time: form.time,
+        serviceLabel: label,
+        barberName: brb?.name,
+        price,
+        address: barbershop.address,
+      }))
+      ensureClient()
+      setForm(EMPTY_APT)
+      if (!waHref) {
+        // Telefone sem DDD/curto: não dá pra montar o link, fecha como antes
+        toast({ title: 'Agendamento criado', description: 'O telefone não parece completo (com DDD) para mandar no WhatsApp.' })
+        setModalOpen(false)
+        return
+      }
+      const dia = new Date(form.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).replace('.', '')
+      setJustBooked({ clientName: form.clientName, summary: `${dia} · ${form.time} · ${label}`, waHref })
+    }
+
     setSaving(true)
     try {
       if (isDemoMode()) {
@@ -273,9 +303,7 @@ const DashboardAgenda = () => {
         if (form.date === selectedDate) {
           setAppointments(prev => [...prev, demoApt].sort((a, b) => a.time.localeCompare(b.time)))
         }
-        ensureClient()
-        setModalOpen(false)
-        setForm(EMPTY_APT)
+        finishBooked()
         return
       }
       // Resolve serviço e barbeiro selecionados para gravar os campos que
@@ -299,9 +327,7 @@ const DashboardAgenda = () => {
       if (row.date === selectedDate) {
         setAppointments(prev => [...prev, mapAppointment(row)].sort((a, b) => a.time.localeCompare(b.time)))
       }
-      ensureClient()
-      setModalOpen(false)
-      setForm(EMPTY_APT)
+      finishBooked()
     } catch (err: unknown) {
       // 23P01 = exclusion_violation da trava de sobreposição por barbeiro
       const msg = (err && typeof err === 'object' && 'message' in err) ? String((err as { message: unknown }).message) : ''
@@ -520,6 +546,35 @@ const DashboardAgenda = () => {
                 </button>
               </div>
 
+              {justBooked ? (
+                <div className="px-6 py-10 flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                    <Check className="w-7 h-7 text-emerald-400" />
+                  </div>
+                  <p className="font-heading text-2xl tracking-wide text-white mt-4">AGENDADO</p>
+                  <p className="text-sm font-body text-white/55 mt-1">{justBooked.clientName}</p>
+                  <p className="text-xs font-body text-white/35 mt-0.5">{justBooked.summary}</p>
+                  <a
+                    href={justBooked.waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setModalOpen(false)}
+                    className="mt-7 w-full max-w-sm py-3.5 px-6 rounded-xl bg-[#25D366] text-[#0a0a0a] text-sm font-bold font-body tracking-wide hover:bg-[#3ee07a] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Confirmar no WhatsApp
+                  </a>
+                  <p className="text-[11px] font-body text-white/30 mt-2 max-w-sm">
+                    Abre a conversa com dia, horário, serviço e valor já escritos — é só tocar em enviar.
+                  </p>
+                  <button
+                    onClick={() => setModalOpen(false)}
+                    className="mt-5 text-sm font-body text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    Agora não
+                  </button>
+                </div>
+              ) : (<>
               {/* Corpo: quem/o quê à esquerda, quando à direita (painel mais escuro) */}
               <div className="flex-1 overflow-y-auto scrollbar-none grid lg:grid-cols-[1.1fr_0.9fr]">
                 <div className="p-6 space-y-6">
@@ -821,6 +876,7 @@ const DashboardAgenda = () => {
                   {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando…</> : 'Confirmar agendamento'}
                 </button>
               </div>
+              </>)}
             </motion.div>
           </motion.div>
         )}

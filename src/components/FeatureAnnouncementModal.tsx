@@ -26,6 +26,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'confirmacao-whatsapp-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Agendou, já confirma no WhatsApp do cliente',
+    description:
+      'Ao marcar um horário pela Agenda, o painel monta a mensagem de confirmação com dia, horário, serviço, barbeiro e valor.',
+    steps: [
+      'Na Agenda, toque em “Novo agendamento” e preencha nome e telefone do cliente (com DDD)',
+      'Confirme o agendamento',
+      'Toque em “Mandar confirmação no WhatsApp”: a conversa abre com a mensagem pronta, é só enviar',
+    ],
+    ctaLabel: 'Abrir a Agenda',
+    ctaTo: '/dashboard/agenda',
+  },
+  {
     key: 'som-moeda-agendamento-2026-11',
     badge: 'Novidade no ar',
     title: 'Plim! BarberOS virou app e avisa cada agendamento',
