@@ -3,7 +3,7 @@
   "short_name": "BarberOS",
   "description": "Agenda, equipe e clientes da barbearia.",
   "start_url": "/dashboard",
-  "scope": "/",
+  "scope": "/dashboard",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",

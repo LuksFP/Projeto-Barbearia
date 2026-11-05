@@ -13,6 +13,10 @@
 //   VAPID_SUBJECT      — mailto: de contato exigido pelo protocolo
 //
 // verify_jwt = false (autenticação própria via CRON_SECRET).
+//
+// Teste: { test: true } com o JWT do usuário logado (Authorization: Bearer)
+// manda um aviso de exemplo só pros aparelhos DESTE usuário. É o que o sino
+// do painel chama ao ser ligado, pra confirmar que a notificação chega.
 
 import webpush from 'npm:web-push@3.6.7'
 import { createAdminClient, corsHeaders, json, err } from '../_shared/supabase-admin.ts'
@@ -36,10 +40,6 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() })
   if (req.method !== 'POST') return err('Method not allowed', 405)
 
-  const secret = Deno.env.get('CRON_SECRET')
-  const provided = req.headers.get('x-cron-secret')
-  if (!secret || !provided || !safeEqual(provided, secret)) return err('Unauthorized', 401)
-
   const publicKey = Deno.env.get('VAPID_PUBLIC_KEY')
   const privateKey = Deno.env.get('VAPID_PRIVATE_KEY')
   const subject = Deno.env.get('VAPID_SUBJECT')
@@ -52,10 +52,33 @@ Deno.serve(async (req) => {
   } catch {
     return err('JSON inválido')
   }
+  const supabase = createAdminClient()
+
+  if ((body as { test?: unknown } | null)?.test === true) {
+    const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+    if (!token) return err('Unauthorized', 401)
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token)
+    if (userErr || !userData.user) return err('Unauthorized', 401)
+    const { data: mine } = await supabase
+      .from('push_subscriptions')
+      .select('id, endpoint, p256dh, auth')
+      .eq('user_id', userData.user.id)
+    return json(
+      await sendAll(supabase, mine ?? [], {
+        title: 'Plim! Avisos ligados',
+        body: 'É assim que vai chegar cada agendamento novo, mesmo com o app fechado.',
+        tag: 'teste-aviso',
+        url: '/dashboard/agenda',
+      }),
+    )
+  }
+
+  const secret = Deno.env.get('CRON_SECRET')
+  const provided = req.headers.get('x-cron-secret')
+  if (!secret || !provided || !safeEqual(provided, secret)) return err('Unauthorized', 401)
+
   const id = (body as { appointment_id?: unknown } | null)?.appointment_id
   if (typeof id !== 'string' || !UUID_RE.test(id)) return err('appointment_id inválido')
-
-  const supabase = createAdminClient()
 
   const { data: appt, error: apptErr } = await supabase
     .from('appointments')
@@ -85,12 +108,25 @@ Deno.serve(async (req) => {
     price > 0 ? brl(price) : null,
   ].filter(Boolean)
 
-  const payload = JSON.stringify({
-    title: 'Novo agendamento!',
-    body: parts.join(' · '),
-    tag: `agendamento-${appt.id}`,
-    url: '/dashboard/agenda',
-  })
+  return json(
+    await sendAll(supabase, subs, {
+      title: 'Novo agendamento!',
+      body: parts.join(' · '),
+      tag: `agendamento-${appt.id}`,
+      url: '/dashboard/agenda',
+    }),
+  )
+})
+
+type Sub = { id: string; endpoint: string; p256dh: string; auth: string }
+
+async function sendAll(
+  supabase: ReturnType<typeof createAdminClient>,
+  subs: Sub[],
+  message: { title: string; body: string; tag: string; url: string },
+): Promise<{ sent: number; removed: number }> {
+  if (!subs.length) return { sent: 0, removed: 0 }
+  const payload = JSON.stringify(message)
 
   let sent = 0
   const dead: string[] = []
@@ -123,5 +159,5 @@ Deno.serve(async (req) => {
       .in('id', used)
   }
 
-  return json({ sent, removed: dead.length })
-})
+  return { sent, removed: dead.length }
+}

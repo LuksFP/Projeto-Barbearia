@@ -23,8 +23,11 @@ self.addEventListener('activate', event => {
 })
 
 // Só navegação (abrir/recarregar página). Tudo o mais vai direto pra rede.
+// Só o painel (/dashboard): o site da barbearia (lado cliente) passa direto.
+const isPainel = url => new URL(url, self.location.origin).pathname.startsWith('/dashboard')
+
 self.addEventListener('fetch', event => {
-  if (event.request.mode !== 'navigate') return
+  if (event.request.mode !== 'navigate' || !isPainel(event.request.url)) return
   event.respondWith(
     fetch(event.request).catch(() =>
       caches.match('/offline.html').then(r => r || Response.error()),
@@ -52,9 +55,11 @@ self.addEventListener('push', event => {
   }
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      // Painel na frente: ele mesmo já mostrou o aviso e tocou a moeda.
-      const visible = list.some(c => c.visibilityState === 'visible')
-      if (visible) return undefined
+      // Painel na frente: ele mesmo já mostrou o aviso e tocou a moeda. Outra
+      // página aberta (ex.: site da barbearia) não conta: aí a notificação aparece.
+      const visible = list.some(c => c.visibilityState === 'visible' && isPainel(c.url))
+      // O teste do sino aparece sempre: é justamente pra ver a notificação.
+      if (visible && options.tag !== 'teste-aviso') return undefined
       return self.registration.showNotification(title, options)
     }),
   )

@@ -267,7 +267,7 @@ const PublicSiteLayout = () => {
     { label: 'Serviços', href: '#servicos' },
     { label: 'Equipe', href: '#equipe' },
     { label: 'Galeria', href: '#galeria' },
-    { label: 'Clube VIP', href: '#clube' },
+    ...(memberships.length > 0 ? [{ label: 'Clube VIP', href: '#clube' }] : []),
     { label: 'Agendar', href: '#agendar' },
   ]
 

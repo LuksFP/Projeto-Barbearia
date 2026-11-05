@@ -1,9 +1,10 @@
-import { Component, ReactNode, lazy, Suspense } from "react";
+import { Component, ReactNode, lazy, Suspense, useEffect } from "react";
+import { syncPwaHead } from "@/lib/pwaHead";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false }
@@ -101,6 +102,13 @@ const PageFallback = () => (
   </div>
 );
 
+/** Manifesto do app só nas telas do barbeiro (ver src/lib/pwaHead.ts). */
+const PwaHeadSync = () => {
+  const { pathname } = useLocation();
+  useEffect(() => syncPwaHead(pathname), [pathname]);
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
@@ -109,6 +117,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <PwaHeadSync />
           <SaasAccountProvider>
           <AuthProvider>
             <NotificationProvider>

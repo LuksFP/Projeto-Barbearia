@@ -82,3 +82,11 @@ export async function disablePush(): Promise<void> {
   await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
   await sub.unsubscribe()
 }
+
+/** Pede ao servidor uma notificação de teste pros aparelhos deste usuário. */
+export async function sendTestPush(): Promise<boolean> {
+  const { data, error } = await supabase.functions.invoke<{ sent?: number }>('push-new-booking', {
+    body: { test: true },
+  })
+  return !error && (data?.sent ?? 0) > 0
+}

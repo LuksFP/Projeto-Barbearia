@@ -326,7 +326,7 @@ const BookingSection = ({
           </div>
 
           {/* Total + continuar */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex flex-col items-stretch gap-3 mt-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm font-body">
               {selectedServices.length > 0 ? (
                 <span className="text-white/60">
@@ -334,13 +334,13 @@ const BookingSection = ({
                   <span className="text-white/90 font-semibold">R$ {totalPrice.toFixed(0)}</span>
                 </span>
               ) : (
-                <span className="text-white/30">Selecione ao menos um serviço</span>
+                <span className="text-white/30">Escolha um serviço</span>
               )}
             </div>
             <button
               onClick={() => setStep('barber')}
               disabled={selectedServices.length === 0}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ backgroundColor: primary, color: '#0a0a0a' }}
             >
               Continuar
@@ -559,7 +559,7 @@ const BookingSection = ({
             <p className="text-red-400 text-sm font-body mb-4">{bookError}</p>
           )}
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               onClick={() => setStep('datetime')}
               className="flex items-center gap-1.5 text-sm text-white/35 hover:text-white/60 font-body transition-colors"
@@ -570,7 +570,7 @@ const BookingSection = ({
             <button
               onClick={handleBook}
               disabled={submitting || !clientName || !clientPhone}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3.5 sm:py-3 rounded-lg text-sm font-bold tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ backgroundColor: primary, color: '#0a0a0a' }}
             >
               {submitting ? (
@@ -598,7 +598,7 @@ const BarbershopHome = () => {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         id="home"
-        className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a]"
+        className="relative min-h-screen min-h-[100svh] flex items-center justify-center overflow-hidden bg-[#0a0a0a]"
       >
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -613,13 +613,15 @@ const BarbershopHome = () => {
         />
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold tracking-wider mb-8"
-            style={{ borderColor: primary + '44', backgroundColor: primary + '11', color: primary }}
-          >
-            <MapPin className="w-3 h-3" />
-            {barbershop.address}
-          </motion.div>
+          {barbershop.address?.trim() && (
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold tracking-wider mb-8 max-w-full"
+              style={{ borderColor: primary + '44', backgroundColor: primary + '11', color: primary }}
+            >
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span className="truncate">{barbershop.address}</span>
+            </motion.div>
+          )}
 
           {ratingCount > 0 && ratingAvg && (
             <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}
@@ -639,7 +641,7 @@ const BarbershopHome = () => {
           )}
 
           <motion.h1 initial="hidden" animate="visible" variants={fadeUp} custom={1}
-            className="font-heading text-6xl md:text-8xl lg:text-9xl tracking-wider text-white mb-6 leading-none"
+            className="font-heading text-5xl sm:text-6xl md:text-8xl lg:text-9xl tracking-wider text-white mb-6 leading-none break-words"
           >
             {barbershop.logoText}
           </motion.h1>
@@ -797,6 +799,7 @@ const BarbershopHome = () => {
       </section>
 
       {/* ── CLUBE VIP ────────────────────────────────────────────────────── */}
+      {memberships.length > 0 && (
       <section id="clube" className="py-24 bg-[#111111]">
         <div className="max-w-5xl mx-auto px-6">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="mb-14">
@@ -806,7 +809,7 @@ const BarbershopHome = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {memberships.map((mem, i) => (
               <motion.div key={mem.id} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={fadeUp} custom={i}
-                className="relative p-8 rounded-xl border"
+                className="relative p-6 sm:p-8 rounded-xl border"
                 style={{
                   background: i === 0 ? `linear-gradient(135deg, ${primary}0f 0%, transparent 60%)` : 'transparent',
                   borderColor: i === 0 ? primary + '44' : 'rgba(255,255,255,0.06)',
@@ -850,6 +853,7 @@ const BarbershopHome = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── AVALIAÇÕES (prova social) ─────────────────────────────────────── */}
       {ratingCount > 0 && (
@@ -905,7 +909,7 @@ const BarbershopHome = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Form */}
-            <div className="lg:col-span-3 p-8 rounded-2xl bg-[#111] border border-[#1e1e1e]">
+            <div className="lg:col-span-3 p-5 sm:p-8 rounded-2xl bg-[#111] border border-[#1e1e1e]">
               <BookingSection barbershop={barbershop} services={services} barbers={barbers} />
             </div>
 
@@ -927,18 +931,26 @@ const BarbershopHome = () => {
                 </a>
               </div>
 
+              {[barbershop.address, barbershop.city, barbershop.phone, barbershop.instagram].some(v => v?.trim()) && (
               <div className="p-6 rounded-2xl bg-[#111] border border-[#1e1e1e] space-y-4">
                 <p className="text-xs font-semibold tracking-widest uppercase font-body" style={{ color: primary }}>
                   Informações
                 </p>
+                {[barbershop.address, barbershop.city].some(v => v?.trim()) && (
                 <div className="flex items-start gap-3 text-sm text-white/50">
                   <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: primary + '88' }} />
-                  <span className="font-body">{barbershop.address}, {barbershop.city}</span>
+                  <span className="font-body break-words min-w-0">
+                    {[barbershop.address, barbershop.city].filter(v => v?.trim()).join(', ')}
+                  </span>
                 </div>
+                )}
+                {barbershop.phone?.trim() && (
                 <div className="flex items-center gap-3 text-sm text-white/50">
                   <Phone className="w-4 h-4 shrink-0" style={{ color: primary + '88' }} />
                   <span className="font-body">{barbershop.phone}</span>
                 </div>
+                )}
+                {barbershop.instagram?.trim() && (
                 <div className="flex items-center gap-3 text-sm text-white/50">
                   <Instagram className="w-4 h-4 shrink-0" style={{ color: primary + '88' }} />
                   <a
@@ -950,7 +962,9 @@ const BarbershopHome = () => {
                     {barbershop.instagram}
                   </a>
                 </div>
+                )}
               </div>
+              )}
             </div>
           </div>
         </div>

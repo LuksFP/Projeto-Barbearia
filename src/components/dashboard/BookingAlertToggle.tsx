@@ -12,7 +12,7 @@ import {
   writeAlertPrefs,
   type NotifyPermission,
 } from '@/lib/bookingAlert'
-import { disablePush, enablePush, needsInstallForPush } from '@/lib/push'
+import { disablePush, enablePush, needsInstallForPush, sendTestPush } from '@/lib/push'
 import { toast } from '@/hooks/use-toast'
 
 interface Props {
@@ -54,10 +54,11 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
     }
     if (current !== 'granted') return
     const ok = await enablePush(barbershopId)
+    if (ok) void sendTestPush()
     toast({
       title: ok ? 'Avisos ligados neste aparelho' : 'Som ligado',
       description: ok
-        ? 'Agendamento novo chega aqui mesmo com o navegador fechado.'
+        ? 'Mandamos uma notificação de teste agora. Agendamento novo chega aqui mesmo com o app fechado.'
         : 'Não deu pra ligar o aviso com o navegador fechado neste aparelho — o som continua com o painel aberto.',
     })
   }
