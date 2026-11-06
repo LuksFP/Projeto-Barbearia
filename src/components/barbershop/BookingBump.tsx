@@ -13,7 +13,10 @@ interface Props {
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 const BookingBump = ({ products, picked, onChange, primary }: Props) => {
-  const offer = products.filter(p => p.available > 0).slice(0, 6)
+  // O que já está escolhido (ex.: veio da sacola) aparece primeiro
+  const offer = products.filter(p => p.available > 0)
+    .sort((a, b) => Number(!!picked[b.id]) - Number(!!picked[a.id]))
+    .slice(0, Math.max(6, Object.keys(picked).length))
   if (offer.length === 0) return null
 
   const setQty = (id: string, qty: number) => {

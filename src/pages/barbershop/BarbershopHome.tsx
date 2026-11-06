@@ -1,7 +1,8 @@
 // Site público de uma barbearia — template profissional configurável por slug
 
 import { useState, useEffect, useMemo } from 'react'
-import { useOutletContext } from 'react-router-dom'
+import { useLocation, useOutletContext } from 'react-router-dom'
+import { useBag } from '@/components/barbershop/store/bag'
 import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, Check, ChevronLeft, Loader2, CheckCircle2, User, Calendar, AlertCircle, ShoppingBag } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
@@ -64,8 +65,13 @@ const BookingSection = ({
   const primary = barbershop.primaryColor
   const [step, setStep] = useState<BookStep>('service')
   const [selectedServices, setSelectedServices] = useState<BarbershopService[]>([])
-  // "Leve junto": produto → quantidade
+  // "Leve junto": produto → quantidade. Começa com o que já está na sacola.
+  const bag = useBag()
   const [bump, setBump] = useState<Record<string, number>>({})
+  useEffect(() => {
+    if (step !== 'contact' || Object.keys(bump).length || bag.lines.length === 0) return
+    setBump(Object.fromEntries(bag.lines.map(l => [l.product.id, l.qty])))
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
   // Depois de agendar: o que foi separado da loja, ou por que não deu
   const [orderResult, setOrderResult] = useState<{ ok: boolean; text: string } | null>(null)
   const [selectedBarber, setSelectedBarber] = useState<BarbershopBarber | null>(null)
@@ -206,6 +212,7 @@ const BookingSection = ({
           appointmentId,
         })
         setOrderResult({ ok: true, text: bumpLines.map(l => `${l.qty}× ${l.product.name}`).join(', ') })
+        bumpLines.forEach(l => bag.remove(l.product.id)) // já reservado junto do horário
         onOrdered()
       } catch (e: unknown) {
         setOrderResult({ ok: false, text: orderErrorMessage(e) })
@@ -698,6 +705,14 @@ const BarbershopHome = () => {
 
   const primary = barbershop.primaryColor
 
+  // Link do menu vindo de outra página (/b/slug#agendar): rola até a seção
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (!hash) return
+    const t = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
+    return () => clearTimeout(t)
+  }, [hash])
+
   return (
     <div className="font-body">
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
@@ -819,13 +834,7 @@ const BarbershopHome = () => {
       </section>
 
       {/* ── LOJA ─────────────────────────────────────────────────────────── */}
-      <StoreSection
-        barbershopId={barbershop.id}
-        barbershopName={barbershop.name}
-        products={products}
-        primary={primary}
-        onOrdered={refreshProducts}
-      />
+      <StoreSection slug={barbershop.slug} products={products} primary={primary} />
 
       {/* ── EQUIPE ───────────────────────────────────────────────────────── */}
       <section id="equipe" className="py-24 bg-[#0a0a0a]">

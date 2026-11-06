@@ -76,6 +76,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Site público da barbearia (/b/:slug)
 const BarbershopHome = lazy(() => import("./pages/barbershop/BarbershopHome"));
+const StorePage = lazy(() => import("./pages/barbershop/StorePage"));
+const ProductPage = lazy(() => import("./pages/barbershop/ProductPage"));
 const Demo = lazy(() => import("./pages/Demo"));
 
 // Dashboard da barbearia (/dashboard/*)
@@ -171,6 +173,8 @@ const App = () => (
                         {/* ── Site público da barbearia ── branding da casa */}
                         <Route path="/b/:slug" element={<PublicSiteLayout />}>
                           <Route index element={<BarbershopHome />} />
+                          <Route path="loja" element={<StorePage />} />
+                          <Route path="loja/:productId" element={<ProductPage />} />
                         </Route>
 
                         {/* ── Dashboard da barbearia ── protegido pelo SaasGuard */}

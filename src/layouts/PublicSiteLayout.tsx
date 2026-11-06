@@ -2,8 +2,10 @@
 // Busca a barbearia do Supabase pelo slug (acesso público via RLS)
 
 import { useState, useEffect } from 'react'
-import { Outlet, Link, useParams } from 'react-router-dom'
-import { Menu, X, Scissors, Phone } from 'lucide-react'
+import { Outlet, Link, useParams, useLocation } from 'react-router-dom'
+import { Menu, X, Scissors, Phone, ShoppingBag } from 'lucide-react'
+import { BagProvider, useBag } from '@/components/barbershop/store/bag'
+import BagDrawer from '@/components/barbershop/store/BagDrawer'
 import { supabasePublic } from '@/lib/supabase-public'
 import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
 import { publicStoreRepository, type PublicProduct } from '@/repositories/publicStoreRepository'
@@ -46,8 +48,28 @@ export interface PublicSiteOutletCtx {
   refreshProducts: () => void
 }
 
+// Ícone da sacola no topo, com a quantidade
+const BagButton = ({ primary }: { primary: string }) => {
+  const bag = useBag()
+  return (
+    <button type="button" onClick={bag.open} aria-label={`Sacola${bag.count ? `, ${bag.count} ${bag.count === 1 ? 'item' : 'itens'}` : ' vazia'}`}
+      className="relative w-10 h-10 flex items-center justify-center text-white/75 hover:text-white">
+      <ShoppingBag className="w-5 h-5" />
+      {bag.count > 0 && (
+        <span className="absolute top-0.5 right-0 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold font-body flex items-center justify-center tabular-nums"
+          style={{ backgroundColor: primary, color: '#0a0a0a' }}>
+          {bag.count}
+        </span>
+      )}
+    </button>
+  )
+}
+
 const PublicSiteLayout = () => {
   const { slug } = useParams<{ slug: string }>()
+  const { pathname, hash } = useLocation()
+  // Trocou de página dentro do site (loja, produto): começa do topo
+  useEffect(() => { if (!hash) window.scrollTo(0, 0) }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null)
   const [services, setServices] = useState<BarbershopService[]>([])
   const [barbers, setBarbers] = useState<BarbershopBarber[]>([])
@@ -289,7 +311,7 @@ const PublicSiteLayout = () => {
     { label: 'Equipe', href: '#equipe' },
     { label: 'Galeria', href: '#galeria' },
     ...(memberships.length > 0 ? [{ label: 'Clube VIP', href: '#clube' }] : []),
-    ...(products.length > 0 ? [{ label: 'Loja', href: '#loja' }] : []),
+    ...(products.length > 0 ? [{ label: 'Loja', href: '/loja' }] : []),
     { label: 'Agendar', href: '#agendar' },
   ]
 
@@ -322,6 +344,7 @@ const PublicSiteLayout = () => {
   }
 
   return (
+    <BagProvider barbershopId={barbershop.id} products={products}>
     <div className="flex flex-col min-h-screen bg-[#0a0a0a] text-white">
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-[#1a1a1a]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -339,13 +362,14 @@ const PublicSiteLayout = () => {
 
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map(link => (
-              <a key={link.href} href={link.href} className="text-sm text-white/55 hover:text-white transition-colors font-body tracking-wide">
+              <Link key={link.href} to={`/b/${barbershop.slug}${link.href}`} className="text-sm text-white/55 hover:text-white transition-colors font-body tracking-wide">
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            {products.length > 0 && <BagButton primary={primary} />}
             <a
               href={`https://wa.me/${safeWhatsapp}`}
               target="_blank"
@@ -372,9 +396,9 @@ const PublicSiteLayout = () => {
             >
               <nav className="px-6 py-4 flex flex-col gap-4">
                 {navLinks.map(link => (
-                  <a key={link.href} href={link.href} className="text-white/70 hover:text-white text-sm font-body transition-colors" onClick={() => setMenuOpen(false)}>
+                  <Link key={link.href} to={`/b/${barbershop.slug}${link.href}`} className="text-white/70 hover:text-white text-sm font-body transition-colors" onClick={() => setMenuOpen(false)}>
                     {link.label}
-                  </a>
+                  </Link>
                 ))}
                 <a
                   href={`https://wa.me/${safeWhatsapp}`}
@@ -407,7 +431,16 @@ const PublicSiteLayout = () => {
           </span>
         </div>
       </footer>
+      <BagDrawer
+        barbershopId={barbershop.id}
+        barbershopName={barbershop.name}
+        address={barbershop.address}
+        slug={barbershop.slug}
+        primary={primary}
+        onOrdered={() => setProductsNonce(n => n + 1)}
+      />
     </div>
+    </BagProvider>
   )
 }
 
