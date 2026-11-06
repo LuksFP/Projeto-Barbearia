@@ -45,8 +45,8 @@ const fromProduct = (p: Product | null): Draft => ({
 const num = (v: string) => Number(v.replace(',', '.'))
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-const field = 'w-full bg-[#161616] border border-[#272727] rounded-lg px-3 py-2.5 text-white text-base sm:text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50'
-const label = 'block text-white/45 text-xs font-body mb-1.5'
+const field = 'w-full bg-[#161616] border border-[#272727] rounded-lg px-3 py-2.5 text-white text-base sm:text-sm font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50'
+const label = 'block text-white/65 text-xs font-body mb-1.5'
 
 const photosOf = (p: Product | null): PhotoItem[] => (p?.imageUrls ?? []).map(url => ({ key: url, url }))
 
@@ -164,7 +164,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-[#111] border-[#262626] text-white max-w-lg max-h-[92dvh] overflow-y-auto p-5 sm:p-6">
         <DialogTitle className="font-heading text-2xl tracking-wide">{product ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</DialogTitle>
-        <DialogDescription className="text-white/40 text-xs font-body -mt-2">
+        <DialogDescription className="text-white/65 text-xs font-body -mt-2">
           O estoque desce sozinho a cada venda registrada.
         </DialogDescription>
 
@@ -217,7 +217,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
             <input type="checkbox" checked={draft.visibleOnSite} onChange={e => set('visibleOnSite', e.target.checked)} className="mt-0.5 w-4 h-4 accent-amber-500" />
             <span className="text-sm font-body text-white/70">
               Mostrar no site da barbearia
-              <span className="block text-[11px] text-white/35">A vitrine do site entra numa próxima etapa; já deixa marcado o que vai aparecer.</span>
+              <span className="block text-[11px] text-white/60">A vitrine do site entra numa próxima etapa; já deixa marcado o que vai aparecer.</span>
             </span>
           </label>
 
@@ -227,7 +227,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
                 type="button"
                 onClick={() => void remove()}
                 onBlur={() => setConfirmDelete(false)}
-                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-body border transition-colors ${confirmDelete ? 'border-red-500/50 text-red-300 bg-red-500/10' : 'border-[#2a2a2a] text-white/45 hover:text-red-300'}`}
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-body border transition-colors ${confirmDelete ? 'border-red-500/50 text-red-300 bg-red-500/10' : 'border-[#2a2a2a] text-white/65 hover:text-red-300'}`}
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 {confirmDelete ? 'Toque de novo pra excluir' : 'Excluir'}

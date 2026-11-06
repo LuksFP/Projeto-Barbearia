@@ -763,49 +763,62 @@ export type Database = {
       }
       product_sales: {
         Row: {
+          appointment_id: string | null
           barbershop_id: string
-          client_name: string | null
+          client_name: string
+          client_phone: string
           created_at: string
           id: string
-          payment_method: string | null
+          order_id: string
           product_id: string
           product_name: string
           quantity: number
-          seller_name: string
-          sold_by: string | null
+          status: string
           total: number
           unit_cost: number | null
           unit_price: number
+          updated_at: string
         }
         Insert: {
+          appointment_id?: string | null
           barbershop_id: string
-          client_name?: string | null
+          client_name: string
+          client_phone: string
           created_at?: string
           id?: string
-          payment_method?: string | null
+          order_id: string
           product_id: string
           product_name: string
           quantity: number
-          seller_name: string
-          sold_by?: string | null
+          status?: string
           unit_cost?: number | null
           unit_price: number
+          updated_at?: string
         }
         Update: {
+          appointment_id?: string | null
           barbershop_id?: string
-          client_name?: string | null
+          client_name?: string
+          client_phone?: string
           created_at?: string
           id?: string
-          payment_method?: string | null
+          order_id?: string
           product_id?: string
           product_name?: string
           quantity?: number
-          seller_name?: string
-          sold_by?: string | null
+          status?: string
           unit_cost?: number | null
           unit_price?: number
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "product_sales_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_sales_barbershop_id_fkey"
             columns: ["barbershop_id"]
@@ -1114,6 +1127,28 @@ export type Database = {
       mark_announcement_seen: { Args: { p_key: string }; Returns: undefined }
       my_admin_barbershop_ids: { Args: never; Returns: string[] }
       my_barbershop_ids: { Args: never; Returns: string[] }
+      public_barbershop_products: {
+        Args: { p_barbershop_id: string }
+        Returns: {
+          available: number
+          category: string
+          description: string
+          id: string
+          image_urls: string[]
+          name: string
+          price: number
+        }[]
+      }
+      public_place_product_order: {
+        Args: {
+          p_barbershop_id: string
+          p_items: Json
+          p_client_name: string
+          p_client_phone: string
+          p_appointment_id?: string
+        }
+        Returns: string
+      }
       product_sales_by_month: {
         Args: { p_barbershop_id: string; p_from: string }
         Returns: {

@@ -1,15 +1,19 @@
-// Estado da loja no painel: catálogo + vendas do mês corrente.
-// Real: Supabase (estoque é baixado pelo banco). Demo: localStorage com
-// exemplos, mesma regra de estoque reproduzida aqui.
+// Estado da loja no painel: catálogo + pedidos (do mês e reservas em aberto).
+// A venda nasce no site do cliente; aqui a equipe marca "retirou" ou cancela.
+// Real: Supabase (estoque é mexido pelo banco). Demo: localStorage com
+// exemplos, mesmas regras reproduzidas aqui — e o site demo (/b/atlas) grava
+// os pedidos no mesmo lugar, então dá pra ver o fluxo inteiro sem banco.
 import { useCallback, useEffect, useState } from 'react'
 import { isDemoMode } from '@/lib/demo'
 import {
   productRepository,
+  type OrderItem,
+  type OrderStatus,
   type Product,
   type ProductInput,
   type ProductSale,
-  type SaleInput,
 } from '@/repositories/productRepository'
+import type { PublicProduct } from '@/repositories/publicStoreRepository'
 
 export const monthStartISO = (d = new Date()) => new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
 
@@ -18,7 +22,7 @@ interface DemoState {
   sales: ProductSale[]
 }
 
-const demoKey = (bsId: string) => `barberos:loja:${bsId}`
+const demoKey = (bsId: string) => `barberos:loja2:${bsId}`
 
 function demoSeed(bsId: string): DemoState {
   const p = (id: string, name: string, category: string, price: number, cost: number, stock: number, description = ''): Product => ({
@@ -27,23 +31,25 @@ function demoSeed(bsId: string): DemoState {
   })
   const products = [
     p('demo-p1', 'Pomada efeito matte 120g', 'Cabelo', 45, 22, 8, 'Fixação média, sem brilho.'),
-    p('demo-p2', 'Óleo para barba 30ml', 'Barba', 38, 15, 2),
+    p('demo-p2', 'Óleo para barba 30ml', 'Barba', 38, 15, 2, 'Amacia e perfuma a barba.'),
     p('demo-p3', 'Balm pós-barba', 'Barba', 32, 14, 0),
     p('demo-p4', 'Shampoo anticaspa 250ml', 'Cabelo', 29, 12, 5),
     p('demo-p5', 'Pente de madeira', 'Acessórios', 18, 6, 12),
   ]
   const now = Date.now()
-  const sale = (id: string, prod: Product, quantity: number, hoursAgo: number, seller: string): ProductSale => ({
-    id, productId: prod.id, productName: prod.name, quantity, unitPrice: prod.price, unitCost: prod.cost,
-    total: quantity * prod.price, sellerName: seller, clientName: null, paymentMethod: 'pix',
+  const line = (orderId: string, prod: Product, quantity: number, hoursAgo: number, client: string, status: OrderStatus, withBooking: boolean): ProductSale => ({
+    id: `${orderId}-${prod.id}`, orderId, productId: prod.id, productName: prod.name, quantity,
+    unitPrice: prod.price, unitCost: prod.cost, total: quantity * prod.price,
+    clientName: client, clientPhone: '11987654321', appointmentId: withBooking ? 'demo-apt' : null, status,
     createdAt: new Date(now - hoursAgo * 3600_000).toISOString(),
   })
   return {
     products,
     sales: [
-      sale('demo-s1', products[0], 1, 3, 'Diego Matos'),
-      sale('demo-s2', products[1], 2, 26, 'Caio Brito'),
-      sale('demo-s3', products[4], 1, 50, 'Diego Matos'),
+      line('demo-o1', products[0], 1, 3, 'Rafael Souza', 'reservado', true),
+      line('demo-o1', products[4], 1, 3, 'Rafael Souza', 'reservado', true),
+      line('demo-o2', products[1], 2, 26, 'Marcos Lima', 'retirado', false),
+      line('demo-o3', products[3], 1, 50, 'Bruno Alves', 'retirado', true),
     ],
   }
 }
@@ -68,11 +74,15 @@ const saveDemo = (bsId: string, s: DemoState) => {
 /** Erros do banco que fazem sentido pro barbeiro; o resto vira mensagem genérica. */
 export function productErrorMessage(err: unknown): string {
   const msg = err instanceof Error ? err.message : (err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : '')
-  if (/Estoque insuficiente/.test(msg)) return 'Estoque insuficiente. Alguém pode ter vendido agora — confira o estoque.'
-  if (/Preço acima/.test(msg)) return 'O valor não pode passar do preço do produto.'
-  if (/row-level security|violates row-level|42501/.test(msg)) return 'Só o dono ou admin da barbearia pode fazer isso.'
-  if (/Upload falhou|Imagem muito grande|Arquivo inválido/.test(msg)) return msg
+  if (/cancelado não volta|Mudança de status/.test(msg)) return msg
+  if (/row-level security|violates row-level|42501|permission denied/.test(msg)) return 'Só o dono ou admin da barbearia pode fazer isso.'
+  if (/Upload falhou|Imagem muito grande|Arquivo inválido|ler essa imagem/.test(msg)) return msg
   return 'Não deu certo. Tente de novo em instantes.'
+}
+
+const visibleSales = (sales: ProductSale[]) => {
+  const since = monthStartISO()
+  return sales.filter(x => x.createdAt >= since || x.status === 'reservado')
 }
 
 export function useProducts(barbershopId: string | undefined) {
@@ -86,7 +96,7 @@ export function useProducts(barbershopId: string | undefined) {
     if (demo) {
       const s = loadDemo(barbershopId)
       setProducts(s.products.filter(p => p.active))
-      setSales(s.sales.filter(x => x.createdAt >= monthStartISO()))
+      setSales(visibleSales(s.sales))
       setLoading(false)
       return
     }
@@ -101,6 +111,14 @@ export function useProducts(barbershopId: string | undefined) {
 
   useEffect(() => {
     reload().catch(() => setLoading(false))
+    // Pedido novo do site: aparece quando o barbeiro volta pra aba/app
+    const onVisible = () => { if (document.visibilityState === 'visible') void reload().catch(() => {}) }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
   }, [reload])
 
   // Demo: aplica a mudança no estado salvo e recarrega a tela
@@ -109,7 +127,7 @@ export function useProducts(barbershopId: string | undefined) {
     const next = fn(loadDemo(barbershopId))
     saveDemo(barbershopId, next)
     setProducts(next.products.filter(p => p.active))
-    setSales(next.sales.filter(x => x.createdAt >= monthStartISO()))
+    setSales(visibleSales(next.sales))
   }
 
   const save = async (input: ProductInput, id?: string): Promise<Product> => {
@@ -130,7 +148,7 @@ export function useProducts(barbershopId: string | undefined) {
     return saved
   }
 
-  /** Exclui; se o produto já vendeu, só tira da loja (o histórico aponta pra ele). */
+  /** Exclui; se o produto já teve pedido, só tira da loja (o histórico aponta pra ele). */
   const remove = async (id: string): Promise<'deleted' | 'archived'> => {
     if (demo) {
       let result: 'deleted' | 'archived' = 'deleted'
@@ -149,48 +167,74 @@ export function useProducts(barbershopId: string | undefined) {
     return result
   }
 
-  const sell = async (input: SaleInput) => {
-    if (!barbershopId) return
+  /** Retirou (reservado → retirado) ou cancelou (estoque volta). */
+  const setOrderStatus = async (orderId: string, status: 'retirado' | 'cancelado') => {
     if (demo) {
-      const prod = loadDemo(barbershopId).products.find(p => p.id === input.productId)
-      if (!prod || prod.stock < input.quantity) throw new Error('Estoque insuficiente')
-      if (input.unitPrice > prod.price) throw new Error('Preço acima do preço do produto')
-      const sale: ProductSale = {
-        id: `demo-${crypto.randomUUID()}`, productId: prod.id, productName: prod.name, quantity: input.quantity,
-        unitPrice: input.unitPrice, unitCost: prod.cost, total: input.quantity * input.unitPrice,
-        sellerName: input.sellerName, clientName: input.clientName, paymentMethod: input.paymentMethod,
-        createdAt: new Date().toISOString(),
-      }
-      mutateDemo(s => ({
-        products: s.products.map(p => (p.id === prod.id ? { ...p, stock: p.stock - input.quantity } : p)),
-        sales: [sale, ...s.sales],
-      }))
+      mutateDemo(s => {
+        const back = new Map<string, number>()
+        const sales = s.sales.map(x => {
+          if (x.orderId !== orderId) return x
+          if (status === 'retirado' && x.status === 'reservado') return { ...x, status }
+          if (status === 'cancelado' && x.status !== 'cancelado') {
+            back.set(x.productId, (back.get(x.productId) ?? 0) + x.quantity)
+            return { ...x, status }
+          }
+          return x
+        })
+        return { sales, products: s.products.map(p => ({ ...p, stock: p.stock + (back.get(p.id) ?? 0) })) }
+      })
       return
     }
-    await productRepository.sell(barbershopId, input)
+    await productRepository.setOrderStatus(orderId, status)
     await reload() // estoque novo vem do banco
   }
 
-  const reverseSale = async (sale: ProductSale) => {
-    if (demo) {
-      mutateDemo(s => ({
-        products: s.products.map(p => (p.id === sale.productId ? { ...p, stock: p.stock + sale.quantity } : p)),
-        sales: s.sales.filter(x => x.id !== sale.id),
-      }))
-      return
-    }
-    await productRepository.reverseSale(sale.id)
-    await reload()
-  }
-
-  return { products, sales, loading, demo, save, remove, sell, reverseSale, reload }
+  return { products, sales, loading, demo, save, remove, setOrderStatus, reload }
 }
 
-/** Demo do Financeiro: loja por mês. O mês atual usa as vendas feitas no demo;
+// ─── Demo do site do cliente ─────────────────────────────────────────────────
+
+export function demoPublicProducts(bsId: string): PublicProduct[] {
+  return loadDemo(bsId).products
+    .filter(p => p.active && p.visibleOnSite)
+    .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.category.localeCompare(b.category) || a.name.localeCompare(b.name))
+    .map(p => ({
+      id: p.id, name: p.name, description: p.description, category: p.category,
+      price: p.price, imageUrls: p.imageUrls, available: Math.min(p.stock, 10),
+    }))
+}
+
+/** Mesmas regras do public_place_product_order: tudo ou nada, baixa estoque. */
+export function demoPlaceOrder(bsId: string, input: { items: OrderItem[]; clientName: string; clientPhone: string; withBooking: boolean }): string {
+  const s = loadDemo(bsId)
+  const orderId = `demo-${crypto.randomUUID()}`
+  const lines: ProductSale[] = []
+  const stock = new Map(s.products.map(p => [p.id, p.stock]))
+  for (const it of input.items) {
+    const prod = s.products.find(p => p.id === it.productId && p.active && p.visibleOnSite)
+    if (!prod) throw new Error('Produto indisponível')
+    const left = stock.get(prod.id) ?? 0
+    if (left < it.quantity) throw new Error(`Sem estoque suficiente: ${prod.name}`)
+    stock.set(prod.id, left - it.quantity)
+    lines.push({
+      id: `${orderId}-${prod.id}`, orderId, productId: prod.id, productName: prod.name, quantity: it.quantity,
+      unitPrice: prod.price, unitCost: prod.cost, total: it.quantity * prod.price,
+      clientName: input.clientName, clientPhone: input.clientPhone.replace(/\D/g, ''),
+      appointmentId: input.withBooking ? 'demo-apt' : null, status: 'reservado', createdAt: new Date().toISOString(),
+    })
+  }
+  saveDemo(bsId, {
+    products: s.products.map(p => ({ ...p, stock: stock.get(p.id) ?? p.stock })),
+    sales: [...lines, ...s.sales],
+  })
+  return orderId
+}
+
+/** Demo do Financeiro: loja por mês. O mês atual usa os pedidos do demo;
  *  os anteriores são estimados a partir dos serviços (10–18% deles, lucro ~48%). */
 export function demoStoreMonths(bsId: string, servicesByMonth: Array<{ month: string; total: number }>) {
   const current = new Date().toISOString().slice(0, 7)
-  const demoSales = loadDemo(bsId).sales
+  const demoSales = loadDemo(bsId).sales.filter(s => s.status !== 'cancelado')
   return servicesByMonth.map((m, i) => {
     if (m.month === current) {
       const mine = demoSales.filter(s => s.createdAt.slice(0, 7) === current)

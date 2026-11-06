@@ -1,10 +1,11 @@
-// Loja da barbearia: catálogo (products) e vendas no balcão (product_sales).
-// RLS: equipe lê e registra venda; dono/admin mexe no catálogo e estorna.
+// Loja da barbearia: catálogo (products) e pedidos (product_sales, um item por linha).
+// A venda nasce no site do cliente (RPC public_place_product_order); no painel
+// a equipe só marca retirado/cancelado. dono/admin mexe no catálogo.
 // O estoque desce/volta por gatilho no banco — o app não faz conta de estoque.
 import { supabase } from '@/lib/supabase'
 import type { Tables } from '@/types/database'
 
-export type PaymentMethod = 'dinheiro' | 'pix' | 'cartao'
+export type OrderStatus = 'reservado' | 'retirado' | 'cancelado'
 
 export interface Product {
   id: string
@@ -23,16 +24,24 @@ export interface Product {
 
 export interface ProductSale {
   id: string
+  orderId: string
   productId: string
   productName: string
   quantity: number
   unitPrice: number
   unitCost: number | null
   total: number
-  sellerName: string
-  clientName: string | null
-  paymentMethod: PaymentMethod | null
+  clientName: string
+  clientPhone: string
+  appointmentId: string | null
+  status: OrderStatus
   createdAt: string
+}
+
+/** Item de pedido no site do cliente */
+export interface OrderItem {
+  productId: string
+  quantity: number
 }
 
 export interface ProductInput {
@@ -47,16 +56,7 @@ export interface ProductInput {
   visibleOnSite: boolean
 }
 
-export interface SaleInput {
-  productId: string
-  quantity: number
-  unitPrice: number
-  sellerName: string
-  clientName: string | null
-  paymentMethod: PaymentMethod | null
-}
-
-const PAYMENTS: readonly string[] = ['dinheiro', 'pix', 'cartao']
+const STATUSES: readonly string[] = ['reservado', 'retirado', 'cancelado']
 
 export const mapProduct = (r: Tables<'products'>): Product => ({
   id: r.id,
@@ -81,9 +81,11 @@ export const mapSale = (r: Tables<'product_sales'>): ProductSale => ({
   unitPrice: Number(r.unit_price),
   unitCost: r.unit_cost === null ? null : Number(r.unit_cost),
   total: Number(r.total),
-  sellerName: r.seller_name,
+  orderId: r.order_id,
   clientName: r.client_name,
-  paymentMethod: r.payment_method && PAYMENTS.includes(r.payment_method) ? (r.payment_method as PaymentMethod) : null,
+  clientPhone: r.client_phone,
+  appointmentId: r.appointment_id,
+  status: STATUSES.includes(r.status) ? (r.status as OrderStatus) : 'reservado',
   createdAt: r.created_at,
 })
 
@@ -153,35 +155,25 @@ export const productRepository = {
     if (error) throw error
   },
 
+  /** Itens do mês + qualquer reserva ainda em aberto (mesmo de meses atrás). */
   async listSales(barbershopId: string, since: string): Promise<ProductSale[]> {
     const { data, error } = await supabase
       .from('product_sales')
       .select('*')
       .eq('barbershop_id', barbershopId)
-      .gte('created_at', since)
+      .or(`created_at.gte.${since},status.eq.reservado`)
       .order('created_at', { ascending: false })
       .limit(500)
     if (error) throw error
     return (data ?? []).map(mapSale)
   },
 
-  async sell(barbershopId: string, input: SaleInput): Promise<ProductSale> {
-    const { data, error } = await supabase
-      .from('product_sales')
-      .insert({
-        barbershop_id: barbershopId,
-        product_id: input.productId,
-        product_name: '', // o banco grava o nome real do produto
-        quantity: input.quantity,
-        unit_price: input.unitPrice,
-        seller_name: input.sellerName,
-        client_name: input.clientName,
-        payment_method: input.paymentMethod,
-      })
-      .select()
-      .single()
+  /** Retirou: reservados viram retirados. Cancelar: tudo que não foi cancelado
+   *  volta pro estoque (o gatilho devolve). */
+  async setOrderStatus(orderId: string, status: 'retirado' | 'cancelado'): Promise<void> {
+    const q = supabase.from('product_sales').update({ status }).eq('order_id', orderId)
+    const { error } = status === 'retirado' ? await q.eq('status', 'reservado') : await q.neq('status', 'cancelado')
     if (error) throw error
-    return mapSale(data)
   },
 
   /** Totais da loja por mês desde `from` ('YYYY-MM-DD'), somados no banco. */
@@ -195,10 +187,5 @@ export const productRepository = {
       items: Number(r.items) || 0,
       hasCost: !!r.has_cost,
     }))
-  },
-
-  async reverseSale(id: string): Promise<void> {
-    const { error } = await supabase.from('product_sales').delete().eq('id', id)
-    if (error) throw error
   },
 }

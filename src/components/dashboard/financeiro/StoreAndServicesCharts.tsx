@@ -50,12 +50,12 @@ const TooltipBox = ({ active, payload, label, rows, mode }: {
   const hasProfit = mode === 'store' && rows.some(x => x.profit > 0)
   return (
     <div className="rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] px-3 py-2 text-xs font-body shadow-lg min-w-[150px]">
-      <p className="text-white/50 mb-1.5">{label}</p>
+      <p className="text-white/70 mb-1.5">{label}</p>
       {mode === 'both' ? (
         <>
           <p className="flex items-center gap-2 text-white/80"><Swatch color={SERVICES} />Serviços <span className="ml-auto tabular-nums text-white">{brl(r.services)}</span></p>
           <p className="flex items-center gap-2 text-white/80 mt-1"><Swatch color={STORE} />Loja <span className="ml-auto tabular-nums text-white">{brl(r.store)}</span></p>
-          <p className="flex items-center gap-2 text-white/50 mt-1.5 pt-1.5 border-t border-[#262626]">Total <span className="ml-auto tabular-nums text-white font-semibold">{brl(r.services + r.store)}</span></p>
+          <p className="flex items-center gap-2 text-white/70 mt-1.5 pt-1.5 border-t border-[#262626]">Total <span className="ml-auto tabular-nums text-white font-semibold">{brl(r.services + r.store)}</span></p>
         </>
       ) : (
         <>
@@ -101,15 +101,15 @@ const StoreAndServicesCharts = ({ servicesByMonth, storeByMonth }: Props) => {
       {/* Os dois juntos */}
       <section className="p-6 rounded-xl bg-[#141414] border border-[#252525]" aria-labelledby="fin-both">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-1">
-          <h3 id="fin-both" className="text-white/40 text-xs font-semibold uppercase tracking-widest font-body">Serviços + Loja</h3>
+          <h3 id="fin-both" className="text-white/65 text-xs font-semibold uppercase tracking-widest font-body">Serviços + Loja</h3>
           <p className="text-white text-sm font-body sm:ml-auto">
             <span className="font-heading text-xl tracking-wide">{brl(total)}</span>
-            <span className="text-white/40"> no período</span>
+            <span className="text-white/65"> no período</span>
           </p>
         </div>
-        <ul className="flex flex-wrap gap-x-5 gap-y-1 mb-5 text-xs font-body text-white/60">
+        <ul className="flex flex-wrap gap-x-5 gap-y-1 mb-5 text-xs font-body text-white/75">
           <li className="flex items-center gap-1.5"><Swatch color={SERVICES} />Serviços <span className="text-white tabular-nums">{brl(totalServices)}</span></li>
-          <li className="flex items-center gap-1.5"><Swatch color={STORE} />Loja <span className="text-white tabular-nums">{brl(totalStore)}</span><span className="text-white/35">({storeShare}% do total)</span></li>
+          <li className="flex items-center gap-1.5"><Swatch color={STORE} />Loja <span className="text-white tabular-nums">{brl(totalStore)}</span><span className="text-white/60">({storeShare}% do total)</span></li>
         </ul>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={rows} barSize={28} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -127,21 +127,21 @@ const StoreAndServicesCharts = ({ servicesByMonth, storeByMonth }: Props) => {
       {/* Só a loja */}
       <section className="p-6 rounded-xl bg-[#141414] border border-[#252525]" aria-labelledby="fin-store">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-1">
-          <h3 id="fin-store" className="text-white/40 text-xs font-semibold uppercase tracking-widest font-body">Loja por mês</h3>
+          <h3 id="fin-store" className="text-white/65 text-xs font-semibold uppercase tracking-widest font-body">Loja por mês</h3>
           {totalStore > 0 && (
-            <p className="text-white/40 text-xs font-body sm:ml-auto">
+            <p className="text-white/65 text-xs font-body sm:ml-auto">
               {storeItems} {storeItems === 1 ? 'item vendido' : 'itens vendidos'}
             </p>
           )}
         </div>
         {totalStore === 0 ? (
-          <p className="text-white/35 text-sm font-body py-8">
+          <p className="text-white/60 text-sm font-body py-8">
             Nenhuma venda da loja nesse período.{' '}
             <Link to="/dashboard/loja" className="text-amber-300 underline underline-offset-4 decoration-amber-400/40">Abrir a Loja</Link>
           </p>
         ) : (
           <>
-            <ul className="flex flex-wrap gap-x-5 gap-y-1 mb-5 text-xs font-body text-white/60">
+            <ul className="flex flex-wrap gap-x-5 gap-y-1 mb-5 text-xs font-body text-white/75">
               <li className="flex items-center gap-1.5"><Swatch color={STORE} />Vendido <span className="text-white tabular-nums">{brl(totalStore)}</span></li>
               {hasCost && (
                 <li className="flex items-center gap-1.5"><Swatch color={PROFIT} line />Lucro <span className="text-white tabular-nums">{brl(totalProfit)}</span></li>
@@ -161,7 +161,7 @@ const StoreAndServicesCharts = ({ servicesByMonth, storeByMonth }: Props) => {
               </ComposedChart>
             </ResponsiveContainer>
             {!hasCost && (
-              <p className="text-white/30 text-[11px] font-body mt-2">Preencha “quanto você pagou” nos produtos pra ver o lucro aqui.</p>
+              <p className="text-white/55 text-[11px] font-body mt-2">Preencha “quanto você pagou” nos produtos pra ver o lucro aqui.</p>
             )}
           </>
         )}

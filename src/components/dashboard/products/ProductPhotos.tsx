@@ -31,8 +31,8 @@ const ProductPhotos = ({ photos, onChange, onPick }: Props) => {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5">
-        <span className="text-white/45 text-xs font-body">Fotos</span>
-        <span className="text-white/25 text-[11px] font-body">{photos.length}/{MAX_PHOTOS} · a primeira é a capa</span>
+        <span className="text-white/65 text-xs font-body">Fotos</span>
+        <span className="text-white/55 text-[11px] font-body">{photos.length}/{MAX_PHOTOS} · a primeira é a capa</span>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {photos.map((ph, i) => (
@@ -57,7 +57,7 @@ const ProductPhotos = ({ photos, onChange, onPick }: Props) => {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="w-20 h-20 shrink-0 rounded-lg border border-dashed border-[#333] bg-[#161616] flex flex-col items-center justify-center gap-1 text-white/40 hover:border-amber-500/50 hover:text-amber-300 transition-colors text-[11px] font-body"
+            className="w-20 h-20 shrink-0 rounded-lg border border-dashed border-[#333] bg-[#161616] flex flex-col items-center justify-center gap-1 text-white/65 hover:border-amber-500/50 hover:text-amber-300 transition-colors text-[11px] font-body"
           >
             <ImagePlus className="w-5 h-5" />
             {photos.length === 0 ? 'Adicionar' : 'Mais'}

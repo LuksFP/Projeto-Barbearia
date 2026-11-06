@@ -28,13 +28,13 @@ const ANNOUNCEMENTS: Announcement[] = [
   {
     key: 'loja-produtos-2026-11',
     badge: 'Novidade no ar',
-    title: 'Vende pomada no balcão? Agora tem Loja',
+    title: 'Sua barbearia agora tem loja no site',
     description:
-      'Cadastre os produtos com preço, custo e estoque. Cada venda registrada baixa o estoque sozinha e entra no total do mês, com o lucro.',
+      'Cadastre pomada, óleo, shampoo… O cliente reserva pelo seu site, sozinho ou junto com o horário, e paga aí na barbearia. O estoque desce na hora e a venda entra no Financeiro.',
     steps: [
       'Abra o menu e toque em “Loja”',
-      'Cadastre o produto: nome, preço, quanto pagou, quantas unidades tem e uma foto',
-      'Vendeu? Toque em “Vender”, escolha a quantidade e o pagamento. Avisamos quando estiver acabando',
+      'Cadastre o produto com fotos, preço, quanto pagou e o estoque',
+      'Quando o cliente reservar, chega notificação. Ele retirou? Toque em “Retirou”',
     ],
     ctaLabel: 'Abrir a Loja',
     ctaTo: '/dashboard/loja',

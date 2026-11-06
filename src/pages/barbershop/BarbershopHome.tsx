@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, Check, ChevronLeft, Loader2, CheckCircle2, User, Calendar, AlertCircle } from 'lucide-react'
+import { Phone, Instagram, MapPin, Clock, Star, Crown, Scissors, ChevronRight, Check, ChevronLeft, Loader2, CheckCircle2, User, Calendar, AlertCircle, ShoppingBag } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 import { supabasePublic } from '@/lib/supabase-public'
 import { buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
+import BookingBump from '@/components/barbershop/BookingBump'
+import StoreSection from '@/components/barbershop/StoreSection'
+import { placeOrder } from '@/lib/placeOrder'
+import { orderErrorMessage, type PublicProduct } from '@/repositories/publicStoreRepository'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -48,14 +52,22 @@ const BookingSection = ({
   barbershop,
   services,
   barbers,
+  products,
+  onOrdered,
 }: {
   barbershop: PublicSiteOutletCtx['barbershop']
   services: BarbershopService[]
   barbers: BarbershopBarber[]
+  products: PublicProduct[]
+  onOrdered: () => void
 }) => {
   const primary = barbershop.primaryColor
   const [step, setStep] = useState<BookStep>('service')
   const [selectedServices, setSelectedServices] = useState<BarbershopService[]>([])
+  // "Leve junto": produto → quantidade
+  const [bump, setBump] = useState<Record<string, number>>({})
+  // Depois de agendar: o que foi separado da loja, ou por que não deu
+  const [orderResult, setOrderResult] = useState<{ ok: boolean; text: string } | null>(null)
   const [selectedBarber, setSelectedBarber] = useState<BarbershopBarber | null>(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
@@ -74,6 +86,8 @@ const BookingSection = ({
   const pickedBarber = selectedBarber
   // Serviços somam preço e tempo (cada serviço tem sua duração)
   const totalPrice = selectedServices.reduce((acc, s) => acc + s.price, 0)
+  const bumpLines = products.filter(p => bump[p.id]).map(p => ({ product: p, qty: bump[p.id] }))
+  const bumpTotal = bumpLines.reduce((a, l) => a + l.product.price * l.qty, 0)
   const servicesLabel = selectedServices.map(s => s.name).join(' + ')
   // Duração do atendimento = soma dos serviços escolhidos; sem serviços, tempo de corte do barbeiro (fallback 30 min)
   const servicesTotalDuration = selectedServices.reduce((acc, s) => acc + (s.durationMin || 0), 0)
@@ -161,6 +175,8 @@ const BookingSection = ({
     setClientEmail(s.email || '')
     setClientNotes('')
     setBookError('')
+    setBump({})
+    setOrderResult(null)
     setSlotNotice('')
   }
 
@@ -177,13 +193,34 @@ const BookingSection = ({
     // Salva os dados no navegador do cliente pra prefill nos próximos agendamentos
     saveContact(clientName.trim(), clientPhone.trim(), clientEmail.trim())
 
-    // Demo: não grava no banco (id não é real), só mostra a confirmação
+    // O id sai daqui (o site não pode ler o agendamento de volta) pra ligar
+    // os produtos do "leve junto" a este horário.
+    const appointmentId = crypto.randomUUID()
+    const reserveBump = async () => {
+      if (bumpLines.length === 0) { setOrderResult(null); return }
+      try {
+        await placeOrder(barbershop.id, {
+          items: bumpLines.map(l => ({ productId: l.product.id, quantity: l.qty })),
+          clientName: clientName.trim(),
+          clientPhone,
+          appointmentId,
+        })
+        setOrderResult({ ok: true, text: bumpLines.map(l => `${l.qty}× ${l.product.name}`).join(', ') })
+        onOrdered()
+      } catch (e: unknown) {
+        setOrderResult({ ok: false, text: orderErrorMessage(e) })
+      }
+    }
+
+    // Demo: não grava agendamento no banco (id não é real), só mostra a confirmação
     if (isDemoBarbershop) {
+      await reserveBump()
       setTimeout(() => { setSubmitting(false); setStep('done') }, 500)
       return
     }
     try {
       const { error } = await supabasePublic.from('appointments').insert({
+        id: appointmentId,
         barbershop_id: barbershop.id,
         service_id: selectedServices[0].id,
         // O banco soma duração e preço destes serviços (combo corte + barba etc.)
@@ -203,6 +240,7 @@ const BookingSection = ({
         status: 'pending',
       })
       if (error) throw error
+      await reserveBump() // horário já está garantido; produto é extra
       setStep('done')
     } catch (e: unknown) {
       // Mostra a mensagem do limite anti-abuse (trigger) se vier; senão, genérica.
@@ -272,6 +310,13 @@ const BookingSection = ({
         </p>
         {selectedBarber && (
           <p className="text-white/35 text-xs font-body mb-8">com {selectedBarber.name}</p>
+        )}
+        {orderResult && (
+          <p className={`text-sm font-body mb-4 ${orderResult.ok ? 'text-white/70' : 'text-red-300'}`}>
+            {orderResult.ok
+              ? <>Separado pra você: {orderResult.text}. Paga tudo na barbearia.</>
+              : <>Seu horário está marcado, mas não deu pra separar os produtos: {orderResult.text}</>}
+          </p>
         )}
         <p className="text-white/40 text-sm font-body mb-8">
           Em breve você receberá uma confirmação. Até lá!
@@ -543,7 +588,24 @@ const BookingSection = ({
                 {selectedBarber.name}
               </div>
             )}
+            {bumpLines.length > 0 && (
+              <>
+                {bumpLines.map(l => (
+                  <div key={l.product.id} className="flex items-center gap-2 text-sm text-white/70">
+                    <ShoppingBag className="w-3.5 h-3.5 shrink-0" style={{ color: primary }} />
+                    <span className="min-w-0 flex-1 truncate">{l.qty}× {l.product.name}</span>
+                    <span className="tabular-nums text-white/60">R$ {(l.product.price * l.qty).toFixed(2).replace('.', ',')}</span>
+                  </div>
+                ))}
+                <div className="flex items-center gap-2 text-sm pt-2 mt-1 border-t border-[#262626]">
+                  <span className="text-white/50">Total na barbearia</span>
+                  <span className="ml-auto font-heading" style={{ color: primary }}>R$ {(totalPrice + bumpTotal).toFixed(2).replace('.', ',')}</span>
+                </div>
+              </>
+            )}
           </div>
+
+          <BookingBump products={products} picked={bump} onChange={setBump} primary={primary} />
 
           {barbershop.cancellationPolicy?.enabled && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/8 border border-amber-500/20 mb-6">
@@ -632,7 +694,7 @@ const BookingSection = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const BarbershopHome = () => {
-  const { barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount } = useOutletContext<PublicSiteOutletCtx>()
+  const { barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount, products, refreshProducts } = useOutletContext<PublicSiteOutletCtx>()
 
   const primary = barbershop.primaryColor
 
@@ -755,6 +817,15 @@ const BarbershopHome = () => {
           </div>
         </div>
       </section>
+
+      {/* ── LOJA ─────────────────────────────────────────────────────────── */}
+      <StoreSection
+        barbershopId={barbershop.id}
+        barbershopName={barbershop.name}
+        products={products}
+        primary={primary}
+        onOrdered={refreshProducts}
+      />
 
       {/* ── EQUIPE ───────────────────────────────────────────────────────── */}
       <section id="equipe" className="py-24 bg-[#0a0a0a]">
@@ -953,7 +1024,7 @@ const BarbershopHome = () => {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Form */}
             <div className="lg:col-span-3 p-5 sm:p-8 rounded-2xl bg-[#111] border border-[#1e1e1e]">
-              <BookingSection barbershop={barbershop} services={services} barbers={barbers} />
+              <BookingSection barbershop={barbershop} services={services} barbers={barbers} products={products} onOrdered={refreshProducts} />
             </div>
 
             {/* Info lateral */}

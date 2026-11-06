@@ -6,6 +6,8 @@ import { Outlet, Link, useParams } from 'react-router-dom'
 import { Menu, X, Scissors, Phone } from 'lucide-react'
 import { supabasePublic } from '@/lib/supabase-public'
 import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
+import { publicStoreRepository, type PublicProduct } from '@/repositories/publicStoreRepository'
+import { demoPublicProducts } from '@/hooks/useProducts'
 import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership } from '@/types/tenant'
 import type { Database, Tables } from '@/types/database'
 import { mapBarbershopRow } from '@/repositories/barbershopRepository'
@@ -38,6 +40,10 @@ export interface PublicSiteOutletCtx {
   reviews: PublicReview[]
   ratingAvg: number | null
   ratingCount: number
+  /** Loja: só o que a barbearia marcou pra aparecer no site */
+  products: PublicProduct[]
+  /** Rebusca a loja (estoque mudou depois de um pedido) */
+  refreshProducts: () => void
 }
 
 const PublicSiteLayout = () => {
@@ -47,6 +53,8 @@ const PublicSiteLayout = () => {
   const [barbers, setBarbers] = useState<BarbershopBarber[]>([])
   const [memberships, setMemberships] = useState<BarbershopMembership[]>([])
   const [reviews, setReviews] = useState<PublicReview[]>([])
+  const [products, setProducts] = useState<PublicProduct[]>([])
+  const [productsNonce, setProductsNonce] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -262,12 +270,26 @@ const PublicSiteLayout = () => {
     }
   }, [slug])
 
+  // Loja: busca separada, não segura o carregamento do site. Barbearia demo
+  // (id não é uuid) lê os produtos do demo no navegador.
+  const shopId = barbershop?.id
+  useEffect(() => {
+    if (!shopId) { setProducts([]); return }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(shopId)) { setProducts(demoPublicProducts(shopId)); return }
+    let active = true
+    publicStoreRepository.list(shopId)
+      .then(list => { if (active) setProducts(list) })
+      .catch(() => { if (active) setProducts([]) })
+    return () => { active = false }
+  }, [shopId, productsNonce])
+
   const navLinks = [
     { label: 'Início', href: '#home' },
     { label: 'Serviços', href: '#servicos' },
     { label: 'Equipe', href: '#equipe' },
     { label: 'Galeria', href: '#galeria' },
     ...(memberships.length > 0 ? [{ label: 'Clube VIP', href: '#clube' }] : []),
+    ...(products.length > 0 ? [{ label: 'Loja', href: '#loja' }] : []),
     { label: 'Agendar', href: '#agendar' },
   ]
 
@@ -371,7 +393,7 @@ const PublicSiteLayout = () => {
       </header>
 
       <main className="flex-1 pt-16">
-        <Outlet context={{ barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount } satisfies PublicSiteOutletCtx} />
+        <Outlet context={{ barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount, products, refreshProducts: () => setProductsNonce(n => n + 1) } satisfies PublicSiteOutletCtx} />
       </main>
 
       <footer className="border-t border-[#1a1a1a] py-8">

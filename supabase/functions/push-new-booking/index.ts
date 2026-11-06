@@ -6,6 +6,10 @@
 // { appointment_id } e header x-cron-secret. O corpo só traz o id: o
 // agendamento é relido aqui com service role.
 //
+// Também chamada por public_place_product_order com { order_id } quando o
+// cliente compra na loja do site: "Cliente agendado e venda realizada!" se o
+// pedido veio junto do agendamento, "Nova reserva na loja!" se foi avulso.
+//
 // Secrets:
 //   CRON_SECRET        — o mesmo do Vault `trial_cron_secret`
 //   VAPID_PUBLIC_KEY   — par da chave usada no front (src/lib/push.ts)
@@ -76,6 +80,38 @@ Deno.serve(async (req) => {
   const secret = Deno.env.get('CRON_SECRET')
   const provided = req.headers.get('x-cron-secret')
   if (!secret || !provided || !safeEqual(provided, secret)) return err('Unauthorized', 401)
+
+  const orderId = (body as { order_id?: unknown } | null)?.order_id
+  if (orderId !== undefined) {
+    if (typeof orderId !== 'string' || !UUID_RE.test(orderId)) return err('order_id inválido')
+    const { data: lines, error: linesErr } = await supabase
+      .from('product_sales')
+      .select('barbershop_id, appointment_id, product_name, quantity, total, client_name, status, created_at')
+      .eq('order_id', orderId)
+    if (linesErr) return err('Falha ao ler pedido', 500)
+    const open = (lines ?? []).filter(l => l.status === 'reservado')
+    if (!open.length) return json({ sent: 0, skipped: 'not-open' })
+    if (Date.now() - new Date(open[0].created_at).getTime() > 5 * 60 * 1000) return json({ sent: 0, skipped: 'stale' })
+
+    const { data: orderSubs, error: orderSubsErr } = await supabase
+      .from('push_subscriptions')
+      .select('id, endpoint, p256dh, auth')
+      .eq('barbershop_id', open[0].barbershop_id)
+    if (orderSubsErr) return err('Falha ao ler inscrições', 500)
+    if (!orderSubs?.length) return json({ sent: 0 })
+
+    const items = open.map(l => `${l.quantity}× ${l.product_name}`).join(', ')
+    const total = open.reduce((a, l) => a + Number(l.total), 0)
+    const withBooking = open.some(l => l.appointment_id)
+    return json(
+      await sendAll(supabase, orderSubs, {
+        title: withBooking ? 'Cliente agendado e venda realizada!' : 'Nova reserva na loja!',
+        body: [open[0].client_name, items, brl(total)].join(' · '),
+        tag: `pedido-${orderId}`,
+        url: '/dashboard/loja',
+      }),
+    )
+  }
 
   const id = (body as { appointment_id?: unknown } | null)?.appointment_id
   if (typeof id !== 'string' || !UUID_RE.test(id)) return err('appointment_id inválido')
