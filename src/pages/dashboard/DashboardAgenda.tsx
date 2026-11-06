@@ -186,8 +186,9 @@ const DashboardAgenda = () => {
     setServicesOpen(false)
     setClientPickerOpen(false)
     setModalOpen(true)
-    // Pega também quem agendou pelo site público desde que o painel abriu
-    void refreshClients()
+    // Pega também quem agendou pelo site público desde que o painel abriu.
+    // Depois da animação: a rebusca re-renderiza o painel todo e engasgava a abertura.
+    setTimeout(() => { void refreshClients() }, 400)
   }
 
   useEffect(() => {
@@ -596,8 +597,8 @@ const DashboardAgenda = () => {
         {modalOpen && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 0.15 } }}
+            exit={{ opacity: 0, transition: { duration: 0.1 } }}
             className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-4"
           >
             {/* Fundo só fecha se o toque COMEÇOU e TERMINOU nele: arrastar a
@@ -611,10 +612,9 @@ const DashboardAgenda = () => {
               }}
             />
             <motion.div
-              initial={{ y: 24, scale: 0.97 }}
-              animate={{ y: 0, scale: 1 }}
-              exit={{ y: 12, scale: 0.97 }}
-              transition={{ duration: 0.2 }}
+              initial={{ y: 16 }}
+              animate={{ y: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
               className="relative w-full max-w-3xl bg-[#111] sm:border border-[#222] sm:rounded-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[92vh]"
             >
               {/* Cabeçalho */}
