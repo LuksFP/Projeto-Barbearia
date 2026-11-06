@@ -46,6 +46,7 @@ function demoApptToRow(a: BarbershopAppointment, client: BarbershopClient): Appo
     barber_id: a.barberId ?? null,
     barber_name: a.barberName,
     service_id: a.serviceId ?? null,
+    service_ids: null,
     service_name: a.serviceName,
     service_category: a.serviceCategory ?? null,
     date: a.date,

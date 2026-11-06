@@ -130,6 +130,7 @@ export type Database = {
           review: string | null
           service_category: string | null
           service_id: string | null
+          service_ids: string[] | null
           service_name: string
           status: string
           stripe_checkout_session_id: string | null
@@ -159,6 +160,7 @@ export type Database = {
           review?: string | null
           service_category?: string | null
           service_id?: string | null
+          service_ids?: string[] | null
           service_name: string
           status?: string
           stripe_checkout_session_id?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           review?: string | null
           service_category?: string | null
           service_id?: string | null
+          service_ids?: string[] | null
           service_name?: string
           status?: string
           stripe_checkout_session_id?: string | null

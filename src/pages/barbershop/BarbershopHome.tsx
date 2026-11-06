@@ -181,6 +181,8 @@ const BookingSection = ({
       const { error } = await supabasePublic.from('appointments').insert({
         barbershop_id: barbershop.id,
         service_id: selectedServices[0].id,
+        // O banco soma duração e preço destes serviços (combo corte + barba etc.)
+        service_ids: selectedServices.map(s => s.id),
         service_name: servicesLabel,
         service_category: category,
         price: totalPrice,

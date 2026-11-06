@@ -156,12 +156,29 @@ const DashboardAgenda = () => {
     })
   }
 
+  // A lista da tela só tem o dia aberto na Agenda. Se o formulário estiver em
+  // outra data, busca os agendamentos daquele dia — senão tudo pareceria livre.
+  const [formDayApts, setFormDayApts] = useState<BarbershopAppointment[] | null>(null)
+  const formDateIsOpenDay = form.date === selectedDate
+  useEffect(() => {
+    setFormDayApts(null)
+    if (!modalOpen || !barbershop || !form.date || formDateIsOpenDay || isDemoMode()) return
+    let active = true
+    appointmentRepository
+      .listByBarbershop(barbershop.id, form.date)
+      .then(rows => { if (active) setFormDayApts(rows.map(mapAppointment)) })
+      .catch(() => { if (active) setFormDayApts([]) })
+    return () => { active = false }
+  }, [modalOpen, barbershop?.id, form.date, formDateIsOpenDay]) // eslint-disable-line react-hooks/exhaustive-deps
+  const formApts = formDateIsOpenDay || isDemoMode() ? appointments : formDayApts
+  const formDayLoading = formApts === null
+
   // Horários já calculados (início–fim) do barbeiro naquela data: passo fino,
   // reservando o bloco cheio (soma dos serviços / duração) e escondendo os
   // ocupados. É o que aparece ao abrir a lista de horário.
   const daySlots = useMemo(() => {
-    if (!form.date || !form.barberId) return []
-    const busy = busyRanges(appointments, form.barberId, form.date)
+    if (!form.date || !form.barberId || !formApts) return []
+    const busy = busyRanges(formApts, form.barberId, form.date)
     return buildDaySlots({
       step: Math.min(30, slotDuration),
       duration: slotDuration,
@@ -171,15 +188,15 @@ const DashboardAgenda = () => {
       now: new Date(),
       date: form.date,
     }).filter(s => s.available)
-  }, [form.date, form.barberId, slotDuration, appointments, barbershop?.openTime, barbershop?.closeTime])
+  }, [form.date, form.barberId, slotDuration, formApts, barbershop?.openTime, barbershop?.closeTime])
 
   // Término do horário escolhido (usado no resumo e na trava do botão)
   const bookingCheck = useMemo(() => {
-    if (!form.date || !form.time) return null
-    const busy = form.barberId ? busyRanges(appointments, form.barberId, form.date) : []
+    if (!form.date || !form.time || !formApts) return null
+    const busy = form.barberId ? busyRanges(formApts, form.barberId, form.date) : []
     const end = toMin(form.time) + slotDuration
     return { end: toHHMM(end), available: isTimeAvailable(form.time, slotDuration, busy) }
-  }, [form.date, form.time, form.barberId, slotDuration, appointments])
+  }, [form.date, form.time, form.barberId, slotDuration, formApts])
 
   const openNewModal = () => {
     setForm({ ...EMPTY_APT, date: selectedDate })
@@ -277,7 +294,8 @@ const DashboardAgenda = () => {
 
     // Guarda: não deixa marcar em cima de um horário já ocupado do barbeiro
     if (form.barberId) {
-      const busy = busyRanges(appointments, form.barberId, form.date)
+      if (!formApts) return
+      const busy = busyRanges(formApts, form.barberId, form.date)
       if (!isTimeAvailable(form.time, duration, busy)) {
         toast({ title: 'Horário ocupado', description: `${brb?.name ?? 'O barbeiro'} já tem atendimento nesse horário.`, variant: 'destructive' })
         return
@@ -350,6 +368,7 @@ const DashboardAgenda = () => {
         client_name: form.clientName,
         client_phone: form.clientPhone,
         service_name: label,
+        service_ids: picked.map(s => s.id),
         service_category: category ?? null,
         barber_id: brb?.id ?? null,
         barber_name: brb?.name ?? 'A definir',
@@ -875,6 +894,10 @@ const DashboardAgenda = () => {
                     {!form.barberId || !form.date ? (
                       <p className="rounded-xl border border-dashed border-[#2a2a2a] px-4 py-6 text-center text-white/35 text-xs font-body">
                         {!form.barberId ? 'Escolha o barbeiro para ver os horários livres.' : 'Escolha a data para ver os horários livres.'}
+                      </p>
+                    ) : formDayLoading ? (
+                      <p className="rounded-xl border border-dashed border-[#2a2a2a] px-4 py-6 text-center text-white/35 text-xs font-body">
+                        Vendo os horários ocupados desse dia…
                       </p>
                     ) : daySlots.length === 0 ? (
                       <p className="rounded-xl border border-dashed border-red-400/25 px-4 py-6 text-center text-red-300/70 text-xs font-body">
