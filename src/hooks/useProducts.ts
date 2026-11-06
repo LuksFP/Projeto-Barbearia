@@ -23,7 +23,7 @@ const demoKey = (bsId: string) => `barberos:loja:${bsId}`
 function demoSeed(bsId: string): DemoState {
   const p = (id: string, name: string, category: string, price: number, cost: number, stock: number, description = ''): Product => ({
     id, barbershopId: bsId, name, description, category, price, cost, stock, lowStockAt: 2,
-    imageUrl: null, visibleOnSite: true, active: true,
+    imageUrls: [], visibleOnSite: true, active: true,
   })
   const products = [
     p('demo-p1', 'Pomada efeito matte 120g', 'Cabelo', 45, 22, 8, 'Fixação média, sem brilho.'),
@@ -130,10 +130,23 @@ export function useProducts(barbershopId: string | undefined) {
     return saved
   }
 
-  const archive = async (id: string) => {
-    if (demo) { mutateDemo(s => ({ ...s, products: s.products.map(p => (p.id === id ? { ...p, active: false } : p)) })); return }
-    await productRepository.archive(id)
+  /** Exclui; se o produto já vendeu, só tira da loja (o histórico aponta pra ele). */
+  const remove = async (id: string): Promise<'deleted' | 'archived'> => {
+    if (demo) {
+      let result: 'deleted' | 'archived' = 'deleted'
+      mutateDemo(s => {
+        const sold = s.sales.some(x => x.productId === id)
+        result = sold ? 'archived' : 'deleted'
+        return {
+          ...s,
+          products: sold ? s.products.map(p => (p.id === id ? { ...p, active: false } : p)) : s.products.filter(p => p.id !== id),
+        }
+      })
+      return result
+    }
+    const result = await productRepository.remove(id)
     setProducts(prev => prev.filter(p => p.id !== id))
+    return result
   }
 
   const sell = async (input: SaleInput) => {
@@ -170,5 +183,29 @@ export function useProducts(barbershopId: string | undefined) {
     await reload()
   }
 
-  return { products, sales, loading, demo, save, archive, sell, reverseSale, reload }
+  return { products, sales, loading, demo, save, remove, sell, reverseSale, reload }
+}
+
+/** Demo do Financeiro: loja por mês. O mês atual usa as vendas feitas no demo;
+ *  os anteriores são estimados a partir dos serviços (10–18% deles, lucro ~48%). */
+export function demoStoreMonths(bsId: string, servicesByMonth: Array<{ month: string; total: number }>) {
+  const current = new Date().toISOString().slice(0, 7)
+  const demoSales = loadDemo(bsId).sales
+  return servicesByMonth.map((m, i) => {
+    if (m.month === current) {
+      const mine = demoSales.filter(s => s.createdAt.slice(0, 7) === current)
+      if (mine.length) {
+        return {
+          month: m.month,
+          revenue: mine.reduce((a, s) => a + s.total, 0),
+          profit: mine.reduce((a, s) => a + (s.unitCost === null ? 0 : (s.unitPrice - s.unitCost) * s.quantity), 0),
+          items: mine.reduce((a, s) => a + s.quantity, 0),
+          hasCost: mine.some(s => s.unitCost !== null),
+        }
+      }
+    }
+    const ratio = 0.1 + ((i * 37) % 9) / 100
+    const revenue = Math.round(m.total * ratio)
+    return { month: m.month, revenue, profit: Math.round(revenue * 0.48), items: Math.max(1, Math.round(revenue / 38)), hasCost: true }
+  })
 }

@@ -70,21 +70,30 @@ export async function uploadBarberAvatar(barberId: string, file: File): Promise<
   return { url: `${data.publicUrl}?v=${Date.now()}`, path }
 }
 
-/** Foto de produto da loja: products/{barbershopId}/{productId}.{ext}
- *  (a política do Storage só deixa dono/admin escrever na pasta da própria barbearia). */
+/** Foto de produto da loja: products/{barbershopId}/{productId}/{aleatório}.jpg
+ *  (a política do Storage só deixa dono/admin escrever na pasta da própria barbearia).
+ *  Recebe o arquivo já reduzido (resizeImage). */
 export async function uploadProductImage(barbershopId: string, productId: string, file: File): Promise<UploadResult> {
   const err = validateImage(file)
   if (err) throw new Error(err)
 
-  const ext = extFromMime(file.type)
-  const path = `products/${barbershopId}/${productId}.${ext}`
-
+  const path = `products/${barbershopId}/${productId}/${crypto.randomUUID()}.${extFromMime(file.type)}`
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { upsert: true, contentType: file.type })
+    .upload(path, file, { contentType: file.type })
 
   if (error) throw new Error(`Upload falhou: ${error.message}`)
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
-  return { url: `${data.publicUrl}?v=${Date.now()}`, path }
+  return { url: data.publicUrl, path }
+}
+
+/** Apaga do Storage uma foto de produto a partir da URL pública (best-effort). */
+export async function removeProductImage(publicUrl: string): Promise<void> {
+  const marker = `/object/public/${BUCKET}/`
+  const i = publicUrl.indexOf(marker)
+  if (i < 0) return
+  const path = decodeURIComponent(publicUrl.slice(i + marker.length).split('?')[0])
+  if (!path.startsWith('products/')) return
+  await supabase.storage.from(BUCKET).remove([path])
 }

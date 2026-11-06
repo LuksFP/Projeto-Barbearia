@@ -29,7 +29,7 @@ const when = (iso: string) => {
 
 const DashboardProdutos = () => {
   const { barbershop, tenantUser, isAdmin } = useTenant()
-  const { products, sales, loading, demo, save, archive, sell, reverseSale } = useProducts(barbershop?.id)
+  const { products, sales, loading, demo, save, remove, sell, reverseSale } = useProducts(barbershop?.id)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string | null>(null)
   const [stockFilter, setStockFilter] = useState<StockFilter>('todos')
@@ -157,8 +157,8 @@ const DashboardProdutos = () => {
             return (
               <li key={p.id} className="flex items-center gap-3 sm:gap-4 py-3">
                 <div className="w-12 h-12 rounded-md bg-[#181818] border border-[#242424] overflow-hidden shrink-0 flex items-center justify-center">
-                  {p.imageUrl
-                    ? <img src={p.imageUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
+                  {p.imageUrls[0]
+                    ? <img src={p.imageUrls[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
                     : <span className="font-heading text-lg text-white/25">{p.name.slice(0, 1).toUpperCase()}</span>}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -221,7 +221,7 @@ const DashboardProdutos = () => {
         categories={categories}
         demo={demo}
         onSave={save}
-        onArchive={archive}
+        onRemove={remove}
       />
       <SellDialog
         product={selling}

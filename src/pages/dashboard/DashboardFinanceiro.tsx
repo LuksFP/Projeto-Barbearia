@@ -14,6 +14,9 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { MonthRevenue } from '@/types/tenant'
+import { productRepository, type StoreMonth } from '@/repositories/productRepository'
+import { demoStoreMonths } from '@/hooks/useProducts'
+import StoreAndServicesCharts from '@/components/dashboard/financeiro/StoreAndServicesCharts'
 
 type Period = 3 | 6 | 12
 
@@ -106,6 +109,7 @@ const DashboardFinanceiro = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [avgTicket, setAvgTicket] = useState(0)
   const hasData = byMonth.length > 0
+  const [storeByMonth, setStoreByMonth] = useState<StoreMonth[]>([])
 
   // Insights de IA — exclusivo Pro/Premium
   const [insights, setInsights] = useState<Insight[]>([])
@@ -129,10 +133,21 @@ const DashboardFinanceiro = () => {
         const bt = Math.round(total * share)
         return { barberId: b.id, barberName: b.name, total: bt, count: Math.max(1, Math.round(bt / 45)) }
       }))
+      setStoreByMonth(barbershop ? demoStoreMonths(barbershop.id, months) : [])
       setFetching(false)
       return
     }
     if (!barbershop) return
+
+    // Loja: mesma janela dos serviços (getFinancials começa no dia 1 de `period` meses atrás)
+    const from = new Date()
+    from.setMonth(from.getMonth() - period)
+    from.setDate(1)
+    const fromStr = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-01`
+    productRepository
+      .salesByMonth(barbershop.id, fromStr)
+      .then(setStoreByMonth)
+      .catch(() => setStoreByMonth([])) // loja sem vendas/tabela: os gráficos de serviço seguem
 
     // Se já tem dados, faz refresh discreto (sem apagar o conteúdo)
     if (hasData) setRefreshing(true)
@@ -387,7 +402,7 @@ const DashboardFinanceiro = () => {
             className="p-6 rounded-xl bg-[#141414] border border-[#252525]"
           >
             <p className="text-white/40 text-xs font-semibold uppercase tracking-widest font-body mb-6">
-              Receita por mês
+              Serviços por mês
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={byMonth} barSize={28} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -417,6 +432,9 @@ const DashboardFinanceiro = () => {
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
+
+          {/* Loja: junto com os serviços e sozinha */}
+          <StoreAndServicesCharts servicesByMonth={byMonth} storeByMonth={storeByMonth} />
 
           {/* Gráfico de tendência */}
           <motion.div
@@ -700,7 +718,8 @@ const DashboardFinanceiro = () => {
                 <thead>
                   <tr className="border-b border-[#252525]">
                     <th className="text-left text-white/30 text-xs pb-3 pr-4">Mês</th>
-                    <th className="text-right text-white/30 text-xs pb-3 pr-4">Receita</th>
+                    <th className="text-right text-white/30 text-xs pb-3 pr-4">Serviços</th>
+                    <th className="text-right text-white/30 text-xs pb-3 pr-4">Loja</th>
                     {allCategories.map(cat => (
                       <th key={cat} className="text-right text-white/20 text-xs pb-3 pr-4 hidden md:table-cell">
                         {cat}
@@ -717,6 +736,9 @@ const DashboardFinanceiro = () => {
                       <tr key={m.month} className="border-b border-[#1a1a1a] last:border-0">
                         <td className="py-3 pr-4 text-white/70">{m.label}</td>
                         <td className="py-3 pr-4 text-right text-white font-medium">R$ {fmt(m.total)}</td>
+                        <td className="py-3 pr-4 text-right text-white/70">
+                          {storeByMonth.find(x => x.month === m.month)?.revenue ? `R$ ${fmt(storeByMonth.find(x => x.month === m.month)!.revenue)}` : '—'}
+                        </td>
                         {allCategories.map(cat => (
                           <td key={cat} className="py-3 pr-4 text-right text-white/40 hidden md:table-cell">
                             {m.byCategory[cat] ? `R$ ${fmt(m.byCategory[cat])}` : '—'}

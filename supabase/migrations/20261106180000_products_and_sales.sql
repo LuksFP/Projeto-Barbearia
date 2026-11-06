@@ -11,6 +11,18 @@
 -- O site público (anon) ainda não lê nada daqui: o lado cliente vem depois, por RPC.
 
 -- ═══ Catálogo ════════════════════════════════════════════════════════════════
+-- Fotos: até 4 URLs públicas do Storage (a primeira é a capa).
+CREATE OR REPLACE FUNCTION public.product_images_ok(urls text[])
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+SET search_path = public
+AS $$
+  SELECT coalesce(cardinality(urls), 0) <= 4
+     AND coalesce(bool_and(u ~ '^https://'), true)
+  FROM unnest(coalesce(urls, '{}'::text[])) AS u
+$$;
+
 CREATE TABLE IF NOT EXISTS public.products (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   barbershop_id   uuid NOT NULL REFERENCES public.barbershops(id) ON DELETE CASCADE,
@@ -21,7 +33,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   cost            numeric(10,2) CHECK (cost IS NULL OR cost >= 0),
   stock           integer NOT NULL DEFAULT 0 CHECK (stock >= 0),
   low_stock_at    integer NOT NULL DEFAULT 2 CHECK (low_stock_at >= 0),
-  image_url       text CHECK (image_url IS NULL OR image_url ~ '^https://'),
+  image_urls      text[] NOT NULL DEFAULT '{}' CHECK (public.product_images_ok(image_urls)),
   visible_on_site boolean NOT NULL DEFAULT true,
   active          boolean NOT NULL DEFAULT true,
   created_at      timestamptz NOT NULL DEFAULT now(),
@@ -48,10 +60,16 @@ CREATE POLICY "admin updates products" ON public.products
   USING (barbershop_id IN (SELECT public.my_admin_barbershop_ids()))
   WITH CHECK (barbershop_id IN (SELECT public.my_admin_barbershop_ids()));
 
--- Sem DELETE: produto sai do catálogo arquivando (active = false), pra o
--- histórico de vendas continuar apontando pra ele.
+-- Excluir de verdade só produto que nunca vendeu: product_sales aponta com
+-- ON DELETE RESTRICT, então com venda o DELETE falha e o app arquiva
+-- (active = false) — o histórico continua apontando pro produto.
+DROP POLICY IF EXISTS "admin deletes products" ON public.products;
+CREATE POLICY "admin deletes products" ON public.products
+  FOR DELETE TO authenticated
+  USING (barbershop_id IN (SELECT public.my_admin_barbershop_ids()));
+
 REVOKE ALL ON public.products FROM anon;
-GRANT SELECT, INSERT, UPDATE ON public.products TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.products TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.touch_product_updated_at()
 RETURNS trigger
@@ -179,9 +197,34 @@ CREATE TRIGGER trg_reverse_product_sale
   AFTER DELETE ON public.product_sales
   FOR EACH ROW EXECUTE FUNCTION public.reverse_product_sale();
 
+-- ═══ Resumo por mês (Financeiro) ═════════════════════════════════════════════
+-- SECURITY INVOKER: roda com as permissões de quem chama, então a RLS de
+-- product_sales vale (só a própria barbearia). Mês no horário de Brasília.
+CREATE OR REPLACE FUNCTION public.product_sales_by_month(p_barbershop_id uuid, p_from date)
+RETURNS TABLE (month text, revenue numeric, profit numeric, items bigint, has_cost boolean)
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
+  SELECT to_char(created_at AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') AS month,
+         sum(total)                                                    AS revenue,
+         sum(CASE WHEN unit_cost IS NULL THEN 0 ELSE (unit_price - unit_cost) * quantity END) AS profit,
+         sum(quantity)                                                 AS items,
+         bool_or(unit_cost IS NOT NULL)                                AS has_cost
+    FROM public.product_sales
+   WHERE barbershop_id = p_barbershop_id
+     AND created_at >= (p_from::timestamp AT TIME ZONE 'America/Sao_Paulo')
+   GROUP BY 1
+   ORDER BY 1
+$$;
+
+REVOKE ALL ON FUNCTION public.product_sales_by_month(uuid, date) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.product_sales_by_month(uuid, date) TO authenticated;
+
 -- ═══ Fotos dos produtos ══════════════════════════════════════════════════════
 -- Bucket público barbershop-assets não tinha nenhuma política de escrita.
--- Aqui só a pasta products/{barbershop_id}/ — dono/admin daquela barbearia.
+-- Aqui só a pasta products/{barbershop_id}/{product_id}/ — dono/admin daquela barbearia.
 DROP POLICY IF EXISTS "admin uploads product photos" ON storage.objects;
 CREATE POLICY "admin uploads product photos" ON storage.objects
   FOR INSERT TO authenticated

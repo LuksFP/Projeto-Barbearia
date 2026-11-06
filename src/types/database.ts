@@ -831,7 +831,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
-          image_url: string | null
+          image_urls: string[]
           low_stock_at: number
           name: string
           price: number
@@ -847,7 +847,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
-          image_url?: string | null
+          image_urls?: string[]
           low_stock_at?: number
           name: string
           price: number
@@ -863,7 +863,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
-          image_url?: string | null
+          image_urls?: string[]
           low_stock_at?: number
           name?: string
           price?: number
@@ -1114,6 +1114,16 @@ export type Database = {
       mark_announcement_seen: { Args: { p_key: string }; Returns: undefined }
       my_admin_barbershop_ids: { Args: never; Returns: string[] }
       my_barbershop_ids: { Args: never; Returns: string[] }
+      product_sales_by_month: {
+        Args: { p_barbershop_id: string; p_from: string }
+        Returns: {
+          has_cost: boolean
+          items: number
+          month: string
+          profit: number
+          revenue: number
+        }[]
+      }
       public_barber_busy_slots: {
         Args: { p_barber_id: string; p_barbershop_id: string; p_date: string }
         Returns: {

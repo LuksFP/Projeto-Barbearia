@@ -16,7 +16,7 @@ export interface Product {
   cost: number | null
   stock: number
   lowStockAt: number
-  imageUrl: string | null
+  imageUrls: string[]          // até 4; a primeira é a capa
   visibleOnSite: boolean
   active: boolean
 }
@@ -43,7 +43,7 @@ export interface ProductInput {
   cost: number | null
   stock: number
   lowStockAt: number
-  imageUrl: string | null
+  imageUrls: string[]          // até 4; a primeira é a capa
   visibleOnSite: boolean
 }
 
@@ -68,7 +68,7 @@ export const mapProduct = (r: Tables<'products'>): Product => ({
   cost: r.cost === null ? null : Number(r.cost),
   stock: r.stock,
   lowStockAt: r.low_stock_at,
-  imageUrl: r.image_url,
+  imageUrls: r.image_urls ?? [],
   visibleOnSite: r.visible_on_site,
   active: r.active,
 })
@@ -95,9 +95,17 @@ const toRow = (i: ProductInput) => ({
   cost: i.cost,
   stock: i.stock,
   low_stock_at: i.lowStockAt,
-  image_url: i.imageUrl,
+  image_urls: i.imageUrls,
   visible_on_site: i.visibleOnSite,
 })
+
+export interface StoreMonth {
+  month: string      // 'YYYY-MM'
+  revenue: number
+  profit: number
+  items: number
+  hasCost: boolean   // alguma venda do mês tinha custo (lucro só faz sentido assim)
+}
 
 export const productRepository = {
   async list(barbershopId: string): Promise<Product[]> {
@@ -125,6 +133,19 @@ export const productRepository = {
     const { data, error } = await supabase.from('products').update(toRow(input)).eq('id', id).select().single()
     if (error) throw error
     return mapProduct(data)
+  },
+
+  /** Exclui de vez. Produto que já vendeu não pode (o histórico aponta pra ele):
+   *  nesse caso arquiva e devolve 'archived'. */
+  async remove(id: string): Promise<'deleted' | 'archived'> {
+    const { error } = await supabase.from('products').delete().eq('id', id)
+    if (!error) return 'deleted'
+    // 23001 = RESTRICT da FK de product_sales (23503 se um dia virar NO ACTION)
+    if (error.code === '23001' || error.code === '23503') {
+      await this.archive(id)
+      return 'archived'
+    }
+    throw error
   },
 
   async archive(id: string): Promise<void> {
@@ -161,6 +182,19 @@ export const productRepository = {
       .single()
     if (error) throw error
     return mapSale(data)
+  },
+
+  /** Totais da loja por mês desde `from` ('YYYY-MM-DD'), somados no banco. */
+  async salesByMonth(barbershopId: string, from: string): Promise<StoreMonth[]> {
+    const { data, error } = await supabase.rpc('product_sales_by_month', { p_barbershop_id: barbershopId, p_from: from })
+    if (error) throw error
+    return (data ?? []).map(r => ({
+      month: r.month,
+      revenue: Number(r.revenue) || 0,
+      profit: Number(r.profit) || 0,
+      items: Number(r.items) || 0,
+      hasCost: !!r.has_cost,
+    }))
   },
 
   async reverseSale(id: string): Promise<void> {

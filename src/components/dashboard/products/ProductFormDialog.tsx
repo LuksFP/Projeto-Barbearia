@@ -1,10 +1,12 @@
 // Cadastro/edição de produto da loja (só dono/admin abre isto).
 import { useEffect, useRef, useState } from 'react'
-import { ImagePlus, Archive, Loader2 } from 'lucide-react'
+import { Trash2, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/hooks/use-toast'
 import { productErrorMessage } from '@/hooks/useProducts'
-import { uploadProductImage } from '@/lib/storage'
+import { removeProductImage, uploadProductImage } from '@/lib/storage'
+import { imageToDataUrl, resizeImage } from '@/lib/imageResize'
+import ProductPhotos, { MAX_PHOTOS, type PhotoItem } from './ProductPhotos'
 import type { Product, ProductInput } from '@/repositories/productRepository'
 
 interface Props {
@@ -15,7 +17,7 @@ interface Props {
   categories: string[]                 // sugestões (as que já existem)
   demo: boolean
   onSave: (input: ProductInput, id?: string) => Promise<Product>
-  onArchive: (id: string) => Promise<void>
+  onRemove: (id: string) => Promise<'deleted' | 'archived'>
 }
 
 interface Draft {
@@ -46,23 +48,28 @@ const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', curren
 const field = 'w-full bg-[#161616] border border-[#272727] rounded-lg px-3 py-2.5 text-white text-base sm:text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50'
 const label = 'block text-white/45 text-xs font-body mb-1.5'
 
-const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categories, demo, onSave, onArchive }: Props) => {
+const photosOf = (p: Product | null): PhotoItem[] => (p?.imageUrls ?? []).map(url => ({ key: url, url }))
+
+const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categories, demo, onSave, onRemove }: Props) => {
   const [draft, setDraft] = useState<Draft>(() => fromProduct(product))
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(product?.imageUrl ?? null)
+  const [photos, setPhotos] = useState<PhotoItem[]>(() => photosOf(product))
   const [saving, setSaving] = useState(false)
-  const [confirmArchive, setConfirmArchive] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const blobs = useRef<string[]>([])
 
   useEffect(() => {
     if (!open) return
     setDraft(fromProduct(product))
-    setFile(null)
-    setPreview(product?.imageUrl ?? null)
-    setConfirmArchive(false)
+    setPhotos(photosOf(product))
+    setConfirmDelete(false)
   }, [open, product])
 
-  useEffect(() => () => { if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview) }, [preview])
+  // Libera as prévias (blob:) quando o formulário fecha
+  useEffect(() => {
+    if (open) return
+    blobs.current.forEach(u => URL.revokeObjectURL(u))
+    blobs.current = []
+  }, [open])
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft(d => ({ ...d, [k]: v }))
 
@@ -77,11 +84,23 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
   const valid = !errors.name && !errors.price && !errors.stock
   const margin = cost !== null && price > 0 ? price - cost : null
 
-  const pickFile = (f: File | undefined) => {
-    if (!f) return
-    if (demo) { toast({ title: 'No modo demonstração a foto não é salva' }); return }
-    setFile(f)
-    setPreview(URL.createObjectURL(f))
+  const pickFiles = async (files: File[]) => {
+    try {
+      const items: PhotoItem[] = await Promise.all(files.map(async f => {
+        if (demo) {
+          // Demo: guarda pequena no navegador, já é a "URL" final
+          const url = await imageToDataUrl(f)
+          return { key: crypto.randomUUID(), url }
+        }
+        const resized = await resizeImage(f)
+        const url = URL.createObjectURL(resized)
+        blobs.current.push(url)
+        return { key: url, url, file: resized }
+      }))
+      setPhotos(prev => [...prev, ...items].slice(0, MAX_PHOTOS))
+    } catch (err: unknown) {
+      toast({ title: 'Não deu pra usar essa foto', description: productErrorMessage(err), variant: 'destructive' })
+    }
   }
 
   const submit = async (e: React.FormEvent) => {
@@ -96,15 +115,24 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
       cost,
       stock,
       lowStockAt: Math.max(0, Math.round(num(draft.lowStockAt) || 0)),
-      imageUrl: product?.imageUrl ?? null,
+      imageUrls: photos.filter(p => !p.file).map(p => p.url),
       visibleOnSite: draft.visibleOnSite,
     }
     try {
       let saved = await onSave(input, product?.id)
-      if (file) {
-        // A foto vai pra pasta do produto: precisa do id, por isso depois de salvar
-        const { url } = await uploadProductImage(barbershopId, saved.id, file)
-        saved = await onSave({ ...input, imageUrl: url }, saved.id)
+      if (photos.some(p => p.file)) {
+        // Fotos novas vão pra pasta do produto: precisa do id, por isso depois de salvar.
+        // Sobe na ordem da tela, pra capa continuar sendo a primeira.
+        const urls: string[] = []
+        for (const ph of photos) {
+          urls.push(ph.file ? (await uploadProductImage(barbershopId, saved.id, ph.file)).url : ph.url)
+        }
+        saved = await onSave({ ...input, imageUrls: urls }, saved.id)
+      }
+      // Foto tirada no formulário sai também do Storage
+      if (!demo && product) {
+        const kept = new Set(saved.imageUrls)
+        product.imageUrls.filter(u => !kept.has(u)).forEach(u => { void removeProductImage(u).catch(() => {}) })
       }
       toast({ title: product ? 'Produto atualizado' : 'Produto cadastrado', description: saved.name })
       onOpenChange(false)
@@ -115,15 +143,20 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
     }
   }
 
-  const archive = async () => {
+  const remove = async () => {
     if (!product) return
-    if (!confirmArchive) { setConfirmArchive(true); return }
+    if (!confirmDelete) { setConfirmDelete(true); return }
     try {
-      await onArchive(product.id)
-      toast({ title: 'Produto tirado da loja', description: 'As vendas antigas dele continuam no histórico.' })
+      const result = await onRemove(product.id)
+      if (result === 'deleted' && !demo) {
+        product.imageUrls.forEach(u => { void removeProductImage(u).catch(() => {}) })
+      }
+      toast(result === 'deleted'
+        ? { title: 'Produto excluído', description: product.name }
+        : { title: 'Produto tirado da loja', description: 'Ele já teve venda, então fica guardado pro histórico do Financeiro.' })
       onOpenChange(false)
     } catch (err: unknown) {
-      toast({ title: 'Não deu pra arquivar', description: productErrorMessage(err), variant: 'destructive' })
+      toast({ title: 'Não deu pra excluir', description: productErrorMessage(err), variant: 'destructive' })
     }
   }
 
@@ -136,28 +169,17 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
         </DialogDescription>
 
         <form onSubmit={submit} className="space-y-4" noValidate>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="relative w-24 h-24 shrink-0 rounded-lg border border-dashed border-[#333] bg-[#161616] overflow-hidden flex items-center justify-center text-white/35 hover:border-amber-500/50 hover:text-amber-300 transition-colors"
-              aria-label={preview ? 'Trocar foto do produto' : 'Adicionar foto do produto'}
-            >
-              {preview
-                ? <img src={preview} alt="" className="w-full h-full object-cover" />
-                : <span className="flex flex-col items-center gap-1 text-[11px] font-body"><ImagePlus className="w-5 h-5" />Foto</span>}
-            </button>
-            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => pickFile(e.target.files?.[0])} />
-            <div className="flex-1 min-w-0 space-y-3">
-              <div>
-                <label htmlFor="p-name" className={label}>Nome *</label>
-                <input id="p-name" value={draft.name} onChange={e => set('name', e.target.value.slice(0, 80))} placeholder="Pomada matte 120g" className={field} aria-invalid={!!errors.name && draft.name !== ''} />
-              </div>
-              <div>
-                <label htmlFor="p-cat" className={label}>Categoria</label>
-                <input id="p-cat" list="p-cats" value={draft.category} onChange={e => set('category', e.target.value.slice(0, 40))} placeholder="Cabelo, Barba, Acessórios…" className={field} />
-                <datalist id="p-cats">{categories.map(c => <option key={c} value={c} />)}</datalist>
-              </div>
+          <ProductPhotos photos={photos} onChange={setPhotos} onPick={files => void pickFiles(files)} />
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label htmlFor="p-name" className={label}>Nome *</label>
+              <input id="p-name" value={draft.name} onChange={e => set('name', e.target.value.slice(0, 80))} placeholder="Pomada matte 120g" className={field} />
+            </div>
+            <div className="col-span-2">
+              <label htmlFor="p-cat" className={label}>Categoria</label>
+              <input id="p-cat" list="p-cats" value={draft.category} onChange={e => set('category', e.target.value.slice(0, 40))} placeholder="Cabelo, Barba, Acessórios…" className={field} />
+              <datalist id="p-cats">{categories.map(c => <option key={c} value={c} />)}</datalist>
             </div>
           </div>
 
@@ -203,11 +225,12 @@ const ProductFormDialog = ({ open, onOpenChange, product, barbershopId, categori
             {product && (
               <button
                 type="button"
-                onClick={() => void archive()}
-                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-body border transition-colors ${confirmArchive ? 'border-red-500/50 text-red-300 bg-red-500/10' : 'border-[#2a2a2a] text-white/45 hover:text-white/80'}`}
+                onClick={() => void remove()}
+                onBlur={() => setConfirmDelete(false)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-body border transition-colors ${confirmDelete ? 'border-red-500/50 text-red-300 bg-red-500/10' : 'border-[#2a2a2a] text-white/45 hover:text-red-300'}`}
               >
-                <Archive className="w-3.5 h-3.5" />
-                {confirmArchive ? 'Toque de novo pra tirar' : 'Tirar da loja'}
+                <Trash2 className="w-3.5 h-3.5" />
+                {confirmDelete ? 'Toque de novo pra excluir' : 'Excluir'}
               </button>
             )}
             <button
