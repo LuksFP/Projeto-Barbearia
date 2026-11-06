@@ -21,6 +21,7 @@ import {
   Clock,
   BellRing,
   UserPlus,
+  Lightbulb,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
@@ -46,6 +47,7 @@ const navItems = [
   { to: '/dashboard/personalizar', label: 'Personalizar', icon: Paintbrush2 },
   { to: '/dashboard/configuracoes', label: 'Configurações', icon: Settings },
   { to: '/dashboard/assinatura', label: 'Assinatura', icon: CreditCard },
+  { to: '/dashboard/sugestoes', label: 'Sugestões', icon: Lightbulb },
 ]
 
 const ROLE_LABELS: Record<string, string> = {

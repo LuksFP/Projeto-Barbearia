@@ -60,6 +60,53 @@ export type Database = {
         }
         Relationships: []
       }
+      app_suggestions: {
+        Row: {
+          area: string
+          author_name: string
+          barbershop_id: string
+          body: string
+          created_at: string
+          id: string
+          reply: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area: string
+          author_name: string
+          barbershop_id: string
+          body: string
+          created_at?: string
+          id?: string
+          reply?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          area?: string
+          author_name?: string
+          barbershop_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          reply?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_suggestions_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           barber_id: string | null

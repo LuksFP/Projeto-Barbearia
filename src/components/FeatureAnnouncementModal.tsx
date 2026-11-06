@@ -26,6 +26,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'sugestoes-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Fala pra gente o que falta no app',
+    description:
+      'Agora tem uma caixa de sugestões no painel. Você e sua equipe pedem o que querem ver no BarberOS, e a resposta aparece ali mesmo.',
+    steps: [
+      'Abra o menu e toque em “Sugestões”',
+      'Escolha do que se trata (Agenda, Clientes, Financeiro…) e escreva a ideia do seu jeito',
+      'Acompanhe na lista: “Estamos vendo”, “Vai entrar” ou “Já está no app”',
+    ],
+    ctaLabel: 'Mandar uma sugestão',
+    ctaTo: '/dashboard/sugestoes',
+  },
+  {
     key: 'confirmacao-whatsapp-2026-11',
     badge: 'Novidade no ar',
     title: 'Agendou, já confirma no WhatsApp do cliente',
