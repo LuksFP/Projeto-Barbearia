@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
@@ -92,6 +92,7 @@ const DashboardAgenda = () => {
 
   // Modal "Novo agendamento"
   const [modalOpen, setModalOpen] = useState(false)
+  const backdropPress = useRef(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<NewAptForm>(EMPTY_APT)
   // Depois de salvar: tela de "Agendado" com o botão que abre o WhatsApp do
@@ -597,18 +598,24 @@ const DashboardAgenda = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-4"
           >
+            {/* Fundo só fecha se o toque COMEÇOU e TERMINOU nele: arrastar a
+                lista, abrir o teclado ou errar por 1px não fecha o formulário. */}
             <div
               className="absolute inset-0 bg-black/70"
-              onClick={() => setModalOpen(false)}
+              onPointerDown={e => { backdropPress.current = e.target === e.currentTarget }}
+              onClick={e => {
+                if (backdropPress.current && e.target === e.currentTarget) setModalOpen(false)
+                backdropPress.current = false
+              }}
             />
             <motion.div
               initial={{ y: 24, scale: 0.97 }}
               animate={{ y: 0, scale: 1 }}
               exit={{ y: 12, scale: 0.97 }}
               transition={{ duration: 0.2 }}
-              className="relative w-full max-w-3xl bg-[#111] border border-[#222] rounded-2xl overflow-hidden flex flex-col max-h-[92vh]"
+              className="relative w-full max-w-3xl bg-[#111] sm:border border-[#222] sm:rounded-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[92vh]"
             >
               {/* Cabeçalho */}
               <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-[#1f1f1f]">
