@@ -26,6 +26,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'loja-produtos-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Vende pomada no balcão? Agora tem Loja',
+    description:
+      'Cadastre os produtos com preço, custo e estoque. Cada venda registrada baixa o estoque sozinha e entra no total do mês, com o lucro.',
+    steps: [
+      'Abra o menu e toque em “Loja”',
+      'Cadastre o produto: nome, preço, quanto pagou, quantas unidades tem e uma foto',
+      'Vendeu? Toque em “Vender”, escolha a quantidade e o pagamento. Avisamos quando estiver acabando',
+    ],
+    ctaLabel: 'Abrir a Loja',
+    ctaTo: '/dashboard/loja',
+  },
+  {
     key: 'sugestoes-2026-11',
     badge: 'Novidade no ar',
     title: 'Fala pra gente o que falta no app',

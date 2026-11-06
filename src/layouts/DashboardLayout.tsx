@@ -22,6 +22,7 @@ import {
   BellRing,
   UserPlus,
   Lightbulb,
+  ShoppingBag,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
@@ -42,6 +43,7 @@ const navItems = [
   { to: '/dashboard/clientes', label: 'Clientes', icon: Users },
   { to: '/dashboard/reativar', label: 'Reativação', icon: UserPlus },
   { to: '/dashboard/servicos', label: 'Serviços', icon: Scissors },
+  { to: '/dashboard/loja', label: 'Loja', icon: ShoppingBag },
   { to: '/dashboard/clube', label: 'Clube VIP', icon: Crown },
   { to: '/dashboard/financeiro', label: 'Financeiro', icon: BarChart2 },
   { to: '/dashboard/personalizar', label: 'Personalizar', icon: Paintbrush2 },

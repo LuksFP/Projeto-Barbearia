@@ -92,6 +92,7 @@ const DashboardAssinatura = lazy(() => import("./pages/dashboard/DashboardAssina
 const DashboardFinanceiro = lazy(() => import("./pages/dashboard/DashboardFinanceiro"));
 const DashboardPersonalizar = lazy(() => import("./pages/dashboard/DashboardPersonalizar"));
 const DashboardSugestoes = lazy(() => import("./pages/dashboard/DashboardSugestoes"));
+const DashboardProdutos = lazy(() => import("./pages/dashboard/DashboardProdutos"));
 const AceitarConvite = lazy(() => import("./pages/AceitarConvite"));
 
 const queryClient = new QueryClient();
@@ -183,6 +184,7 @@ const App = () => (
                           <Route path="clientes" element={<DashboardClientes />} />
                           <Route path="reativar" element={<DashboardReativar />} />
                           <Route path="servicos" element={<DashboardServicos />} />
+                          <Route path="loja" element={<DashboardProdutos />} />
                           <Route path="clube" element={<DashboardClube />} />
                           <Route path="personalizar" element={<DashboardPersonalizar />} />
                           <Route path="configuracoes" element={<DashboardConfiguracoes />} />

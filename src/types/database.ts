@@ -761,6 +761,126 @@ export type Database = {
         }
         Relationships: []
       }
+      product_sales: {
+        Row: {
+          barbershop_id: string
+          client_name: string | null
+          created_at: string
+          id: string
+          payment_method: string | null
+          product_id: string
+          product_name: string
+          quantity: number
+          seller_name: string
+          sold_by: string | null
+          total: number
+          unit_cost: number | null
+          unit_price: number
+        }
+        Insert: {
+          barbershop_id: string
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          product_id: string
+          product_name: string
+          quantity: number
+          seller_name: string
+          sold_by?: string | null
+          unit_cost?: number | null
+          unit_price: number
+        }
+        Update: {
+          barbershop_id?: string
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          seller_name?: string
+          sold_by?: string | null
+          unit_cost?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sales_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean
+          barbershop_id: string
+          category: string
+          cost: number | null
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          low_stock_at: number
+          name: string
+          price: number
+          stock: number
+          updated_at: string
+          visible_on_site: boolean
+        }
+        Insert: {
+          active?: boolean
+          barbershop_id: string
+          category?: string
+          cost?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          low_stock_at?: number
+          name: string
+          price: number
+          stock?: number
+          updated_at?: string
+          visible_on_site?: boolean
+        }
+        Update: {
+          active?: boolean
+          barbershop_id?: string
+          category?: string
+          cost?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          low_stock_at?: number
+          name?: string
+          price?: number
+          stock?: number
+          updated_at?: string
+          visible_on_site?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth: string

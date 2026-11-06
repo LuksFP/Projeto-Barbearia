@@ -69,3 +69,22 @@ export async function uploadBarberAvatar(barberId: string, file: File): Promise<
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
   return { url: `${data.publicUrl}?v=${Date.now()}`, path }
 }
+
+/** Foto de produto da loja: products/{barbershopId}/{productId}.{ext}
+ *  (a política do Storage só deixa dono/admin escrever na pasta da própria barbearia). */
+export async function uploadProductImage(barbershopId: string, productId: string, file: File): Promise<UploadResult> {
+  const err = validateImage(file)
+  if (err) throw new Error(err)
+
+  const ext = extFromMime(file.type)
+  const path = `products/${barbershopId}/${productId}.${ext}`
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { upsert: true, contentType: file.type })
+
+  if (error) throw new Error(`Upload falhou: ${error.message}`)
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
+  return { url: `${data.publicUrl}?v=${Date.now()}`, path }
+}
