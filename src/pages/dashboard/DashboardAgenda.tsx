@@ -159,6 +159,7 @@ const DashboardAgenda = () => {
   // A lista da tela só tem o dia aberto na Agenda. Se o formulário estiver em
   // outra data, busca os agendamentos daquele dia — senão tudo pareceria livre.
   const [formDayApts, setFormDayApts] = useState<BarbershopAppointment[] | null>(null)
+  const [formDayNonce, setFormDayNonce] = useState(0)
   const formDateIsOpenDay = form.date === selectedDate
   useEffect(() => {
     setFormDayApts(null)
@@ -169,11 +170,11 @@ const DashboardAgenda = () => {
       .then(rows => { if (active) setFormDayApts(rows.map(mapAppointment)) })
       .catch(() => { if (active) setFormDayApts([]) })
     return () => { active = false }
-  }, [modalOpen, barbershop?.id, form.date, formDateIsOpenDay]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [modalOpen, barbershop?.id, form.date, formDateIsOpenDay, formDayNonce]) // eslint-disable-line react-hooks/exhaustive-deps
   const formApts = formDateIsOpenDay || isDemoMode() ? appointments : formDayApts
   const formDayLoading = formApts === null
 
-  // Horários já calculados (início–fim) do barbeiro naquela data: passo fino,
+  // Grade do dia do barbeiro (início–fim): passo fino,
   // reservando o bloco cheio (soma dos serviços / duração) e escondendo os
   // ocupados. É o que aparece ao abrir a lista de horário.
   const daySlots = useMemo(() => {
@@ -187,8 +188,9 @@ const DashboardAgenda = () => {
       close: barbershop?.closeTime,
       now: new Date(),
       date: form.date,
-    }).filter(s => s.available)
+    })
   }, [form.date, form.barberId, slotDuration, formApts, barbershop?.openTime, barbershop?.closeTime])
+  const freeSlotCount = daySlots.filter(s => s.available).length
 
   // Término do horário escolhido (usado no resumo e na trava do botão)
   const bookingCheck = useMemo(() => {
@@ -388,6 +390,17 @@ const DashboardAgenda = () => {
       // 23P01 = exclusion_violation da trava de sobreposição por barbeiro
       const msg = (err && typeof err === 'object' && 'message' in err) ? String((err as { message: unknown }).message) : ''
       const overlap = msg.includes('23P01') || msg.includes('appointments_no_overlap_per_barber')
+      if (overlap) {
+        // Alguém marcou antes (site/outro aparelho): rebusca pra o horário aparecer em vermelho
+        setForm(f => ({ ...f, time: '' }))
+        if (formDateIsOpenDay) {
+          appointmentRepository.listByBarbershop(barbershop.id, selectedDate)
+            .then(rows => setAppointments(rows.map(mapAppointment)))
+            .catch(() => {})
+        } else {
+          setFormDayNonce(n => n + 1)
+        }
+      }
       toast({
         title: overlap ? 'Horário já ocupado' : 'Erro ao criar agendamento',
         description: overlap ? `${brb?.name ?? 'Esse barbeiro'} já tem um atendimento que bate com esse horário.` : undefined,
@@ -905,9 +918,26 @@ const DashboardAgenda = () => {
                       </p>
                     ) : (
                       <div>
-                        <p className="text-white/45 text-xs font-body mb-2">Horários livres <span className="text-white/25">· bloco de {slotDuration} min</span></p>
+                        <p className="text-white/45 text-xs font-body mb-2">
+                          Horários <span className="text-white/25">· bloco de {slotDuration} min · {freeSlotCount} {freeSlotCount === 1 ? 'livre' : 'livres'}</span>
+                        </p>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {daySlots.map(sl => {
+                            if (!sl.available) {
+                              return (
+                                <div
+                                  key={sl.time}
+                                  aria-disabled="true"
+                                  title={sl.block === 'nao-cabe'
+                                    ? `Às ${sl.time} não dá: ${slotDuration} min iriam até ${sl.end} e invadem o próximo cliente.`
+                                    : `${sl.time} já tem cliente marcado com ${formBarber?.name ?? 'esse barbeiro'}.`}
+                                  className="py-1.5 rounded-lg border border-red-500/20 bg-red-500/[0.06] text-center cursor-not-allowed select-none"
+                                >
+                                  <span className="block text-sm font-heading tracking-wide tabular-nums text-red-300/50 line-through leading-tight">{sl.time}</span>
+                                  <span className="block text-[10px] font-body text-red-300/70 leading-tight">{sl.block === 'nao-cabe' ? 'Não cabe' : 'Ocupado'}</span>
+                                </div>
+                              )
+                            }
                             const on = form.time === sl.time
                             return (
                               <button
@@ -924,6 +954,11 @@ const DashboardAgenda = () => {
                             )
                           })}
                         </div>
+                        <p className="text-white/30 text-[11px] font-body mt-2">
+                          {freeSlotCount === 0
+                            ? `${formBarber?.name ?? 'Esse barbeiro'} está lotado nesse dia com ${slotDuration} min. Tente outra data ou outro barbeiro.`
+                            : `Vermelho = não dá pra marcar. “Não cabe”: o horário está livre, mas ${slotDuration} min invadem o próximo cliente.`}
+                        </p>
                       </div>
                     )}
                   </section>

@@ -6,10 +6,15 @@ import type { BarbershopAppointment } from '@/types/tenant'
 export const DEFAULT_OPEN = '08:00'    // fallback quando a barbearia não configurou
 export const DEFAULT_CLOSE = '20:00'
 
+/** Por que o horário não pode ser marcado: já tem gente nele, ou está livre
+ *  mas o atendimento escolhido invadiria o próximo. */
+export type SlotBlock = 'ocupado' | 'nao-cabe'
+
 export interface Slot {
   time: string        // início 'HH:MM'
   end: string         // término 'HH:MM' (início + duração)
   available: boolean
+  block?: SlotBlock   // só quando available = false
 }
 
 export interface BusyRange {
@@ -91,7 +96,12 @@ export function buildDaySlots(opts: BuildSlotsOptions): Slot[] {
     if (t < minNow) continue
     const end = t + duration
     const available = !opts.busy.some(b => overlaps(t, end, b.start, b.end))
-    slots.push({ time: toHHMM(t), end: toHHMM(end), available })
+    if (available) {
+      slots.push({ time: toHHMM(t), end: toHHMM(end), available })
+    } else {
+      const startTaken = opts.busy.some(b => t >= b.start && t < b.end)
+      slots.push({ time: toHHMM(t), end: toHHMM(end), available, block: startTaken ? 'ocupado' : 'nao-cabe' })
+    }
   }
   return slots
 }

@@ -59,3 +59,15 @@ test('isTimeAvailable: encostar no fim do outro é permitido', () => {
   assert.equal(isTimeAvailable('10:30', 30, busy), true)
   assert.equal(isTimeAvailable('09:45', 30, busy), false)
 })
+
+test('slots: diz por que não dá — ocupado (já tem gente) ou não cabe (invade o próximo)', () => {
+  // corte + barba (50 min) com cliente marcado 10:00–10:50
+  const slots = buildDaySlots({ step: 30, duration: 50, busy: [{ start: 600, end: 650 }], open: '09:00', close: '12:00' })
+  const at = (t: string) => slots.find(s => s.time === t)
+  assert.equal(at('09:00')?.available, true)        // 09:00–09:50
+  assert.equal(at('09:30')?.block, 'nao-cabe')      // livre, mas 09:30–10:20 invade
+  assert.equal(at('10:00')?.block, 'ocupado')
+  assert.equal(at('10:30')?.block, 'ocupado')       // ainda dentro do 10:00–10:50
+  assert.equal(at('11:00')?.available, true)
+  assert.equal(at('11:00')?.block, undefined)
+})

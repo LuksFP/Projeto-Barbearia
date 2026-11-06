@@ -124,9 +124,10 @@ const BookingSection = ({
     return () => { active = false }
   }, [step, selectedDate, pickedBarber?.id, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Horários disponíveis calculados: dentro do expediente da barbearia, no passo
-  // do tempo de corte do barbeiro, escondendo os que já passaram ou estão ocupados.
-  const slots = useMemo(() => {
+  // Grade do dia: dentro do expediente, no passo do tempo de corte, sem os que
+  // já passaram. Os ocupados ficam na grade (riscados) pra o cliente ver que
+  // aquele horário não está disponível, em vez de sumirem.
+  const allSlots = useMemo(() => {
     if (!selectedDate || !pickedBarber) return []
     return buildDaySlots({
       step: Math.min(30, slotDuration),
@@ -136,8 +137,11 @@ const BookingSection = ({
       date: selectedDate,
       open: barbershop.openTime,
       close: barbershop.closeTime,
-    }).filter(s => s.available)
+    })
   }, [selectedDate, pickedBarber, slotDuration, busy, barbershop.openTime, barbershop.closeTime])
+  const slots = useMemo(() => allSlots.filter(s => s.available), [allSlots])
+  // Aviso na tela de horários quando o escolhido foi pego por outra pessoa
+  const [slotNotice, setSlotNotice] = useState('')
 
   // Limpa o horário escolhido se ele saiu da lista de disponíveis
   useEffect(() => {
@@ -157,6 +161,7 @@ const BookingSection = ({
     setClientEmail(s.email || '')
     setClientNotes('')
     setBookError('')
+    setSlotNotice('')
   }
 
   const handleBook = async () => {
@@ -204,6 +209,12 @@ const BookingSection = ({
       const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message: unknown }).message) : ''
       const code = (e && typeof e === 'object' && 'code' in e) ? String((e as { code: unknown }).code) : ''
       const overlap = code === '23P01' || msg.includes('appointments_no_overlap_per_barber')
+      if (overlap) {
+        // Volta pra grade: a busca dos ocupados roda de novo e o horário aparece riscado
+        setSlotNotice(`O horário das ${selectedTime} acabou de ser reservado por outro cliente. Escolha outro.`)
+        setSelectedTime('')
+        setStep('datetime')
+      }
       setBookError(
         overlap
           ? 'Esse horário acabou de ser reservado para esse barbeiro. Escolha outro horário.'
@@ -414,7 +425,7 @@ const BookingSection = ({
               type="date"
               min={todayStr}
               value={selectedDate}
-              onChange={(e) => { setSelectedDate(e.target.value); setSelectedTime('') }}
+              onChange={(e) => { setSelectedDate(e.target.value); setSelectedTime(''); setSlotNotice('') }}
               className="w-full bg-[#161616] border border-[#252525] rounded-xl px-4 py-3 text-white text-sm font-body focus:outline-none focus:border-[#333] transition-colors"
               style={{ colorScheme: 'dark' }}
             />
@@ -423,31 +434,61 @@ const BookingSection = ({
             <div className="mb-6">
               <label className="block text-white/50 text-xs font-body mb-2 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
-                Horários disponíveis
+                Horários
                 {loadingSlots && <Loader2 className="w-3 h-3 animate-spin" />}
               </label>
-              {slots.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {slots.map((s) => {
-                    const isSel = selectedTime === s.time
-                    return (
-                      <button
-                        key={s.time}
-                        onClick={() => setSelectedTime(s.time)}
-                        className="py-2 rounded-lg font-body transition-all border"
-                        style={isSel
-                          ? { backgroundColor: primary, color: '#0a0a0a', borderColor: primary }
-                          : { backgroundColor: '#161616', color: 'rgba(255,255,255,0.65)', borderColor: '#252525' }}
-                      >
-                        <span className="block text-xs font-semibold leading-none">{s.time}</span>
-                        <span className="block text-[10px] opacity-60 leading-none mt-0.5">–{s.end}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+              {slotNotice && (
+                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-300 text-xs font-body">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-px" />
+                  {slotNotice}
+                </p>
+              )}
+              {allSlots.length > 0 && !loadingSlots ? (
+                <>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {allSlots.map((s) => {
+                      if (!s.available) {
+                        const why = s.block === 'nao-cabe' ? 'Não cabe' : 'Ocupado'
+                        return (
+                          <div
+                            key={s.time}
+                            aria-disabled="true"
+                            title={s.block === 'nao-cabe'
+                              ? `Às ${s.time} não dá tempo: o atendimento iria até ${s.end} e já tem cliente marcado antes disso.`
+                              : `${s.time} já está reservado.`}
+                            className="py-2 rounded-lg font-body border text-center cursor-not-allowed select-none"
+                            style={{ backgroundColor: '#100c0c', color: 'rgba(248,113,113,0.55)', borderColor: 'rgba(248,113,113,0.18)' }}
+                          >
+                            <span className="block text-xs font-semibold leading-none line-through">{s.time}</span>
+                            <span className="block text-[10px] leading-none mt-0.5">{why}</span>
+                          </div>
+                        )
+                      }
+                      const isSel = selectedTime === s.time
+                      return (
+                        <button
+                          key={s.time}
+                          onClick={() => { setSelectedTime(s.time); setSlotNotice('') }}
+                          className="py-2 rounded-lg font-body transition-all border"
+                          style={isSel
+                            ? { backgroundColor: primary, color: '#0a0a0a', borderColor: primary }
+                            : { backgroundColor: '#161616', color: 'rgba(255,255,255,0.65)', borderColor: '#252525' }}
+                        >
+                          <span className="block text-xs font-semibold leading-none">{s.time}</span>
+                          <span className="block text-[10px] opacity-60 leading-none mt-0.5">–{s.end}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-white/35 text-[11px] font-body mt-2.5">
+                    {slots.length === 0
+                      ? 'Esse dia está lotado com esse barbeiro. Tente outra data.'
+                      : <>Riscado em vermelho = não disponível. <span className="text-white/25">“Não cabe”: o horário está livre, mas seu atendimento ({slotDuration} min) invadiria o próximo cliente.</span></>}
+                  </p>
+                </>
               ) : (
                 <p className="text-white/35 text-xs font-body py-3">
-                  {loadingSlots ? 'Carregando horários…' : 'Nenhum horário livre nesse dia. Tente outra data.'}
+                  {loadingSlots ? 'Carregando horários…' : 'Nenhum horário nesse dia. Tente outra data.'}
                 </p>
               )}
             </div>
