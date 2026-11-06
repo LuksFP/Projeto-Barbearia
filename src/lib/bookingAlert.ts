@@ -149,6 +149,7 @@ async function showSystemNotification(title: string, body: string, tag: string) 
   const options: NotificationOptions = {
     body,
     icon: '/icon-192.png',
+    badge: '/icon-badge-96.png',
     tag,
     data: { url: '/dashboard/agenda' },
   }

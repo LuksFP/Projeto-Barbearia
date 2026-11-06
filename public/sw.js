@@ -5,7 +5,7 @@
 // NÃO guarda o app em cache: assets do Vite mudam de nome a cada deploy e a
 // agenda precisa estar sempre em dia. Só a página offline fica guardada.
 const CACHE = 'barberos-offline-v1'
-const OFFLINE_ASSETS = ['/offline.html', '/icon-192.png']
+const OFFLINE_ASSETS = ['/offline.html', '/icon-192.png', '/icon-badge-96.png']
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -43,11 +43,11 @@ self.addEventListener('push', event => {
   } catch (e) {
     data = { body: event.data ? event.data.text() : '' }
   }
-  const title = data.title || 'Novo agendamento!'
+  const title = data.title || 'Parabéns! Novo horário agendado!'
   const options = {
     body: data.body || 'Um cliente marcou pelo site.',
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    badge: '/icon-badge-96.png',
     tag: data.tag || 'agendamento',
     renotify: true,
     vibrate: [90, 60, 140],

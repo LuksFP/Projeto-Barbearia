@@ -1,4 +1,4 @@
-// Web Push: inscreve ESTE aparelho pra receber "Novo agendamento!" mesmo com o
+// Web Push: inscreve ESTE aparelho pra receber "Parabéns! Novo horário agendado!" mesmo com o
 // navegador fechado. A inscrição (endpoint + chaves) vai pra tabela
 // push_subscriptions; quem envia é a edge function push-new-booking.
 //

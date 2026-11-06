@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
 
   return json(
     await sendAll(supabase, subs, {
-      title: 'Novo agendamento!',
+      title: 'Parabéns! Novo horário agendado!',
       body: parts.join(' · '),
       tag: `agendamento-${appt.id}`,
       url: '/dashboard/agenda',

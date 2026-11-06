@@ -201,8 +201,8 @@ const DashboardLayout = () => {
           ? ` · ${price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
           : ''
         const description = `${event.row.client_name} · ${d}/${m} às ${event.row.time.slice(0, 5)} · ${event.row.service_name}${valor}`
-        if (alertNewBooking('Novo agendamento!', description, `agendamento-${event.row.id}`)) {
-          toast({ title: 'Novo agendamento!', description })
+        if (alertNewBooking('Parabéns! Novo horário agendado!', description, `agendamento-${event.row.id}`)) {
+          toast({ title: 'Parabéns! Novo horário agendado!', description })
         }
       }
     }
