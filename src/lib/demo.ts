@@ -9,7 +9,7 @@ import {
   MOCK_BARBERS, MOCK_SERVICES, MOCK_APPOINTMENTS,
   MOCK_CLIENTS, MOCK_MEMBERSHIPS,
 } from '@/mocks/tenant'
-import { listDemoBookings, clearDemoBookings } from '@/lib/demoBookings'
+import { listDemoBookings, clearAllDemoBookings } from '@/lib/demoBookings'
 
 export const DEMO_SESSION_KEY = '__barberos_demo__'
 
@@ -400,11 +400,10 @@ export function getDemoPlan(): DemoPlan | null {
 }
 
 export function setDemoSession(plan: DemoPlan): void {
-  // Entrar na demo começa do zero: apaga horários marcados numa visita anterior
-  clearDemoBookings(BS_ID[plan])
   sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ plan }))
 }
 
 export function clearDemoSession(): void {
   sessionStorage.removeItem(DEMO_SESSION_KEY)
+  clearAllDemoBookings()
 }
