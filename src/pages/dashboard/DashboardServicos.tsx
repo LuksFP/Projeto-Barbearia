@@ -78,16 +78,16 @@ const ServiceForm = ({ draft, onChange, onSave, onCancel, saving }: ServiceFormP
       {/* Nome + Categoria */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Nome do serviço</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Nome do serviço</label>
           <input
             value={draft.name}
             onChange={e => set('name', e.target.value)}
             placeholder="ex: Corte + Barba"
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
           />
         </div>
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Categoria</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Categoria</label>
           <select
             value={draft.category}
             onChange={e => set('category', e.target.value)}
@@ -103,31 +103,31 @@ const ServiceForm = ({ draft, onChange, onSave, onCancel, saving }: ServiceFormP
 
       {draft.category === 'Outro' && (
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Nome da categoria</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Nome da categoria</label>
           <input
             value={draft.customCategory}
             onChange={e => set('customCategory', e.target.value)}
             placeholder="ex: Pézinho, Sobrancelha..."
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
           />
         </div>
       )}
 
       {/* Descrição */}
       <div>
-        <label className="text-white/35 text-xs font-body mb-1.5 block">Descrição <span className="text-white/20">(opcional)</span></label>
+        <label className="text-white/60 text-xs font-body mb-1.5 block">Descrição <span className="text-white/45">(opcional)</span></label>
         <input
           value={draft.description}
           onChange={e => set('description', e.target.value)}
           placeholder="ex: Degradê + Barba com navalha e toalha quente"
-          className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+          className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
         />
       </div>
 
       {/* Preço + Duração */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Preço (R$)</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Preço (R$)</label>
           <input
             type="number"
             min="0"
@@ -135,11 +135,11 @@ const ServiceForm = ({ draft, onChange, onSave, onCancel, saving }: ServiceFormP
             value={draft.price}
             onChange={e => set('price', e.target.value)}
             placeholder="0,00"
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
           />
         </div>
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Duração (min)</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Duração (min)</label>
           <input
             type="number"
             min="5"
@@ -147,9 +147,9 @@ const ServiceForm = ({ draft, onChange, onSave, onCancel, saving }: ServiceFormP
             value={draft.durationMin}
             onChange={e => set('durationMin', e.target.value)}
             placeholder="30"
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
           />
-          <p className="text-white/25 text-[11px] font-body mt-1">Soma no total quando o cliente escolhe vários.</p>
+          <p className="text-white/55 text-[11px] font-body mt-1">Soma no total quando o cliente escolhe vários.</p>
         </div>
       </div>
 
@@ -157,7 +157,7 @@ const ServiceForm = ({ draft, onChange, onSave, onCancel, saving }: ServiceFormP
       <div className="flex items-center justify-end gap-2 pt-1">
         <button
           onClick={onCancel}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/40 hover:text-white font-body transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/65 hover:text-white font-body transition-colors"
         >
           <X className="w-3.5 h-3.5" />
           Cancelar
@@ -313,7 +313,7 @@ const DashboardServicos = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-white/30 text-sm font-body mb-1">Preços e combos</p>
+          <p className="text-white/55 text-sm font-body mb-1">Preços e combos</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">SERVIÇOS</h1>
         </div>
         <button
@@ -333,7 +333,7 @@ const DashboardServicos = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
           >
-            <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body mb-3 px-1">
+            <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body mb-3 px-1">
               Novo serviço
             </p>
             <ServiceForm
@@ -351,7 +351,7 @@ const DashboardServicos = () => {
       {categories.map(cat => {
         const catServices = services.filter(s => s.category === cat)
         const collapsed = collapsedCats.has(cat)
-        const colorClass = CATEGORY_COLORS[cat] ?? 'text-white/40 bg-white/5 border-white/10'
+        const colorClass = CATEGORY_COLORS[cat] ?? 'text-white/65 bg-white/5 border-white/10'
 
         return (
           <div key={cat}>
@@ -360,13 +360,13 @@ const DashboardServicos = () => {
               onClick={() => toggleCat(cat)}
               className="flex items-center gap-2 mb-3 px-1 group"
             >
-              <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body">
+              <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body">
                 {cat}
               </p>
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-body ${colorClass}`}>
                 {catServices.length}
               </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-white/20 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-white/45 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
             </button>
 
             <AnimatePresence>
@@ -397,14 +397,14 @@ const DashboardServicos = () => {
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-white text-sm font-semibold font-body">{service.name}</p>
                             <span className={`text-xs px-2 py-0.5 rounded-full border font-body ${
-                              CATEGORY_COLORS[service.category] ?? 'text-white/30 bg-white/5 border-white/10'
+                              CATEGORY_COLORS[service.category] ?? 'text-white/55 bg-white/5 border-white/10'
                             }`}>
                               {service.category}
                             </span>
-                            <span className="text-xs text-white/35 font-body tabular-nums">{service.durationMin} min</span>
+                            <span className="text-xs text-white/60 font-body tabular-nums">{service.durationMin} min</span>
                           </div>
                           {service.description && (
-                            <p className="text-white/40 text-xs font-body truncate">{service.description}</p>
+                            <p className="text-white/65 text-xs font-body truncate">{service.description}</p>
                           )}
                         </div>
 
@@ -418,7 +418,7 @@ const DashboardServicos = () => {
                             className={`p-1.5 rounded-lg transition-colors ${
                               editingId === service.id
                                 ? 'text-amber-400 bg-amber-400/10'
-                                : 'text-white/30 hover:text-white hover:bg-white/5'
+                                : 'text-white/55 hover:text-white hover:bg-white/5'
                             }`}
                             title="Editar"
                           >
@@ -426,7 +426,7 @@ const DashboardServicos = () => {
                           </button>
                           <button
                             onClick={() => remove(service.id)}
-                            className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            className="p-1.5 rounded-lg text-white/45 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                             title="Remover"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -480,7 +480,7 @@ const DashboardServicos = () => {
       })}
 
       {services.length === 0 && !creating && (
-        <div className="text-center py-16 text-white/25 font-body text-sm">
+        <div className="text-center py-16 text-white/55 font-body text-sm">
           Nenhum serviço cadastrado ainda.{' '}
           <button onClick={openCreate} className="text-amber-400/70 hover:text-amber-400 underline underline-offset-2 transition-colors">
             Criar primeiro serviço

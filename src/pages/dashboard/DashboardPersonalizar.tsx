@@ -27,7 +27,7 @@ const Tab = ({ active, onClick, children }: { active: boolean; onClick: () => vo
     className={`px-4 py-2 rounded-lg text-sm font-body transition-all ${
       active
         ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
-        : 'text-white/40 hover:text-white/70'
+        : 'text-white/65 hover:text-white/70'
     }`}
   >
     {children}
@@ -47,10 +47,10 @@ const Field = ({
 }) => (
   <div className="space-y-1.5">
     <div className="flex items-center justify-between">
-      <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
+      <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">
         {label}
       </label>
-      {hint && <span className="text-white/20 text-xs font-body">{hint}</span>}
+      {hint && <span className="text-white/45 text-xs font-body">{hint}</span>}
     </div>
     {multiline ? (
       <textarea
@@ -58,7 +58,7 @@ const Field = ({
         onChange={e => onChange(name, e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/30 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors resize-none"
+        className="w-full px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/40 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors resize-none"
       />
     ) : (
       <input
@@ -66,7 +66,7 @@ const Field = ({
         value={value}
         onChange={e => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/30 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors"
+        className="w-full px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/40 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors"
       />
     )}
   </div>
@@ -181,7 +181,7 @@ const team = await BarberOS.getTeam()`
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-white/30 text-sm font-body mb-1">Site público</p>
+          <p className="text-white/55 text-sm font-body mb-1">Site público</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">PERSONALIZAR</h1>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -190,7 +190,7 @@ const team = await BarberOS.getTeam()`
             onClick={openOutsideApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Ver site
@@ -204,7 +204,7 @@ const team = await BarberOS.getTeam()`
                   ? 'bg-emerald-500 text-white'
                   : hasChanges && validationErrors.length === 0
                   ? 'bg-amber-500 text-[#0a0a0a] hover:bg-amber-400'
-                  : 'bg-white/5 text-white/20 cursor-not-allowed'
+                  : 'bg-white/5 text-white/45 cursor-not-allowed'
               }`}
             >
               {saved ? <><Check className="w-4 h-4" /> Salvo</> : 'Salvar alterações'}
@@ -258,7 +258,7 @@ const team = await BarberOS.getTeam()`
                 </h2>
 
                 <div>
-                  <p className="text-white/30 text-xs font-body mb-3">Paletas prontas</p>
+                  <p className="text-white/55 text-xs font-body mb-3">Paletas prontas</p>
                   <div className="flex gap-2 flex-wrap">
                     {COLOR_PRESETS.map(preset => (
                       <button
@@ -278,7 +278,7 @@ const team = await BarberOS.getTeam()`
                             <Check className="w-3.5 h-3.5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                           )}
                         </div>
-                        <span className="text-white/30 text-xs font-body group-hover:text-white/60 transition-colors">
+                        <span className="text-white/55 text-xs font-body group-hover:text-white/75 transition-colors">
                           {preset.label}
                         </span>
                       </button>
@@ -288,7 +288,7 @@ const team = await BarberOS.getTeam()`
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
+                    <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">
                       Cor principal
                     </label>
                     <button
@@ -296,12 +296,12 @@ const team = await BarberOS.getTeam()`
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#333] transition-colors"
                     >
                       <div className="w-6 h-6 rounded-lg shrink-0" style={{ backgroundColor: draft.primaryColor }} />
-                      <span className="text-white/60 text-sm font-mono font-body">{draft.primaryColor}</span>
+                      <span className="text-white/75 text-sm font-mono font-body">{draft.primaryColor}</span>
                     </button>
                     <input ref={primaryRef} type="color" value={draft.primaryColor} onChange={e => handleField('primaryColor', e.target.value)} className="sr-only" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
+                    <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">
                       Cor de destaque
                     </label>
                     <button
@@ -309,7 +309,7 @@ const team = await BarberOS.getTeam()`
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#333] transition-colors"
                     >
                       <div className="w-6 h-6 rounded-lg shrink-0" style={{ backgroundColor: draft.accentColor }} />
-                      <span className="text-white/60 text-sm font-mono font-body">{draft.accentColor}</span>
+                      <span className="text-white/75 text-sm font-mono font-body">{draft.accentColor}</span>
                     </button>
                     <input ref={accentRef} type="color" value={draft.accentColor} onChange={e => handleField('accentColor', e.target.value)} className="sr-only" />
                   </div>
@@ -330,7 +330,7 @@ const team = await BarberOS.getTeam()`
             <div className="space-y-6">
               {/* Preview live */}
               <div className="p-6 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f] space-y-4">
-                <h2 className="text-white/50 text-xs font-semibold font-body tracking-wide uppercase">Prévia</h2>
+                <h2 className="text-white/70 text-xs font-semibold font-body tracking-wide uppercase">Prévia</h2>
 
                 {/* Header simulado */}
                 <div
@@ -356,7 +356,7 @@ const team = await BarberOS.getTeam()`
 
                   {/* Botão CTA simulado */}
                   <div className="px-4 py-3 flex items-center justify-between bg-[#141414]">
-                    <span className="text-white/40 text-xs font-body">barberos.io/b/{barbershop.slug}</span>
+                    <span className="text-white/65 text-xs font-body">barberos.io/b/{barbershop.slug}</span>
                     <div
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold font-body"
                       style={{ backgroundColor: draft.primaryColor, color: '#0a0a0a' }}
@@ -371,7 +371,7 @@ const team = await BarberOS.getTeam()`
                   className="h-2 rounded-full"
                   style={{ background: `linear-gradient(90deg, ${draft.primaryColor}, ${draft.accentColor})` }}
                 />
-                <p className="text-white/20 text-xs font-body text-center">Atualiza em tempo real</p>
+                <p className="text-white/45 text-xs font-body text-center">Atualiza em tempo real</p>
               </div>
 
               {/* Foto de capa */}
@@ -399,7 +399,7 @@ const team = await BarberOS.getTeam()`
                   <button
                     onClick={() => coverInputRef.current?.click()}
                     disabled={uploadingCover}
-                    className="w-full h-28 rounded-xl border-2 border-dashed border-[#2a2a2a] hover:border-amber-500/40 flex flex-col items-center justify-center gap-2 text-white/30 hover:text-white/60 transition-all"
+                    className="w-full h-28 rounded-xl border-2 border-dashed border-[#2a2a2a] hover:border-amber-500/40 flex flex-col items-center justify-center gap-2 text-white/55 hover:text-white/75 transition-all"
                   >
                     {uploadingCover ? (
                       <><Loader2 className="w-6 h-6 animate-spin" /><span className="text-xs font-body">Enviando...</span></>
@@ -412,7 +412,7 @@ const team = await BarberOS.getTeam()`
                 {uploadError && <p className="text-red-400 text-xs font-body">{uploadError}</p>}
 
                 <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleCoverUpload} className="sr-only" />
-                <p className="text-white/25 text-xs font-body">Recomendado: 1920×600 px.</p>
+                <p className="text-white/55 text-xs font-body">Recomendado: 1920×600 px.</p>
               </div>
             </div>
           </motion.div>
@@ -468,7 +468,7 @@ const team = await BarberOS.getTeam()`
             <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-5">
               <div>
                 <h2 className="text-white font-semibold font-body mb-1">Tipo de site</h2>
-                <p className="text-white/40 text-xs font-body">
+                <p className="text-white/65 text-xs font-body">
                   Escolha como seus clientes acessam seu site
                 </p>
               </div>
@@ -496,14 +496,14 @@ const team = await BarberOS.getTeam()`
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
                       draft.siteType !== 'external' ? 'bg-amber-500/20' : 'bg-[#222]'
                     }`}>
-                      <Globe className={`w-3.5 h-3.5 ${draft.siteType !== 'external' ? 'text-amber-400' : 'text-white/30'}`} />
+                      <Globe className={`w-3.5 h-3.5 ${draft.siteType !== 'external' ? 'text-amber-400' : 'text-white/55'}`} />
                     </div>
-                    <span className={`text-sm font-semibold font-body ${draft.siteType !== 'external' ? 'text-white' : 'text-white/50'}`}>
+                    <span className={`text-sm font-semibold font-body ${draft.siteType !== 'external' ? 'text-white' : 'text-white/70'}`}>
                       Genérico BarberOS
                     </span>
                   </div>
-                  <p className="text-white/35 text-xs font-body leading-relaxed">
-                    Template pronto em <span className="text-white/55 font-mono">/b/{barbershop.slug}</span>
+                  <p className="text-white/60 text-xs font-body leading-relaxed">
+                    Template pronto em <span className="text-white/70 font-mono">/b/{barbershop.slug}</span>
                   </p>
                 </button>
 
@@ -521,13 +521,13 @@ const team = await BarberOS.getTeam()`
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
                       draft.siteType === 'external' ? 'bg-amber-500/20' : 'bg-[#222]'
                     }`}>
-                      <Link2 className={`w-3.5 h-3.5 ${draft.siteType === 'external' ? 'text-amber-400' : 'text-white/30'}`} />
+                      <Link2 className={`w-3.5 h-3.5 ${draft.siteType === 'external' ? 'text-amber-400' : 'text-white/55'}`} />
                     </div>
-                    <span className={`text-sm font-semibold font-body ${draft.siteType === 'external' ? 'text-white' : 'text-white/50'}`}>
+                    <span className={`text-sm font-semibold font-body ${draft.siteType === 'external' ? 'text-white' : 'text-white/70'}`}>
                       Site externo
                     </span>
                   </div>
-                  <p className="text-white/35 text-xs font-body leading-relaxed">
+                  <p className="text-white/60 text-xs font-body leading-relaxed">
                     {supportsExternalSite
                       ? 'Seu domínio próprio com widget embed'
                       : 'Upgrade para Pro ou Scale para liberar embed'}
@@ -539,13 +539,13 @@ const team = await BarberOS.getTeam()`
               {draft.siteType !== 'external' && (
                 <div className="flex items-center justify-between p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
                   <div>
-                    <p className="text-white/30 text-xs font-body mb-1">URL pública</p>
+                    <p className="text-white/55 text-xs font-body mb-1">URL pública</p>
                     <p className="text-white/70 text-sm font-mono">barberos.io/b/{barbershop.slug}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => copyToClipboard(`${window.location.origin}/b/${barbershop.slug}`, 'public-url')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all"
                     >
                       {copied === 'public-url'
                         ? <><CheckCheck className="w-3 h-3 text-emerald-400" />Copiado</>
@@ -556,7 +556,7 @@ const team = await BarberOS.getTeam()`
                       onClick={openOutsideApp}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/45 hover:text-white hover:border-[#333] text-xs font-body transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all"
                     >
                       <ExternalLink className="w-3 h-3" />
                       Abrir
@@ -602,18 +602,18 @@ const team = await BarberOS.getTeam()`
                   {/* Embed key */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
+                      <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">
                         Chave do widget
                       </label>
-                      <span className="text-white/20 text-xs font-body">somente leitura</span>
+                      <span className="text-white/45 text-xs font-body">somente leitura</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 px-4 py-3 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f] text-white/40 text-xs font-mono overflow-hidden text-ellipsis whitespace-nowrap">
+                      <div className="flex-1 px-4 py-3 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f] text-white/65 text-xs font-mono overflow-hidden text-ellipsis whitespace-nowrap">
                         {barbershop.embedKey ?? 'Salve para gerar'}
                       </div>
                       <button
                         onClick={() => copyToClipboard(barbershop.embedKey ?? '', 'key')}
-                        className="p-3 rounded-xl bg-[#161616] border border-[#262626] text-white/40 hover:text-white hover:border-[#333] transition-all shrink-0"
+                        className="p-3 rounded-xl bg-[#161616] border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all shrink-0"
                       >
                         {copied === 'key' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
@@ -623,17 +623,17 @@ const team = await BarberOS.getTeam()`
                   {/* Snippet HTML */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">
+                      <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">
                         Snippet — cole antes do {'</body>'}
                       </label>
                       <button
                         onClick={() => copyToClipboard(embedSnippet, 'snippet')}
-                        className="flex items-center gap-1 text-white/30 hover:text-amber-400 text-xs font-body transition-colors"
+                        className="flex items-center gap-1 text-white/55 hover:text-amber-400 text-xs font-body transition-colors"
                       >
                         {copied === 'snippet' ? <><CheckCheck className="w-3 h-3 text-emerald-400" /> Copiado</> : <><Copy className="w-3 h-3" /> Copiar</>}
                       </button>
                     </div>
-                    <pre className="p-4 rounded-xl bg-[#0a0a0a] border border-[#1a1a1a] text-white/55 text-xs font-mono leading-relaxed overflow-x-auto">
+                    <pre className="p-4 rounded-xl bg-[#0a0a0a] border border-[#1a1a1a] text-white/70 text-xs font-mono leading-relaxed overflow-x-auto">
                       {embedSnippet}
                     </pre>
                   </div>
@@ -641,18 +641,18 @@ const team = await BarberOS.getTeam()`
                   {/* JS API */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase flex items-center gap-1.5">
+                      <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase flex items-center gap-1.5">
                         <Zap className="w-3 h-3" />
                         API JavaScript
                       </label>
                       <button
                         onClick={() => copyToClipboard(jsApiSnippet, 'api')}
-                        className="flex items-center gap-1 text-white/30 hover:text-amber-400 text-xs font-body transition-colors"
+                        className="flex items-center gap-1 text-white/55 hover:text-amber-400 text-xs font-body transition-colors"
                       >
                         {copied === 'api' ? <><CheckCheck className="w-3 h-3 text-emerald-400" /> Copiado</> : <><Copy className="w-3 h-3" /> Copiar</>}
                       </button>
                     </div>
-                    <pre className="p-4 rounded-xl bg-[#0a0a0a] border border-[#1a1a1a] text-white/55 text-xs font-mono leading-relaxed overflow-x-auto">
+                    <pre className="p-4 rounded-xl bg-[#0a0a0a] border border-[#1a1a1a] text-white/70 text-xs font-mono leading-relaxed overflow-x-auto">
                       {jsApiSnippet}
                     </pre>
                     <div className="grid grid-cols-3 gap-2 mt-2">
@@ -663,7 +663,7 @@ const team = await BarberOS.getTeam()`
                       ].map(item => (
                         <div key={item.fn} className="p-3 rounded-lg bg-[#0f0f0f] border border-[#1a1a1a]">
                           <p className="text-amber-400/80 text-xs font-mono mb-1">{item.fn}</p>
-                          <p className="text-white/35 text-xs font-body">{item.desc}</p>
+                          <p className="text-white/60 text-xs font-body">{item.desc}</p>
                         </div>
                       ))}
                     </div>
@@ -679,7 +679,7 @@ const team = await BarberOS.getTeam()`
       {hasChanges && (
         <button
           onClick={() => setDraft({ ...barbershop })}
-          className="flex items-center gap-1.5 text-white/20 hover:text-white/50 text-xs font-body transition-colors"
+          className="flex items-center gap-1.5 text-white/45 hover:text-white/70 text-xs font-body transition-colors"
         >
           <RefreshCw className="w-3 h-3" />
           Descartar alterações

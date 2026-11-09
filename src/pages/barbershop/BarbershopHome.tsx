@@ -701,7 +701,7 @@ const BookingSection = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const BarbershopHome = () => {
-  const { barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount, products, refreshProducts } = useOutletContext<PublicSiteOutletCtx>()
+  const { barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount, products, storeMode, refreshProducts } = useOutletContext<PublicSiteOutletCtx>()
 
   const primary = barbershop.primaryColor
 
@@ -834,7 +834,7 @@ const BarbershopHome = () => {
       </section>
 
       {/* ── LOJA ─────────────────────────────────────────────────────────── */}
-      <StoreSection slug={barbershop.slug} products={products} primary={primary} />
+      {storeMode === 'loja' && <StoreSection slug={barbershop.slug} products={products} primary={primary} />}
 
       {/* ── EQUIPE ───────────────────────────────────────────────────────── */}
       <section id="equipe" className="py-24 bg-[#0a0a0a]">

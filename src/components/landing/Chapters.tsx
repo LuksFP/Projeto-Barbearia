@@ -145,7 +145,7 @@ const Chapters = () => (
       <div className="lp-cap__grade lp-cap__grade--inverte">
         <Clipe
           nome="clipe-caixa"
-          descricao="Tela Financeiro: resumo do mês escrito por IA e, em seguida, a tabela de comissão por barbeiro"
+          descricao="Tela Financeiro: receita do mês e, em seguida, a tabela de comissão por barbeiro"
           {...PAINEL}
         />
 
@@ -159,9 +159,6 @@ const Chapters = () => (
           <Pontos
             itens={[
               'Exporta em CSV pra mandar pro contador.',
-              <>
-                Resumo do mês escrito por IA, em três linhas. <small>Pro e Premium</small>
-              </>,
             ]}
           />
           <SimComissao />

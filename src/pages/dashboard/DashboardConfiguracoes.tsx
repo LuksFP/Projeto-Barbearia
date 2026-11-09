@@ -10,10 +10,10 @@ import { toast } from '@/hooks/use-toast'
 
 const Field = ({ label, value, hint }: { label: string; value: string; hint?: string }) => (
   <div className="space-y-1.5">
-    <label className="text-xs font-semibold text-white/30 font-body tracking-wide uppercase">{label}</label>
+    <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">{label}</label>
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/5">
       <span className="text-white/70 text-sm font-body flex-1">{value}</span>
-      {hint && <span className="text-white/20 text-xs font-body">{hint}</span>}
+      {hint && <span className="text-white/45 text-xs font-body">{hint}</span>}
     </div>
   </div>
 )
@@ -81,7 +81,7 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
       <div className="flex items-center justify-between">
         <div>
           <p className="text-white/70 text-sm font-body font-semibold">Multa por cancelamento</p>
-          <p className="text-white/35 text-xs font-body mt-0.5">
+          <p className="text-white/60 text-xs font-body mt-0.5">
             Clientes que cancelam fora da janela gratuita pagam uma taxa
           </p>
         </div>
@@ -103,7 +103,7 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
 
           {/* Janela gratuita */}
           <div>
-            <label className="text-white/35 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
+            <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
               Cancelamento gratuito até
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -115,21 +115,21 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
                   className={`px-3 py-2 rounded-lg text-xs font-body border transition-all ${
                     policy.freeWindowHours === opt.value
                       ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                      : 'border-[#2a2a2a] text-white/40 hover:text-white/60 hover:border-[#333]'
+                      : 'border-[#2a2a2a] text-white/65 hover:text-white/75 hover:border-[#333]'
                   }`}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
-            <p className="text-white/25 text-xs font-body mt-2">
+            <p className="text-white/55 text-xs font-body mt-2">
               Clientes podem cancelar sem custo até {WINDOW_OPTIONS.find(o => o.value === policy.freeWindowHours)?.label ?? `${policy.freeWindowHours}h antes`} do horário marcado.
             </p>
           </div>
 
           {/* Tipo de multa */}
           <div>
-            <label className="text-white/35 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
+            <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
               Tipo de multa
             </label>
             <div className="flex gap-3">
@@ -139,11 +139,11 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
                 className={`flex-1 px-4 py-3 rounded-xl text-sm font-body border transition-all text-left ${
                   policy.fineType === 'percent'
                     ? 'bg-red-500/10 border-red-500/30 text-white'
-                    : 'border-[#2a2a2a] text-white/40 hover:text-white/60'
+                    : 'border-[#2a2a2a] text-white/65 hover:text-white/75'
                 }`}
               >
                 <p className="font-semibold mb-0.5">Percentual</p>
-                <p className="text-xs text-white/40">% do valor do serviço</p>
+                <p className="text-xs text-white/65">% do valor do serviço</p>
               </button>
               <button
                 type="button"
@@ -151,23 +151,23 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
                 className={`flex-1 px-4 py-3 rounded-xl text-sm font-body border transition-all text-left ${
                   policy.fineType === 'fixed'
                     ? 'bg-red-500/10 border-red-500/30 text-white'
-                    : 'border-[#2a2a2a] text-white/40 hover:text-white/60'
+                    : 'border-[#2a2a2a] text-white/65 hover:text-white/75'
                 }`}
               >
                 <p className="font-semibold mb-0.5">Valor fixo</p>
-                <p className="text-xs text-white/40">R$ independente do serviço</p>
+                <p className="text-xs text-white/65">R$ independente do serviço</p>
               </button>
             </div>
           </div>
 
           {/* Valor da multa */}
           <div>
-            <label className="text-white/35 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
+            <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
               {policy.fineType === 'fixed' ? 'Valor da multa (R$)' : 'Percentual da multa (%)'}
             </label>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm font-body">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/55 text-sm font-body">
                   {policy.fineType === 'fixed' ? 'R$' : '%'}
                 </span>
                 <input
@@ -180,8 +180,8 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
                   className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg pl-10 pr-4 py-2.5 text-sm text-white font-body w-32 focus:outline-none focus:border-amber-500/50"
                 />
               </div>
-              <p className="text-white/35 text-xs font-body">
-                = <span className="text-white/60">{fineLabel}</span> cobrado no cancelamento tardio
+              <p className="text-white/60 text-xs font-body">
+                = <span className="text-white/75">{fineLabel}</span> cobrado no cancelamento tardio
               </p>
             </div>
           </div>
@@ -189,7 +189,7 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
           {/* Preview */}
           <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/[0.04] border border-amber-500/15">
             <Info className="w-4 h-4 text-amber-400/60 shrink-0 mt-0.5" />
-            <p className="text-white/50 text-xs font-body leading-relaxed">
+            <p className="text-white/70 text-xs font-body leading-relaxed">
               Se um cliente cancelar o agendamento com menos de{' '}
               <span className="text-white/80 font-semibold">{WINDOW_OPTIONS.find(o => o.value === policy.freeWindowHours)?.label}</span>,
               {' '}será cobrada uma taxa de{' '}
@@ -280,7 +280,7 @@ const DashboardConfiguracoes = () => {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <p className="text-white/30 text-sm font-body mb-1">Workspace</p>
+        <p className="text-white/55 text-sm font-body mb-1">Workspace</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">CONFIGURAÇÕES</h1>
       </div>
 
@@ -318,8 +318,8 @@ const DashboardConfiguracoes = () => {
             <div key={label} className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg border border-white/10" style={{ backgroundColor: color }} />
               <div>
-                <p className="text-white/50 text-xs font-body">{label}</p>
-                <p className="text-white/30 text-xs font-body font-mono">{color}</p>
+                <p className="text-white/70 text-xs font-body">{label}</p>
+                <p className="text-white/55 text-xs font-body font-mono">{color}</p>
               </div>
             </div>
           ))}
@@ -329,14 +329,14 @@ const DashboardConfiguracoes = () => {
 
       {/* Horário de funcionamento */}
       <Section title="Horário de Funcionamento" icon={Clock} accent>
-        <p className="text-white/40 text-sm font-body mb-4">
+        <p className="text-white/65 text-sm font-body mb-4">
           Define o intervalo de horários disponíveis para agendamento (na agenda e no site).
         </p>
         {canEdit ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-white/35 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">Abre às</label>
+                <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">Abre às</label>
                 <input
                   type="time"
                   value={openTime}
@@ -346,7 +346,7 @@ const DashboardConfiguracoes = () => {
                 />
               </div>
               <div>
-                <label className="text-white/35 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">Fecha às</label>
+                <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">Fecha às</label>
                 <input
                   type="time"
                   value={closeTime}
@@ -356,7 +356,7 @@ const DashboardConfiguracoes = () => {
                 />
               </div>
             </div>
-            <p className="text-white/25 text-xs font-body">Dica: para fechar à meia-noite, use 00:00 no fechamento.</p>
+            <p className="text-white/55 text-xs font-body">Dica: para fechar à meia-noite, use 00:00 no fechamento.</p>
             <div className="flex items-center justify-end gap-3">
               {hoursSaved && (
                 <span className="flex items-center gap-1.5 text-emerald-400 text-sm font-body">
@@ -375,7 +375,7 @@ const DashboardConfiguracoes = () => {
           </div>
         ) : (
           <div className="flex items-center justify-between py-2">
-            <span className="text-white/50 text-sm font-body">Funcionamento</span>
+            <span className="text-white/70 text-sm font-body">Funcionamento</span>
             <span className="text-white/70 text-sm font-body font-semibold">{openTime} — {closeTime}</span>
           </div>
         )}
@@ -394,21 +394,21 @@ const DashboardConfiguracoes = () => {
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2">
-              <span className="text-white/50 text-sm font-body">Multa ativa</span>
-              <span className={`text-sm font-body font-semibold ${policy.enabled ? 'text-red-400' : 'text-white/30'}`}>
+              <span className="text-white/70 text-sm font-body">Multa ativa</span>
+              <span className={`text-sm font-body font-semibold ${policy.enabled ? 'text-red-400' : 'text-white/55'}`}>
                 {policy.enabled ? 'Sim' : 'Não'}
               </span>
             </div>
             {policy.enabled && (
               <>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-white/50 text-sm font-body">Janela gratuita</span>
+                  <span className="text-white/70 text-sm font-body">Janela gratuita</span>
                   <span className="text-white/70 text-sm font-body">
                     {WINDOW_OPTIONS.find(o => o.value === policy.freeWindowHours)?.label}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-white/50 text-sm font-body">Multa</span>
+                  <span className="text-white/70 text-sm font-body">Multa</span>
                   <span className="text-red-400 text-sm font-body font-semibold">
                     {policy.fineType === 'fixed' ? `R$ ${policy.fineValue}` : `${policy.fineValue}%`}
                   </span>
@@ -421,7 +421,7 @@ const DashboardConfiguracoes = () => {
 
       {canEdit && (
         <div className="flex items-center gap-2 p-4 rounded-xl border border-[#1f1f1f] bg-white/[0.01]">
-          <span className="text-white/30 text-xs font-body">
+          <span className="text-white/55 text-xs font-body">
             Para editar nome, contato e identidade visual, acesse{' '}
             <a href="/dashboard/personalizar" className="text-amber-400/70 hover:text-amber-400 transition-colors underline underline-offset-2">
               Personalizar →

@@ -70,22 +70,22 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
       {/* Nome + preço */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Nome do plano</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Nome do plano</label>
           <input
             value={draft.name}
             onChange={e => set('name', e.target.value)}
             placeholder="ex: Corvo VIP, Lucas Premium"
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
           />
         </div>
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Preço (R$)</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Preço (R$)</label>
           <input
             type="number" min="0" step="1"
             value={draft.price}
             onChange={e => set('price', e.target.value)}
             placeholder="149"
-            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
           />
         </div>
       </div>
@@ -93,7 +93,7 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
       {/* Período + vínculo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Periodicidade</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Periodicidade</label>
           <select
             value={draft.period}
             onChange={e => set('period', e.target.value)}
@@ -105,7 +105,7 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
           </select>
         </div>
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Vinculado a</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Vinculado a</label>
           <div className="flex gap-2">
             <button
               type="button"
@@ -113,7 +113,7 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-body border transition-all ${
                 draft.scope === 'barbershop'
                   ? 'bg-amber-500/15 border-amber-500/35 text-amber-400'
-                  : 'border-[#2e2e2e] text-white/40 hover:text-white/60'
+                  : 'border-[#2e2e2e] text-white/65 hover:text-white/75'
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
@@ -125,7 +125,7 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-body border transition-all ${
                 draft.scope === 'barber'
                   ? 'bg-amber-500/15 border-amber-500/35 text-amber-400'
-                  : 'border-[#2e2e2e] text-white/40 hover:text-white/60'
+                  : 'border-[#2e2e2e] text-white/65 hover:text-white/75'
               }`}
             >
               <Scissors className="w-3.5 h-3.5" />
@@ -138,7 +138,7 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
       {/* Seletor de barbeiro */}
       {draft.scope === 'barber' && (
         <div>
-          <label className="text-white/35 text-xs font-body mb-1.5 block">Barbeiro</label>
+          <label className="text-white/60 text-xs font-body mb-1.5 block">Barbeiro</label>
           <select
             value={draft.barberId}
             onChange={e => set('barberId', e.target.value)}
@@ -154,19 +154,19 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
 
       {/* Benefícios */}
       <div>
-        <label className="text-white/35 text-xs font-body mb-1.5 block">Benefícios</label>
+        <label className="text-white/60 text-xs font-body mb-1.5 block">Benefícios</label>
         <div className="flex gap-2 mb-2">
           <input
             value={draft.benefitInput}
             onChange={e => set('benefitInput', e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addBenefit() } }}
             placeholder="ex: 2 cortes/mês inclusos"
-            className="flex-1 bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50"
+            className="flex-1 bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-3 py-2 text-sm text-white font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50"
           />
           <button
             type="button"
             onClick={addBenefit}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-[#2e2e2e] text-white/50 hover:text-white text-xs font-body transition-colors"
+            className="px-3 py-2 rounded-lg bg-white/5 border border-[#2e2e2e] text-white/70 hover:text-white text-xs font-body transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -174,10 +174,10 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
         {draft.benefits.length > 0 && (
           <ul className="space-y-1.5">
             {draft.benefits.map((b, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm font-body text-white/60">
+              <li key={i} className="flex items-center gap-2 text-sm font-body text-white/75">
                 <Check className="w-3.5 h-3.5 text-amber-400/60 shrink-0" />
                 <span className="flex-1">{b}</span>
-                <button onClick={() => removeBenefit(i)} className="text-white/20 hover:text-red-400 transition-colors">
+                <button onClick={() => removeBenefit(i)} className="text-white/45 hover:text-red-400 transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </li>
@@ -188,7 +188,7 @@ const MembershipForm = ({ draft, onChange, onSave, onCancel, saving, barbers }: 
 
       {/* Ações */}
       <div className="flex items-center justify-end gap-2 pt-1">
-        <button onClick={onCancel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/40 hover:text-white font-body transition-colors">
+        <button onClick={onCancel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/65 hover:text-white font-body transition-colors">
           <X className="w-3.5 h-3.5" />Cancelar
         </button>
         <button
@@ -240,19 +240,19 @@ const PlanCard = ({ mem, onEdit, editing }: PlanCardProps) => {
               </span>
             )}
           </div>
-          <p className="text-white/30 text-xs font-body">{PERIOD_LABELS[mem.period]}</p>
+          <p className="text-white/55 text-xs font-body">{PERIOD_LABELS[mem.period]}</p>
         </div>
         <div className="text-right shrink-0 ml-4">
           <p className={`font-heading text-2xl ${isBarberPlan ? 'text-blue-400' : 'text-amber-400'}`}>
             R$ {mem.price}
           </p>
-          <p className="text-white/30 text-xs font-body">{mem.subscriberCount} assinantes</p>
+          <p className="text-white/55 text-xs font-body">{mem.subscriberCount} assinantes</p>
         </div>
       </div>
 
       <ul className="space-y-1.5 mb-5">
         {mem.benefits.map((b, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-white/55 font-body">
+          <li key={i} className="flex items-start gap-2 text-sm text-white/70 font-body">
             <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isBarberPlan ? 'text-blue-400/60' : 'text-amber-400/60'}`} />
             {b}
           </li>
@@ -260,7 +260,7 @@ const PlanCard = ({ mem, onEdit, editing }: PlanCardProps) => {
       </ul>
 
       <div className="space-y-1.5 mb-5">
-        <div className="flex justify-between text-xs font-body text-white/20">
+        <div className="flex justify-between text-xs font-body text-white/45">
           <span>Assinantes</span>
           <span>{mem.subscriberCount} / 50</span>
         </div>
@@ -277,7 +277,7 @@ const PlanCard = ({ mem, onEdit, editing }: PlanCardProps) => {
         className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-body border transition-all ${
           editing
             ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
-            : 'border-[#333] text-white/40 hover:text-white hover:border-[#444]'
+            : 'border-[#333] text-white/65 hover:text-white hover:border-[#444]'
         }`}
       >
         <Pencil className="w-3.5 h-3.5" />
@@ -400,7 +400,7 @@ const DashboardClube = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-white/30 text-sm font-body mb-1">Recorrência e benefícios</p>
+          <p className="text-white/55 text-sm font-body mb-1">Recorrência e benefícios</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">CLUBE VIP</h1>
         </div>
         {view === 'planos' && (
@@ -424,7 +424,7 @@ const DashboardClube = () => {
             key={t.key}
             onClick={() => setView(t.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body transition-all ${
-              view === t.key ? 'bg-amber-500/15 text-amber-400' : 'text-white/40 hover:text-white/70'
+              view === t.key ? 'bg-amber-500/15 text-amber-400' : 'text-white/65 hover:text-white/70'
             }`}
           >
             <t.icon className="w-4 h-4" />
@@ -452,7 +452,7 @@ const DashboardClube = () => {
             className="p-5 rounded-xl bg-[#161616] border border-[#262626]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-white/30 text-xs font-body">{kpi.label}</span>
+              <span className="text-white/55 text-xs font-body">{kpi.label}</span>
               <div className="w-7 h-7 rounded-lg bg-amber-500/[0.15] border border-amber-500/25 flex items-center justify-center">
                 <kpi.icon className="w-3.5 h-3.5 text-amber-400" />
               </div>
@@ -466,7 +466,7 @@ const DashboardClube = () => {
       <AnimatePresence>
         {creating && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body mb-3">Novo plano</p>
+            <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body mb-3">Novo plano</p>
             <MembershipForm
               draft={newDraft}
               onChange={setNewDraft}
@@ -484,7 +484,7 @@ const DashboardClube = () => {
         <div>
           <div className="flex items-center gap-2 mb-3 px-1">
             <Building2 className="w-3.5 h-3.5 text-amber-400/50" />
-            <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body">Planos da barbearia</p>
+            <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body">Planos da barbearia</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {barbershopPlans.map(mem => (
@@ -522,7 +522,7 @@ const DashboardClube = () => {
         <div>
           <div className="flex items-center gap-2 mb-3 px-1">
             <Scissors className="w-3.5 h-3.5 text-blue-400/50" />
-            <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body">Planos por barbeiro</p>
+            <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body">Planos por barbeiro</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {barberPlans.map(mem => (
@@ -556,7 +556,7 @@ const DashboardClube = () => {
       )}
 
       {memberships.length === 0 && !creating && (
-        <div className="text-center py-16 text-white/25 font-body text-sm">
+        <div className="text-center py-16 text-white/55 font-body text-sm">
           Nenhum plano criado ainda.{' '}
           <button
             onClick={() => { setCreating(true); setNewDraft(EMPTY_DRAFT) }}

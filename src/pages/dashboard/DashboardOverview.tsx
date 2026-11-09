@@ -25,7 +25,7 @@ const fadeUp = {
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10', icon: CheckCircle2 },
   confirmed: { label: 'Confirmado', color: 'text-amber-400',  bg: 'bg-amber-400/10',  icon: Clock },
-  pending:   { label: 'Pendente',   color: 'text-white/40',   bg: 'bg-white/5',        icon: AlertCircle },
+  pending:   { label: 'Pendente',   color: 'text-white/65',   bg: 'bg-white/5',        icon: AlertCircle },
   cancelled: { label: 'Cancelado',  color: 'text-red-400',    bg: 'bg-red-400/10',     icon: AlertCircle },
 }
 
@@ -83,7 +83,7 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Mês atual */}
         <div className="p-5 rounded-xl bg-[#161616] border border-[#262626]">
-          <p className="text-white/30 text-xs font-body mb-3">{current.label} — parcial</p>
+          <p className="text-white/55 text-xs font-body mb-3">{current.label} — parcial</p>
           <p className="font-heading text-3xl text-white mb-1">R$ {fmt(current.total)}</p>
           <div className={`flex items-center gap-1 text-xs font-body ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
             {isUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
@@ -93,14 +93,14 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
 
         {/* Mês anterior */}
         <div className="p-5 rounded-xl bg-[#161616] border border-[#262626]">
-          <p className="text-white/30 text-xs font-body mb-3">{previous.label} — fechado</p>
-          <p className="font-heading text-3xl text-white/60 mb-1">R$ {fmt(previous.total)}</p>
-          <p className="text-white/20 text-xs font-body">mês anterior</p>
+          <p className="text-white/55 text-xs font-body mb-3">{previous.label} — fechado</p>
+          <p className="font-heading text-3xl text-white/75 mb-1">R$ {fmt(previous.total)}</p>
+          <p className="text-white/45 text-xs font-body">mês anterior</p>
         </div>
 
         {/* Projeção */}
         <div className="p-5 rounded-xl bg-[#161616] border border-amber-500/15">
-          <p className="text-white/30 text-xs font-body mb-3">{current.label} — projeção</p>
+          <p className="text-white/55 text-xs font-body mb-3">{current.label} — projeção</p>
           <p className="font-heading text-3xl text-amber-400 mb-1">R$ {fmt(projected)}</p>
           <div className={`flex items-center gap-1 text-xs font-body ${projUp ? 'text-emerald-400' : 'text-red-400'}`}>
             {projUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
@@ -112,9 +112,9 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
       {/* Barras por categoria */}
       <div className="p-5 rounded-xl bg-[#161616] border border-[#262626] space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body">Por categoria</p>
+          <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body">Por categoria</p>
           <div className="flex items-center gap-4 text-xs font-body">
-            <span className="flex items-center gap-1.5 text-white/40">
+            <span className="flex items-center gap-1.5 text-white/65">
               <span className="w-2.5 h-2.5 rounded-sm bg-white/20 inline-block" />{previous.label}
             </span>
             <span className="flex items-center gap-1.5 text-white/70">
@@ -131,7 +131,7 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
           return (
             <div key={cat} className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-body">
-                <span className="text-white/50">{cat}</span>
+                <span className="text-white/70">{cat}</span>
                 <span className={catDelta >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}>
                   {catDelta >= 0 ? '+' : ''}{catDelta}%
                 </span>
@@ -154,7 +154,7 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
                   }}
                 />
               </div>
-              <div className="flex justify-between text-[11px] font-body text-white/20">
+              <div className="flex justify-between text-[11px] font-body text-white/45">
                 <span>R$ {fmt(prev)}</span>
                 <span>R$ {fmt(curr)}</span>
               </div>
@@ -166,7 +166,7 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
       {/* Histórico 3 meses */}
       {months.length >= 3 && (
         <div className="p-5 rounded-xl bg-[#161616] border border-[#262626]">
-          <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body mb-4">Histórico</p>
+          <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body mb-4">Histórico</p>
           <div className="flex items-end gap-1.5 sm:gap-3 h-20">
             {months.map((m, i) => {
               const maxTotal = Math.max(...months.map(x => x.total))
@@ -177,14 +177,14 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
                   key={m.month}
                   className={`flex-1 min-w-0 flex-col items-center gap-1.5 ${i < months.length - 6 ? 'hidden sm:flex' : 'flex'}`}
                 >
-                  <span className="text-[10px] font-body text-white/30 whitespace-nowrap">R$ {fmtCompact(m.total)}</span>
+                  <span className="text-[10px] font-body text-white/55 whitespace-nowrap">R$ {fmtCompact(m.total)}</span>
                   <div className="w-full rounded-t flex items-end justify-center" style={{ height: 48 }}>
                     <div
                       className={`w-full rounded transition-all ${isLast ? 'bg-amber-500/70' : 'bg-white/10'}`}
                       style={{ height: `${heightPct}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-body text-white/25">{m.label.slice(0, 3)}</span>
+                  <span className="text-[10px] font-body text-white/55">{m.label.slice(0, 3)}</span>
                 </div>
               )
             })}
@@ -207,8 +207,8 @@ const DashboardOverview = () => {
   const [financialMonths, setFinancialMonths] = useState<MonthRevenue[]>([])
   const [copiedLink, setCopiedLink] = useState(false)
 
-  // Só os planos com site público (Pro/Premium) têm link para copiar
-  const hasSite = account?.plan === 'pro' || account?.plan === 'premium'
+  // Todo plano tem site público com agendamento; sem plano, sem link
+  const hasSite = !!account?.plan
   const publicUrl = barbershop?.siteType === 'external' && barbershop.customDomain
     ? `https://${barbershop.customDomain}`
     : `${window.location.origin}/b/${barbershop?.slug ?? ''}`
@@ -266,7 +266,7 @@ const DashboardOverview = () => {
         : 'recorrência mensal',
       deltaColor: revDelta !== null
         ? (revDelta >= 0 ? 'text-emerald-400' : 'text-red-400')
-        : 'text-white/40',
+        : 'text-white/65',
     },
   ]
 
@@ -310,7 +310,7 @@ const DashboardOverview = () => {
 
       {/* Header */}
       <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
-        <p className="text-white/30 text-sm font-body mb-1">Hoje — {dateLabel}</p>
+        <p className="text-white/55 text-sm font-body mb-1">Hoje — {dateLabel}</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">
           BOM DIA, {barbershop?.logoText}
         </h1>
@@ -347,7 +347,7 @@ const DashboardOverview = () => {
                         className={`text-xs font-body px-2 py-0.5 rounded-full border ${
                           b.status === 'overdue'
                             ? 'bg-red-500/10 border-red-500/20 text-red-300'
-                            : 'bg-white/[0.04] border-white/10 text-white/60'
+                            : 'bg-white/[0.04] border-white/10 text-white/75'
                         }`}
                       >
                         {b.sub.name.split(' ')[0]} · {hint}
@@ -355,7 +355,7 @@ const DashboardOverview = () => {
                     )
                   })}
                   {alertList.length > 5 && (
-                    <span className="text-xs font-body px-2 py-0.5 text-white/40">+{alertList.length - 5}</span>
+                    <span className="text-xs font-body px-2 py-0.5 text-white/65">+{alertList.length - 5}</span>
                   )}
                 </div>
               </div>
@@ -388,14 +388,14 @@ const DashboardOverview = () => {
         <div className="flex-1 min-w-[12rem]">
           <p className="text-white/70 text-sm font-body break-words">
             {barbershop?.siteType === 'external'
-              ? <>Site vinculado — <span className="text-white/50 font-mono text-xs">{barbershop?.customDomain || 'domínio não configurado'}</span></>
-              : <>Site genérico — <span className="text-white/50 font-mono text-xs">barberos.io/b/{barbershop?.slug}</span></>}
+              ? <>Site vinculado — <span className="text-white/70 font-mono text-xs">{barbershop?.customDomain || 'domínio não configurado'}</span></>
+              : <>Site genérico — <span className="text-white/70 font-mono text-xs">barberos.io/b/{barbershop?.slug}</span></>}
           </p>
         </div>
         {hasSite && (
           <button
             onClick={copyPublicLink}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/40 hover:text-white hover:border-[#333] text-xs font-body transition-all shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all shrink-0"
           >
             {copiedLink
               ? <><Check className="w-3 h-3 text-emerald-400" />Copiado</>
@@ -408,7 +408,7 @@ const DashboardOverview = () => {
             : `/b/${barbershop?.slug}`}
           target="_blank" rel="noopener noreferrer"
           onClick={openOutsideApp}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/40 hover:text-white hover:border-[#333] text-xs font-body transition-all shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all shrink-0"
         >
           <ExternalLink className="w-3 h-3" />
           Ver site
@@ -427,13 +427,13 @@ const DashboardOverview = () => {
             className="p-5 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#303030] transition-colors"
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-white/50 text-xs font-body">{stat.label}</span>
+              <span className="text-white/70 text-xs font-body">{stat.label}</span>
               <div className="w-8 h-8 rounded-lg bg-amber-500/[0.15] border border-amber-500/25 flex items-center justify-center">
                 <stat.icon className="w-4 h-4 text-amber-400" />
               </div>
             </div>
             <p className="font-heading text-2xl text-white mb-1">{stat.value}</p>
-            <p className={`text-xs font-body ${'deltaColor' in stat ? stat.deltaColor : 'text-white/40'}`}>
+            <p className={`text-xs font-body ${'deltaColor' in stat ? stat.deltaColor : 'text-white/65'}`}>
               {stat.delta}
             </p>
           </motion.div>
@@ -463,7 +463,7 @@ const DashboardOverview = () => {
         </div>
         <div className="space-y-2">
           {todayApts.length === 0 && (
-            <p className="text-white/25 text-sm font-body text-center py-8">Nenhum agendamento hoje.</p>
+            <p className="text-white/55 text-sm font-body text-center py-8">Nenhum agendamento hoje.</p>
           )}
           {todayApts.map((apt) => {
             const status = STATUS_CONFIG[apt.status]
@@ -479,7 +479,7 @@ const DashboardOverview = () => {
                 <div className="w-px h-10 bg-white/[0.08] shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-semibold font-body truncate">{apt.clientName}</p>
-                  <p className="text-white/45 text-xs font-body">{apt.serviceName} · {apt.barberName}</p>
+                  <p className="text-white/65 text-xs font-body">{apt.serviceName} · {apt.barberName}</p>
                 </div>
                 {apt.membershipType === 'vip' && (
                   <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
@@ -514,7 +514,7 @@ const DashboardOverview = () => {
             ].map((c) => (
               <div key={c.label} className={`p-5 rounded-xl border ${c.ring}`}>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-white/40 text-xs font-body">{c.label}</span>
+                  <span className="text-white/65 text-xs font-body">{c.label}</span>
                   <c.icon className={`w-4 h-4 ${c.color}`} />
                 </div>
                 <p className="font-heading text-2xl text-white">{c.value}</p>
@@ -533,9 +533,9 @@ const DashboardOverview = () => {
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${b.status === 'overdue' ? 'bg-red-400' : b.status === 'today' ? 'bg-amber-400' : 'bg-blue-400'}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-body truncate">{b.sub.name}</p>
-                      <p className="text-white/35 text-xs font-body">{b.membership?.name ?? '—'} · {formatDueDate(b.dueDate)}</p>
+                      <p className="text-white/60 text-xs font-body">{b.membership?.name ?? '—'} · {formatDueDate(b.dueDate)}</p>
                     </div>
-                    <span className="text-white/60 text-sm font-body shrink-0">{formatBRL(b.amount)}</span>
+                    <span className="text-white/75 text-sm font-body shrink-0">{formatBRL(b.amount)}</span>
                     <span className={`text-xs font-body shrink-0 ${color}`}>{hint}</span>
                   </div>
                 )
@@ -562,7 +562,7 @@ const DashboardOverview = () => {
                   <span className="text-amber-400 font-heading text-lg">R$ {mem.price}/mês</span>
                 </div>
                 {mem.barberName && (
-                  <p className="text-white/30 text-xs font-body mb-3">Plano do barbeiro · {mem.barberName}</p>
+                  <p className="text-white/55 text-xs font-body mb-3">Plano do barbeiro · {mem.barberName}</p>
                 )}
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-1.5 rounded-full bg-[#2a2a2a] overflow-hidden">
@@ -571,7 +571,7 @@ const DashboardOverview = () => {
                       style={{ width: `${Math.min((mem.subscriberCount / 50) * 100, 100)}%` }}
                     />
                   </div>
-                  <span className="text-white/50 text-xs font-body shrink-0">{mem.subscriberCount} assinantes</span>
+                  <span className="text-white/70 text-xs font-body shrink-0">{mem.subscriberCount} assinantes</span>
                 </div>
               </div>
             ))}

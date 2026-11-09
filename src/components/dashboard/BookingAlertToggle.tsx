@@ -83,7 +83,7 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
         aria-pressed={on}
         title={hint}
         className={`w-10 h-10 -mr-2 flex items-center justify-center rounded-lg transition-colors ${
-          on ? 'text-amber-400' : 'text-white/35'
+          on ? 'text-amber-400' : 'text-white/60'
         }`}
       >
         <Icon className="w-5 h-5" />
@@ -100,11 +100,11 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
       title={hint}
       className="w-full flex items-center gap-2 px-3 py-2 mb-1 rounded-lg text-sm hover:bg-white/[0.04] transition-all font-body text-left"
     >
-      <Icon className={`w-4 h-4 shrink-0 ${on ? 'text-amber-400' : 'text-white/35'}`} />
-      <span className={`whitespace-nowrap ${on ? 'text-white/70' : 'text-white/45'}`}>Avisos de agenda</span>
+      <Icon className={`w-4 h-4 shrink-0 ${on ? 'text-amber-400' : 'text-white/60'}`} />
+      <span className={`whitespace-nowrap ${on ? 'text-white/70' : 'text-white/65'}`}>Avisos de agenda</span>
       <span
         className={`ml-auto text-[10px] font-semibold uppercase tracking-wider ${
-          on ? 'text-amber-400' : 'text-white/30'
+          on ? 'text-amber-400' : 'text-white/55'
         }`}
       >
         {on ? 'Ligado' : 'Desligado'}
@@ -122,7 +122,7 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
             duration: 15000,
           })
         }
-        className="w-full flex items-center gap-2 px-3 py-1.5 mb-1 rounded-lg text-xs text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-all font-body"
+        className="w-full flex items-center gap-2 px-3 py-1.5 mb-1 rounded-lg text-xs text-white/65 hover:text-white/70 hover:bg-white/[0.04] transition-all font-body"
       >
         <Download className="w-3.5 h-3.5 shrink-0" />
         Moeda também com o app fechado

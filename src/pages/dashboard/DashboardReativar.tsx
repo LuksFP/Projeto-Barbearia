@@ -43,7 +43,7 @@ const DormantRow = ({ item, barbershop, contacted, onContact }: RowProps) => {
     }`}>
       {/* Cliente */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center shrink-0 text-white/60 text-xs font-heading">
+        <div className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center shrink-0 text-white/75 text-xs font-heading">
           {client.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
         </div>
         <div className="min-w-0">
@@ -60,7 +60,7 @@ const DormantRow = ({ item, barbershop, contacted, onContact }: RowProps) => {
               </span>
             )}
           </div>
-          <p className="text-white/40 text-xs font-body truncate">
+          <p className="text-white/65 text-xs font-body truncate">
             {client.totalVisits} {client.totalVisits === 1 ? 'visita' : 'visitas'} no total
           </p>
         </div>
@@ -71,7 +71,7 @@ const DormantRow = ({ item, barbershop, contacted, onContact }: RowProps) => {
         <p className={`font-heading text-base leading-none ${days >= 60 ? 'text-red-400' : 'text-white/70'}`}>
           {humanizeDays(days)}
         </p>
-        <p className="text-white/30 text-xs font-body mt-1">sem vir</p>
+        <p className="text-white/55 text-xs font-body mt-1">sem vir</p>
       </div>
 
       {/* Ação */}
@@ -80,7 +80,7 @@ const DormantRow = ({ item, barbershop, contacted, onContact }: RowProps) => {
           onClick={sendWhatsapp}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-body transition-colors ${
             contacted
-              ? 'bg-white/5 border-[#2e2e2e] text-white/50 hover:text-white'
+              ? 'bg-white/5 border-[#2e2e2e] text-white/70 hover:text-white'
               : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
           }`}
         >
@@ -142,7 +142,7 @@ const DashboardReativar = () => {
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
-        <p className="text-white/30 text-sm font-body mb-1">Traga de volta quem parou de vir</p>
+        <p className="text-white/55 text-sm font-body mb-1">Traga de volta quem parou de vir</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">REATIVAÇÃO</h1>
       </div>
 
@@ -155,7 +155,7 @@ const DashboardReativar = () => {
             className="p-5 rounded-xl bg-[#161616] border border-[#262626]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-white/40 text-xs font-body">{k.label}</span>
+              <span className="text-white/65 text-xs font-body">{k.label}</span>
               <k.icon className={`w-4 h-4 ${k.color}`} />
             </div>
             <p className="font-heading text-2xl text-white">{k.value}</p>
@@ -165,7 +165,7 @@ const DashboardReativar = () => {
 
       {/* Filtro de tempo */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-white/35 text-xs font-body flex items-center gap-1.5">
+        <span className="text-white/60 text-xs font-body flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5" />Sem vir há mais de:
         </span>
         {THRESHOLDS.map(t => (
@@ -175,7 +175,7 @@ const DashboardReativar = () => {
             className={`px-3 py-1.5 rounded-full text-xs font-body transition-all ${
               threshold === t
                 ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
-                : 'border border-[#262626] text-white/45 hover:border-[#333] hover:text-white/70'
+                : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white/70'
             }`}
           >
             {t} dias
@@ -185,7 +185,7 @@ const DashboardReativar = () => {
 
       {/* Lista */}
       {dormant.length === 0 ? (
-        <div className="text-center py-16 text-white/25 font-body text-sm">
+        <div className="text-center py-16 text-white/55 font-body text-sm">
           <CheckCircle2 className="w-8 h-8 mx-auto mb-3 text-emerald-400/40" />
           Ninguém sumido nesse período. Sua base está ativa!
         </div>

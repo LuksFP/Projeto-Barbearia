@@ -1,6 +1,6 @@
 // /b/:slug/loja — a loja inteira da barbearia: categorias, busca, ordenação.
 import { useMemo, useState } from 'react'
-import { Link, useOutletContext } from 'react-router-dom'
+import { Link, Navigate, useOutletContext } from 'react-router-dom'
 import { Search, ShoppingBag, Store } from 'lucide-react'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import ProductCard from '@/components/barbershop/store/ProductCard'
@@ -15,7 +15,7 @@ const SORTS: Array<{ id: Sort; label: string }> = [
 ]
 
 const StorePage = () => {
-  const { barbershop, products } = useOutletContext<PublicSiteOutletCtx>()
+  const { barbershop, products, storeMode } = useOutletContext<PublicSiteOutletCtx>()
   const primary = barbershop.primaryColor
   const [category, setCategory] = useState<string | null>(null)
   const [query, setQuery] = useState('')
@@ -40,6 +40,8 @@ const StorePage = () => {
     return out // "destaque" = ordem que o banco já devolve (com estoque primeiro)
   }, [products, category, query, sort])
 
+  // Básico não tem página de loja: o produto aparece só no agendamento
+  if (storeMode === 'leve_junto') return <Navigate to={`/b/${barbershop.slug}#agendar`} replace />
   return (
     <div className="max-w-6xl mx-auto px-5 sm:px-6 pt-8 pb-24">
       <nav aria-label="Caminho" className="text-xs font-body text-white/45 mb-4">

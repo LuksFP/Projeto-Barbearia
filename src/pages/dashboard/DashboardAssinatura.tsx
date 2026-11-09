@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
   trial:      { label: 'Trial',                 color: 'text-amber-400',   bg: 'bg-amber-400/10 border-amber-400/20',   icon: Clock },
   past_due:   { label: 'Pagamento pendente',    color: 'text-red-400',     bg: 'bg-red-400/10 border-red-400/20',       icon: AlertTriangle },
   cancelling: { label: 'Cancelamento agendado', color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/20', icon: AlertTriangle },
-  cancelled:  { label: 'Cancelado',             color: 'text-white/40',    bg: 'bg-white/5 border-white/10',            icon: XCircle },
+  cancelled:  { label: 'Cancelado',             color: 'text-white/65',    bg: 'bg-white/5 border-white/10',            icon: XCircle },
 }
 
 function formatDate(iso: string | null): string {
@@ -160,7 +160,7 @@ const DashboardAssinatura = () => {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <p className="text-white/30 text-sm font-body mb-1">Conta SaaS</p>
+        <p className="text-white/55 text-sm font-body mb-1">Conta SaaS</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">ASSINATURA</h1>
       </div>
 
@@ -194,7 +194,7 @@ const DashboardAssinatura = () => {
               <Crown className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <p className="text-white/40 text-xs font-body">Plano atual</p>
+              <p className="text-white/65 text-xs font-body">Plano atual</p>
               <p className="text-white font-heading text-xl tracking-wide">
                 {planConfig?.name ?? 'Sem plano'}
               </p>
@@ -250,7 +250,7 @@ const DashboardAssinatura = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
-            <p className="text-white/30 text-xs font-body mb-1 flex items-center gap-1.5">
+            <p className="text-white/55 text-xs font-body mb-1 flex items-center gap-1.5">
               <CalendarDays className="w-3 h-3" />
               Início
             </p>
@@ -258,7 +258,7 @@ const DashboardAssinatura = () => {
           </div>
           {account.planStatus === 'cancelling' && account.cancelAt && (
             <div className="p-4 rounded-xl bg-[#0f0f0f] border border-orange-500/20">
-              <p className="text-white/30 text-xs font-body mb-1 flex items-center gap-1.5">
+              <p className="text-white/55 text-xs font-body mb-1 flex items-center gap-1.5">
                 <XCircle className="w-3 h-3 text-orange-400" />
                 Acesso até
               </p>
@@ -267,7 +267,7 @@ const DashboardAssinatura = () => {
           )}
           {account.planStatus === 'trial' && account.trialEndsAt && (
             <div className="p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
-              <p className="text-white/30 text-xs font-body mb-1 flex items-center gap-1.5">
+              <p className="text-white/55 text-xs font-body mb-1 flex items-center gap-1.5">
                 <Clock className="w-3 h-3" />
                 Trial encerra
               </p>
@@ -276,7 +276,7 @@ const DashboardAssinatura = () => {
           )}
           {planConfig && (
             <div className="p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
-              <p className="text-white/30 text-xs font-body mb-1 flex items-center gap-1.5">
+              <p className="text-white/55 text-xs font-body mb-1 flex items-center gap-1.5">
                 <CreditCard className="w-3 h-3" />
                 Valor
               </p>
@@ -290,10 +290,10 @@ const DashboardAssinatura = () => {
         {/* Benefícios do plano */}
         {planConfig && (
           <div className="space-y-2">
-            <p className="text-white/30 text-xs font-body uppercase tracking-wide">Incluso no plano</p>
+            <p className="text-white/55 text-xs font-body uppercase tracking-wide">Incluso no plano</p>
             <ul className="space-y-1.5">
               {planConfig.features.map((f, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm font-body text-white/60">
+                <li key={i} className="flex items-start gap-2 text-sm font-body text-white/75">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
                   {f}
                 </li>
@@ -320,7 +320,7 @@ const DashboardAssinatura = () => {
             <p className="text-red-400 text-xs font-body text-center">{portalError}</p>
           )}
 
-          <p className="text-white/25 text-xs font-body text-center">
+          <p className="text-white/55 text-xs font-body text-center">
             Atualizar cartão, ver faturas, cancelar ou mudar plano diretamente no portal Stripe.
           </p>
         </div>
@@ -338,7 +338,7 @@ const DashboardAssinatura = () => {
             <Zap className="w-4 h-4 text-amber-400" />
             <h2 className="text-white font-semibold font-body">Mudar plano</h2>
           </div>
-          <p className="text-white/45 text-sm font-body">
+          <p className="text-white/65 text-sm font-body">
             Troque para qualquer plano. A diferença de valor é calculada proporcionalmente.
           </p>
           <div className="grid grid-cols-1 gap-3">
@@ -359,16 +359,16 @@ const DashboardAssinatura = () => {
                         <span className="ml-2 text-xs text-amber-400 font-normal">{plan.highlight}</span>
                       )}
                       {isDowngrade && (
-                        <span className="ml-2 text-xs text-white/30 font-normal">downgrade</span>
+                        <span className="ml-2 text-xs text-white/55 font-normal">downgrade</span>
                       )}
                     </p>
-                    <p className="text-white/40 text-xs font-body mt-0.5">
+                    <p className="text-white/65 text-xs font-body mt-0.5">
                       R$ {plan.price.toFixed(2).replace('.', ',')} / {plan.period}
                     </p>
                   </div>
                   {upgradeLoading === plan.id
-                    ? <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
-                    : <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-amber-400 transition-colors" />
+                    ? <Loader2 className="w-4 h-4 text-white/55 animate-spin" />
+                    : <ArrowUpRight className="w-4 h-4 text-white/55 group-hover:text-amber-400 transition-colors" />
                   }
                 </button>
               )

@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus, Pencil, MessageCircle, Award, Repeat, Ban, FileText, Check, Sparkles } from 'lucide-react'
+import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus, Pencil, MessageCircle, Award, Repeat, Ban, FileText, Check } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
-import { supabase } from '@/lib/supabase'
 import { isDemoMode } from '@/lib/demo'
 import type { BarbershopAppointment, BarbershopClient } from '@/types/tenant'
 import type { AppointmentRow } from '@/repositories/appointmentRepository'
@@ -116,13 +115,11 @@ const ClientDrawer = ({
   barbershopId: string
   onClose: () => void
 }) => {
-  const { updateClient, appointments, barbershop } = useTenant()
+  const { updateClient, appointments } = useTenant()
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<AppointmentRow[]>([])
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [aiSummary, setAiSummary] = useState<{ resumo: string; sugestao: string } | null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
   const [form, setForm] = useState({
     name: client.name,
     phone: client.phone,
@@ -159,7 +156,6 @@ const ClientDrawer = ({
       membershipType: client.membershipType,
       notes: client.notes ?? '',
     })
-    setAiSummary(null)
   }, [client])
 
   const totalSpend = history
@@ -208,70 +204,8 @@ const ClientDrawer = ({
     setEditing(false)
   }
 
-  // Resumo IA — exclusivo Pro/Premium
-  const aiEnabled = barbershop?.plan === 'pro' || barbershop?.plan === 'premium'
-
-  const handleGenerateSummary = async () => {
-    setAiLoading(true)
-    try {
-      // Demo: resumo mockado, sem chamar a API
-      if (isDemoMode()) {
-        await new Promise(r => setTimeout(r, 600))
-        setAiSummary({
-          resumo: `${client.name} é um cliente ${client.membershipType === 'vip' ? 'VIP muito fiel' : 'recorrente'}, com ${client.totalVisits} visitas${insights.favoriteService ? ` e preferência por ${insights.favoriteService}` : ''}${insights.favoriteBarber ? ` com ${insights.favoriteBarber}` : ''}. ${insights.frequency != null ? `Costuma voltar a cada ${insights.frequency} dias.` : ''}`.trim(),
-          sugestao: insights.noShows > 0
-            ? 'Confirme o próximo horário por WhatsApp — ele já teve cancelamentos.'
-            : 'Ofereça o combo Corte + Barba para aumentar o ticket.',
-        })
-        return
-      }
-
-      const payload = {
-        name: client.name,
-        membershipType: client.membershipType,
-        totalVisits: client.totalVisits,
-        totalSpend,
-        lastVisit: client.lastVisit || null,
-        notes: client.notes || null,
-        favoriteService: insights.favoriteService,
-        favoriteBarber: insights.favoriteBarber,
-        avgTicket: insights.avgTicket,
-        frequency: insights.frequency,
-        noShows: insights.noShows,
-        recent: history.slice(0, 8).map(a => ({
-          service: a.service_name,
-          barber: a.barber_name,
-          date: a.date,
-          status: a.status,
-          price: a.price,
-          rating: a.rating,
-        })),
-      }
-      const cacheKey = `bo:cliente-resumo:${client.id}:${history.length}:${(client.notes ?? '').length}`
-
-      try {
-        const cached = localStorage.getItem(cacheKey)
-        if (cached) {
-          const { at, data } = JSON.parse(cached)
-          if (Date.now() - at < 3 * 60 * 60 * 1000 && data?.resumo) { setAiSummary(data); return }
-        }
-      } catch { /* cache inválido — ignora */ }
-
-      const { data, error } = await supabase.functions.invoke('cliente-resumo', { body: payload })
-      if (error || !data?.resumo) {
-        toast({ title: 'Não foi possível gerar o resumo', variant: 'destructive' })
-        return
-      }
-      const result = { resumo: data.resumo as string, sugestao: (data.sugestao as string) ?? '' }
-      setAiSummary(result)
-      try { localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), data: result })) } catch { /* quota — ignora */ }
-    } finally {
-      setAiLoading(false)
-    }
-  }
-
   const editFieldClass =
-    'w-full px-3 py-2 rounded-lg bg-[#161616] border border-[#262626] text-white placeholder:text-white/30 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors'
+    'w-full px-3 py-2 rounded-lg bg-[#161616] border border-[#262626] text-white placeholder:text-white/40 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors'
 
   return (
     <motion.div
@@ -285,11 +219,11 @@ const ClientDrawer = ({
       <div className="flex items-center justify-between px-6 py-5 border-b border-[#1e1e1e]">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-[#1e1e1e] border border-[#2e2e2e] flex items-center justify-center shrink-0">
-            <span className="text-white/60 text-base font-heading">{initials}</span>
+            <span className="text-white/75 text-base font-heading">{initials}</span>
           </div>
           <div>
             <p className="text-white font-semibold font-body leading-tight">{client.name}</p>
-            <p className="text-white/35 text-xs font-body mt-0.5">
+            <p className="text-white/60 text-xs font-body mt-0.5">
               {client.membershipType === 'vip' ? 'VIP' : client.membershipType === 'standard' ? 'Standard' : 'Sem plano'}
             </p>
           </div>
@@ -299,14 +233,14 @@ const ClientDrawer = ({
             <button
               onClick={() => setEditing(true)}
               title="Editar cliente"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-amber-300 hover:bg-white/5 transition-all"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white/55 hover:text-amber-300 hover:bg-white/5 transition-all"
             >
               <Pencil className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-all"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/55 hover:text-white hover:bg-white/5 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -317,19 +251,19 @@ const ClientDrawer = ({
         /* Form de edição */
         <div className="px-6 py-4 border-b border-[#1a1a1a] space-y-3">
           <div>
-            <label className="text-white/40 text-xs font-body block mb-1.5">Nome *</label>
+            <label className="text-white/65 text-xs font-body block mb-1.5">Nome *</label>
             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={editFieldClass} />
           </div>
           <div>
-            <label className="text-white/40 text-xs font-body block mb-1.5">Telefone *</label>
+            <label className="text-white/65 text-xs font-body block mb-1.5">Telefone *</label>
             <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} inputMode="tel" className={editFieldClass} />
           </div>
           <div>
-            <label className="text-white/40 text-xs font-body block mb-1.5">Email</label>
+            <label className="text-white/65 text-xs font-body block mb-1.5">Email</label>
             <input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="opcional" inputMode="email" className={editFieldClass} />
           </div>
           <div>
-            <label className="text-white/40 text-xs font-body block mb-1.5">Plano</label>
+            <label className="text-white/65 text-xs font-body block mb-1.5">Plano</label>
             <div className="grid grid-cols-3 gap-2">
               {([
                 { v: null, l: 'Sem plano' },
@@ -342,7 +276,7 @@ const ClientDrawer = ({
                   className={`py-2 rounded-lg text-xs font-body border transition-all ${
                     form.membershipType === opt.v
                       ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                      : 'bg-[#161616] border-[#262626] text-white/50 hover:border-[#333]'
+                      : 'bg-[#161616] border-[#262626] text-white/70 hover:border-[#333]'
                   }`}
                 >
                   {opt.l}
@@ -351,7 +285,7 @@ const ClientDrawer = ({
             </div>
           </div>
           <div>
-            <label className="text-white/40 text-xs font-body block mb-1.5">Observações</label>
+            <label className="text-white/65 text-xs font-body block mb-1.5">Observações</label>
             <textarea
               value={form.notes}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -363,7 +297,7 @@ const ClientDrawer = ({
           <div className="flex items-center gap-2 pt-1">
             <button
               onClick={handleCancelEdit}
-              className="flex-1 py-2.5 rounded-lg border border-[#262626] text-white/60 text-sm font-body hover:bg-white/5 transition-all"
+              className="flex-1 py-2.5 rounded-lg border border-[#262626] text-white/75 text-sm font-body hover:bg-white/5 transition-all"
             >
               Cancelar
             </button>
@@ -381,12 +315,12 @@ const ClientDrawer = ({
         <div className="px-6 py-4 border-b border-[#1a1a1a] space-y-3">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-body">
-              <Phone className="w-3.5 h-3.5 text-white/25 shrink-0" />
+              <Phone className="w-3.5 h-3.5 text-white/55 shrink-0" />
               <span className="text-white/65">{client.phone}</span>
             </div>
             {client.email && (
               <div className="flex items-center gap-2 text-sm font-body">
-                <Mail className="w-3.5 h-3.5 text-white/25 shrink-0" />
+                <Mail className="w-3.5 h-3.5 text-white/55 shrink-0" />
                 <span className="text-white/65 truncate">{client.email}</span>
               </div>
             )}
@@ -414,48 +348,17 @@ const ClientDrawer = ({
         ].map(k => (
           <div key={k.label} className="bg-[#0f0f0f] px-4 py-3 text-center">
             <p className="text-white font-heading text-lg leading-tight">{loading && k.label === 'Gasto total' ? '…' : k.value}</p>
-            <p className="text-white/30 text-xs font-body mt-0.5">{k.label}</p>
+            <p className="text-white/55 text-xs font-body mt-0.5">{k.label}</p>
           </div>
         ))}
       </div>
-
-      {/* Resumo IA — Pro/Premium */}
-      {!editing && aiEnabled && (
-        <div className="px-6 py-4 border-b border-[#1a1a1a]">
-          {aiSummary ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body">Resumo IA</p>
-              </div>
-              <p className="text-white/75 text-sm font-body leading-relaxed">{aiSummary.resumo}</p>
-              {aiSummary.sugestao && (
-                <div className="flex items-start gap-2 mt-2 p-3 rounded-lg bg-amber-500/[0.07] border border-amber-500/15">
-                  <Star className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                  <p className="text-amber-200/90 text-sm font-body leading-relaxed">{aiSummary.sugestao}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={handleGenerateSummary}
-              disabled={aiLoading}
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 text-sm font-body font-medium hover:bg-amber-500/15 transition-all disabled:opacity-50"
-            >
-              {aiLoading
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando resumo...</>
-                : <><Sparkles className="w-4 h-4" /> Gerar resumo IA</>}
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Notas (leitura) */}
       {!editing && client.notes && (
         <div className="px-6 py-4 border-b border-[#1a1a1a]">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
-            <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body">Observações</p>
+            <p className="text-white/55 text-xs font-semibold uppercase tracking-widest font-body">Observações</p>
           </div>
           <p className="text-white/65 text-sm font-body leading-relaxed whitespace-pre-wrap">{client.notes}</p>
         </div>
@@ -464,34 +367,34 @@ const ClientDrawer = ({
       {/* Insights derivados do histórico */}
       {!loading && history.length > 0 && (
         <div className="px-6 py-4 border-b border-[#1a1a1a] space-y-2.5">
-          <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body mb-1">Insights</p>
+          <p className="text-white/55 text-xs font-semibold uppercase tracking-widest font-body mb-1">Insights</p>
           {insights.favoriteService && (
             <div className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2 text-white/45"><Scissors className="w-3.5 h-3.5 text-white/25" /> Serviço favorito</span>
+              <span className="flex items-center gap-2 text-white/65"><Scissors className="w-3.5 h-3.5 text-white/55" /> Serviço favorito</span>
               <span className="text-white/80">{insights.favoriteService}</span>
             </div>
           )}
           {insights.favoriteBarber && (
             <div className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2 text-white/45"><Award className="w-3.5 h-3.5 text-white/25" /> Barbeiro favorito</span>
+              <span className="flex items-center gap-2 text-white/65"><Award className="w-3.5 h-3.5 text-white/55" /> Barbeiro favorito</span>
               <span className="text-white/80">{insights.favoriteBarber}</span>
             </div>
           )}
           {insights.avgTicket != null && (
             <div className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2 text-white/45"><Star className="w-3.5 h-3.5 text-white/25" /> Ticket médio</span>
+              <span className="flex items-center gap-2 text-white/65"><Star className="w-3.5 h-3.5 text-white/55" /> Ticket médio</span>
               <span className="text-amber-400/90">R$ {fmt(insights.avgTicket)}</span>
             </div>
           )}
           {insights.frequency != null && (
             <div className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2 text-white/45"><Repeat className="w-3.5 h-3.5 text-white/25" /> Frequência</span>
+              <span className="flex items-center gap-2 text-white/65"><Repeat className="w-3.5 h-3.5 text-white/55" /> Frequência</span>
               <span className="text-white/80">a cada {insights.frequency} {insights.frequency === 1 ? 'dia' : 'dias'}</span>
             </div>
           )}
           {insights.noShows > 0 && (
             <div className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2 text-white/45"><Ban className="w-3.5 h-3.5 text-red-400/50" /> Cancelamentos</span>
+              <span className="flex items-center gap-2 text-white/65"><Ban className="w-3.5 h-3.5 text-red-400/50" /> Cancelamentos</span>
               <span className="text-red-400/80">{insights.noShows}</span>
             </div>
           )}
@@ -500,19 +403,19 @@ const ClientDrawer = ({
 
       {/* Histórico */}
       <div className="flex-1 overflow-y-auto scrollbar-none px-6 py-4">
-        <p className="text-white/30 text-xs font-semibold uppercase tracking-widest font-body mb-4">
+        <p className="text-white/55 text-xs font-semibold uppercase tracking-widest font-body mb-4">
           Histórico de agendamentos
         </p>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12 text-white/25">
+          <div className="flex items-center justify-center py-12 text-white/55">
             <Loader2 className="w-5 h-5 animate-spin mr-2" />
             <span className="text-sm font-body">Carregando...</span>
           </div>
         ) : history.length === 0 ? (
           <div className="py-12 text-center">
             <Calendar className="w-8 h-8 text-white/10 mx-auto mb-3" />
-            <p className="text-white/25 text-sm font-body">Nenhum agendamento encontrado.</p>
+            <p className="text-white/55 text-sm font-body">Nenhum agendamento encontrado.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -523,16 +426,16 @@ const ClientDrawer = ({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Scissors className="w-3.5 h-3.5 text-white/25 shrink-0 mt-0.5" />
+                    <Scissors className="w-3.5 h-3.5 text-white/55 shrink-0 mt-0.5" />
                     <span className="text-white/80 text-sm font-body font-medium leading-tight">
                       {apt.service_name}
                     </span>
                   </div>
-                  <span className={`text-xs font-body shrink-0 ${STATUS_COLOR[apt.status] ?? 'text-white/30'}`}>
+                  <span className={`text-xs font-body shrink-0 ${STATUS_COLOR[apt.status] ?? 'text-white/55'}`}>
                     {STATUS_LABEL[apt.status] ?? apt.status}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs font-body text-white/35 pl-5">
+                <div className="flex items-center justify-between text-xs font-body text-white/60 pl-5">
                   <span>{fmtDate(apt.date)} às {apt.time}</span>
                   <span className="flex items-center gap-2">
                     {apt.barber_name && apt.barber_name !== 'A definir' && (
@@ -554,7 +457,7 @@ const ClientDrawer = ({
                       />
                     ))}
                     {apt.review && (
-                      <span className="text-white/30 text-xs ml-1 italic">"{apt.review}"</span>
+                      <span className="text-white/55 text-xs ml-1 italic">"{apt.review}"</span>
                     )}
                   </div>
                 )}
@@ -598,7 +501,7 @@ const AddClientModal = ({ onClose }: { onClose: () => void }) => {
   }
 
   const fieldClass =
-    'w-full px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/30 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors'
+    'w-full px-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/40 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors'
 
   return (
     <motion.div
@@ -619,7 +522,7 @@ const AddClientModal = ({ onClose }: { onClose: () => void }) => {
         <h2 className="text-white font-heading text-xl tracking-wide">NOVO CLIENTE</h2>
         <button
           onClick={onClose}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-all"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/55 hover:text-white hover:bg-white/5 transition-all"
         >
           <X className="w-4 h-4" />
         </button>
@@ -627,19 +530,19 @@ const AddClientModal = ({ onClose }: { onClose: () => void }) => {
 
       <div className="px-6 py-5 space-y-3">
         <div>
-          <label className="text-white/40 text-xs font-body block mb-1.5">Nome *</label>
+          <label className="text-white/65 text-xs font-body block mb-1.5">Nome *</label>
           <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="Nome do cliente" className={fieldClass} />
         </div>
         <div>
-          <label className="text-white/40 text-xs font-body block mb-1.5">Telefone *</label>
+          <label className="text-white/65 text-xs font-body block mb-1.5">Telefone *</label>
           <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(11) 99999-9999" inputMode="tel" className={fieldClass} />
         </div>
         <div>
-          <label className="text-white/40 text-xs font-body block mb-1.5">Email</label>
+          <label className="text-white/65 text-xs font-body block mb-1.5">Email</label>
           <input value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com (opcional)" inputMode="email" className={fieldClass} />
         </div>
         <div>
-          <label className="text-white/40 text-xs font-body block mb-1.5">Plano</label>
+          <label className="text-white/65 text-xs font-body block mb-1.5">Plano</label>
           <div className="grid grid-cols-3 gap-2">
             {([
               { v: null, l: 'Sem plano' },
@@ -652,7 +555,7 @@ const AddClientModal = ({ onClose }: { onClose: () => void }) => {
                 className={`py-2.5 rounded-xl text-xs font-body border transition-all ${
                   membership === opt.v
                     ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                    : 'bg-[#161616] border-[#262626] text-white/50 hover:border-[#333]'
+                    : 'bg-[#161616] border-[#262626] text-white/70 hover:border-[#333]'
                 }`}
               >
                 {opt.l}
@@ -665,7 +568,7 @@ const AddClientModal = ({ onClose }: { onClose: () => void }) => {
       <div className="flex items-center gap-3 px-6 py-4 border-t border-[#1e1e1e]">
         <button
           onClick={onClose}
-          className="flex-1 py-3 rounded-xl border border-[#262626] text-white/60 text-sm font-body hover:bg-white/5 transition-all"
+          className="flex-1 py-3 rounded-xl border border-[#262626] text-white/75 text-sm font-body hover:bg-white/5 transition-all"
         >
           Cancelar
         </button>
@@ -705,7 +608,7 @@ const DashboardClientes = () => {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-white/30 text-sm font-body mb-1">Base de clientes</p>
+          <p className="text-white/55 text-sm font-body mb-1">Base de clientes</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">CLIENTES</h1>
         </div>
         <button
@@ -726,20 +629,20 @@ const DashboardClientes = () => {
         ].map((s, i) => (
           <div key={i} className="p-4 rounded-xl bg-[#161616] border border-[#262626] text-center">
             <p className="font-heading text-2xl text-white">{s.value}</p>
-            <p className="text-white/45 text-xs font-body mt-1">{s.label}</p>
+            <p className="text-white/65 text-xs font-body mt-1">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/45" />
         <input
           type="text"
           placeholder="Buscar por nome ou telefone..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/30 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors"
+          className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#161616] border border-[#262626] text-white placeholder:text-white/40 text-sm font-body focus:outline-none focus:border-amber-500/50 transition-colors"
         />
       </div>
 
@@ -755,7 +658,7 @@ const DashboardClientes = () => {
             className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#161616] border border-[#262626] hover:bg-[#1c1c1c] hover:border-[#303030] transition-all text-left"
           >
             <div className="w-10 h-10 rounded-full bg-[#222] border border-[#2e2e2e] flex items-center justify-center shrink-0">
-              <span className="text-white/55 text-sm font-heading">
+              <span className="text-white/70 text-sm font-heading">
                 {client.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
               </span>
             </div>
@@ -770,20 +673,20 @@ const DashboardClientes = () => {
                   </span>
                 )}
                 {client.membershipType === 'standard' && (
-                  <span className="text-white/30 text-xs px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 shrink-0">
+                  <span className="text-white/55 text-xs px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 shrink-0">
                     Standard
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <Phone className="w-3 h-3 text-white/20" />
-                <p className="text-white/45 text-xs font-body">{client.phone}</p>
+                <Phone className="w-3 h-3 text-white/45" />
+                <p className="text-white/65 text-xs font-body">{client.phone}</p>
               </div>
             </div>
 
             <div className="text-right shrink-0">
               <p className="text-white/70 text-sm font-body">{client.totalVisits} visitas</p>
-              <p className="text-white/35 text-xs font-body">
+              <p className="text-white/60 text-xs font-body">
                 {client.lastVisit ? `última: ${client.lastVisit}` : 'sem visitas'}
               </p>
             </div>
@@ -791,7 +694,7 @@ const DashboardClientes = () => {
         ))}
 
         {filtered.length === 0 && (
-          <div className="py-16 text-center text-white/20 font-body text-sm">
+          <div className="py-16 text-center text-white/45 font-body text-sm">
             Nenhum cliente encontrado.
           </div>
         )}

@@ -263,8 +263,8 @@ const Planos = () => {
         >
           <div>
             <p className="text-white/60 text-sm font-body leading-relaxed">
-              <span className="text-white font-semibold">Básico</span> só agenda.{' '}
-              <span className="text-white font-semibold">Pro</span> adiciona site genérico em barberos.io.{' '}
+              <span className="text-white font-semibold">Básico</span> tem agenda, agendamento online em barberos.io e 1 produto no agendamento.{' '}
+              <span className="text-white font-semibold">Pro</span> libera a loja completa no site.{' '}
               <span className="text-white font-semibold">Premium</span> entrega site exclusivo com domínio próprio incluso.
             </p>
           </div>

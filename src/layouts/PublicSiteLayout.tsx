@@ -8,8 +8,8 @@ import { BagProvider, useBag } from '@/components/barbershop/store/bag'
 import BagDrawer from '@/components/barbershop/store/BagDrawer'
 import { supabasePublic } from '@/lib/supabase-public'
 import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
-import { publicStoreRepository, type PublicProduct } from '@/repositories/publicStoreRepository'
-import { demoPublicProducts } from '@/hooks/useProducts'
+import { publicStoreRepository, type PublicProduct, type StoreMode } from '@/repositories/publicStoreRepository'
+import { demoPublicProducts, isDemoBasicShop } from '@/hooks/useProducts'
 import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership } from '@/types/tenant'
 import type { Database, Tables } from '@/types/database'
 import { mapBarbershopRow } from '@/repositories/barbershopRepository'
@@ -44,6 +44,9 @@ export interface PublicSiteOutletCtx {
   ratingCount: number
   /** Loja: só o que a barbearia marcou pra aparecer no site */
   products: PublicProduct[]
+  /** 'loja' = página da loja e sacola (Pro/Premium); 'leve_junto' = Básico,
+   *  1 produto oferecido só no fim do agendamento; null = ainda carregando */
+  storeMode: StoreMode | null
   /** Rebusca a loja (estoque mudou depois de um pedido) */
   refreshProducts: () => void
 }
@@ -77,6 +80,7 @@ const PublicSiteLayout = () => {
   const [reviews, setReviews] = useState<PublicReview[]>([])
   const [products, setProducts] = useState<PublicProduct[]>([])
   const [productsNonce, setProductsNonce] = useState(0)
+  const [storeMode, setStoreMode] = useState<StoreMode | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -296,12 +300,21 @@ const PublicSiteLayout = () => {
   // (id não é uuid) lê os produtos do demo no navegador.
   const shopId = barbershop?.id
   useEffect(() => {
-    if (!shopId) { setProducts([]); return }
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(shopId)) { setProducts(demoPublicProducts(shopId)); return }
+    if (!shopId) { setProducts([]); setStoreMode(null); return }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(shopId)) {
+      setStoreMode(isDemoBasicShop(shopId) ? 'leve_junto' : 'loja')
+      setProducts(demoPublicProducts(shopId))
+      return
+    }
     let active = true
     publicStoreRepository.list(shopId)
       .then(list => { if (active) setProducts(list) })
       .catch(() => { if (active) setProducts([]) })
+    // Sem a resposta do modo, o site fica na loja completa: o banco já
+    // devolve só 1 produto pro Básico e recusa reserva avulsa.
+    publicStoreRepository.mode(shopId)
+      .then(m => { if (active) setStoreMode(m) })
+      .catch(() => { if (active) setStoreMode('loja') })
     return () => { active = false }
   }, [shopId, productsNonce])
 
@@ -311,7 +324,7 @@ const PublicSiteLayout = () => {
     { label: 'Equipe', href: '#equipe' },
     { label: 'Galeria', href: '#galeria' },
     ...(memberships.length > 0 ? [{ label: 'Clube VIP', href: '#clube' }] : []),
-    ...(products.length > 0 ? [{ label: 'Loja', href: '/loja' }] : []),
+    ...(storeMode === 'loja' && products.length > 0 ? [{ label: 'Loja', href: '/loja' }] : []),
     { label: 'Agendar', href: '#agendar' },
   ]
 
@@ -369,7 +382,7 @@ const PublicSiteLayout = () => {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {products.length > 0 && <BagButton primary={primary} />}
+            {storeMode === 'loja' && products.length > 0 && <BagButton primary={primary} />}
             <a
               href={`https://wa.me/${safeWhatsapp}`}
               target="_blank"
@@ -417,7 +430,7 @@ const PublicSiteLayout = () => {
       </header>
 
       <main className="flex-1 pt-16">
-        <Outlet context={{ barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount, products, refreshProducts: () => setProductsNonce(n => n + 1) } satisfies PublicSiteOutletCtx} />
+        <Outlet context={{ barbershop, services, barbers, memberships, reviews, ratingAvg, ratingCount, products, storeMode, refreshProducts: () => setProductsNonce(n => n + 1) } satisfies PublicSiteOutletCtx} />
       </main>
 
       <footer className="border-t border-[#1a1a1a] py-8">

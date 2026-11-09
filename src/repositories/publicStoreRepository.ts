@@ -1,6 +1,8 @@
 // Loja no site do cliente (anon). Só RPC: o cliente não lê nem grava tabela.
 //   vitrine → public_barbershop_products (só o que a barbearia marcou pro site)
 //   pedido  → public_place_product_order (tudo ou nada; baixa o estoque no banco)
+//   modo    → public_store_mode: 'loja' (Pro/Premium) ou 'leve_junto' (Básico:
+//             1 produto, só no fim do agendamento)
 import { supabasePublic } from '@/lib/supabase-public'
 import type { OrderItem } from '@/repositories/productRepository'
 
@@ -14,6 +16,8 @@ export interface PublicProduct {
   available: number   // até 10; 0 = esgotado
 }
 
+export type StoreMode = 'loja' | 'leve_junto'
+
 export interface PlaceOrderInput {
   barbershopId: string
   items: OrderItem[]
@@ -23,6 +27,12 @@ export interface PlaceOrderInput {
 }
 
 export const publicStoreRepository = {
+  async mode(barbershopId: string): Promise<StoreMode> {
+    const { data, error } = await supabasePublic.rpc('public_store_mode', { p_barbershop_id: barbershopId })
+    if (error) throw error
+    return data === 'leve_junto' ? 'leve_junto' : 'loja'
+  },
+
   async list(barbershopId: string): Promise<PublicProduct[]> {
     const { data, error } = await supabasePublic.rpc('public_barbershop_products', { p_barbershop_id: barbershopId })
     if (error) throw error

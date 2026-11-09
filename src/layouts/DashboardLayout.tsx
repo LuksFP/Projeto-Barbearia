@@ -83,9 +83,9 @@ const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOu
           <p className="text-sm font-semibold text-white truncate font-heading tracking-wide">
             {barbershop.name}
           </p>
-          <p className="text-xs text-white/40 font-body truncate">{barbershop.city}, {barbershop.state}</p>
+          <p className="text-xs text-white/65 font-body truncate">{barbershop.city}, {barbershop.state}</p>
         </div>
-        <ChevronDown className="w-4 h-4 text-white/30 ml-auto shrink-0" />
+        <ChevronDown className="w-4 h-4 text-white/55 ml-auto shrink-0" />
       </div>
     </div>
 
@@ -101,7 +101,7 @@ const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOu
             `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-body transition-all ${
               isActive
                 ? 'bg-gradient-to-r from-amber-400/[0.13] to-transparent text-amber-300 font-medium shadow-[inset_3px_0_0_0_#C9A84C]'
-                : 'text-white/45 hover:text-white/80 hover:bg-white/[0.04]'
+                : 'text-white/65 hover:text-white/80 hover:bg-white/[0.04]'
             }`
           }
         >
@@ -130,7 +130,7 @@ const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOu
       <BookingAlertToggle barbershopId={pushBarbershopId} />
       <button
         onClick={onSignOut}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/45 hover:text-white/80 hover:bg-white/[0.04] transition-all font-body"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/65 hover:text-white/80 hover:bg-white/[0.04] transition-all font-body"
       >
         <LogOut className="w-4 h-4" />
         Sair do painel
@@ -241,7 +241,7 @@ const DashboardLayout = () => {
 
   if (!barbershop) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white/40 font-body">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white/65 font-body">
         Nenhuma barbearia ativa.
       </div>
     )
@@ -291,7 +291,7 @@ const DashboardLayout = () => {
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Abrir menu"
-            className="w-10 h-10 -ml-2 flex items-center justify-center text-white/60 hover:text-white"
+            className="w-10 h-10 -ml-2 flex items-center justify-center text-white/75 hover:text-white"
           >
             <Menu className="w-5 h-5" />
           </button>

@@ -29,7 +29,7 @@ interface EditForm {
   commissionPercent: string
 }
 
-const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus:border-amber-500/50 transition-colors'
+const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50 transition-colors'
 
 const DashboardEquipe = () => {
   const { barbershop, barbers, updateBarbers } = useTenant()
@@ -213,7 +213,7 @@ const DashboardEquipe = () => {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-white/30 text-sm font-body mb-1">Barbearia ativa</p>
+          <p className="text-white/55 text-sm font-body mb-1">Barbearia ativa</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">EQUIPE</h1>
         </div>
         <button
@@ -252,29 +252,29 @@ const DashboardEquipe = () => {
             <p className="text-amber-400/70 text-xs font-body font-semibold tracking-wide uppercase mb-3">
               {barber.specialty}
             </p>
-            <div className="flex items-center gap-1.5 text-white/35 text-xs font-body mb-1.5">
+            <div className="flex items-center gap-1.5 text-white/60 text-xs font-body mb-1.5">
               <Clock className="w-3 h-3" />
               Bloqueia {barber.cutDurationMin} min por atendimento
             </div>
-            <div className="flex items-center gap-1.5 text-white/35 text-xs font-body mb-3">
+            <div className="flex items-center gap-1.5 text-white/60 text-xs font-body mb-3">
               <Percent className="w-3 h-3" />
               {barber.commissionPercent}% de comissão
             </div>
             {barber.bio && (
-              <p className="text-white/50 text-sm font-body leading-relaxed mb-4 line-clamp-2">{barber.bio}</p>
+              <p className="text-white/70 text-sm font-body leading-relaxed mb-4 line-clamp-2">{barber.bio}</p>
             )}
 
             <div className="flex items-center justify-between">
               <span className={`text-xs font-body px-2.5 py-1 rounded-full ${
                 barber.active
                   ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20'
-                  : 'bg-white/5 text-white/30 border border-white/10'
+                  : 'bg-white/5 text-white/55 border border-white/10'
               }`}>
                 {barber.active ? 'Ativo' : 'Inativo'}
               </span>
               <button
                 onClick={() => openEdit(barber)}
-                className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 font-body transition-colors"
+                className="flex items-center gap-1.5 text-xs text-white/55 hover:text-white/75 font-body transition-colors"
               >
                 <Pencil className="w-3 h-3" />
                 Editar
@@ -289,7 +289,7 @@ const DashboardEquipe = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: barbers.length * 0.07 }}
           onClick={openInvite}
-          className="p-6 rounded-xl border border-dashed border-[#2a2a2a] hover:border-[#3a3a3a] text-white/30 hover:text-white/55 transition-all flex flex-col items-center justify-center gap-3 min-h-[200px]"
+          className="p-6 rounded-xl border border-dashed border-[#2a2a2a] hover:border-[#3a3a3a] text-white/55 hover:text-white/70 transition-all flex flex-col items-center justify-center gap-3 min-h-[200px]"
         >
           <div className="w-12 h-12 rounded-xl border border-[#2a2a2a] flex items-center justify-center">
             <Scissors className="w-5 h-5" />
@@ -318,7 +318,7 @@ const DashboardEquipe = () => {
               {/* Header fixo */}
               <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0 border-b border-[#1c1c1c]">
                 <h2 className="font-heading text-xl tracking-wide text-white">ADICIONAR BARBEIRO</h2>
-                <button onClick={() => setInviteOpen(false)} className="text-white/30 hover:text-white transition-colors">
+                <button onClick={() => setInviteOpen(false)} className="text-white/55 hover:text-white transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -327,7 +327,7 @@ const DashboardEquipe = () => {
               <div className="overflow-y-auto flex-1 px-6 py-5 scrollbar-none">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Nome *</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Nome *</label>
                     <input
                       type="text"
                       value={inviteForm.name}
@@ -337,7 +337,7 @@ const DashboardEquipe = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Especialidade *</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Especialidade *</label>
                     <input
                       type="text"
                       value={inviteForm.specialty}
@@ -347,7 +347,7 @@ const DashboardEquipe = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Função</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Função</label>
                     <select
                       value={inviteForm.role}
                       onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
@@ -357,7 +357,7 @@ const DashboardEquipe = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Bio (opcional)</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Bio (opcional)</label>
                     <textarea
                       value={inviteForm.bio}
                       onChange={e => setInviteForm(f => ({ ...f, bio: e.target.value }))}
@@ -407,7 +407,7 @@ const DashboardEquipe = () => {
             >
               <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
                 <h2 className="font-heading text-xl tracking-wide text-white">EDITAR MEMBRO</h2>
-                <button onClick={() => setEditingBarber(null)} className="text-white/30 hover:text-white transition-colors">
+                <button onClick={() => setEditingBarber(null)} className="text-white/55 hover:text-white transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -416,7 +416,7 @@ const DashboardEquipe = () => {
               <div className="space-y-4">
                 {/* Avatar upload */}
                 <div>
-                  <label className="block text-white/45 text-xs font-body mb-2">Foto do barbeiro</label>
+                  <label className="block text-white/65 text-xs font-body mb-2">Foto do barbeiro</label>
                   <div className="flex items-center gap-4">
                     {editingBarber.avatar ? (
                       <img
@@ -435,7 +435,7 @@ const DashboardEquipe = () => {
                       type="button"
                       onClick={() => avatarInputRef.current?.click()}
                       disabled={uploadingAvatar}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#2a2a2a] text-white/50 hover:text-white hover:border-[#3a3a3a] text-xs font-body transition-all disabled:opacity-40"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#2a2a2a] text-white/70 hover:text-white hover:border-[#3a3a3a] text-xs font-body transition-all disabled:opacity-40"
                     >
                       {uploadingAvatar
                         ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Enviando…</>
@@ -454,7 +454,7 @@ const DashboardEquipe = () => {
                 </div>
 
                 <div>
-                  <label className="block text-white/45 text-xs font-body mb-1.5">Nome completo *</label>
+                  <label className="block text-white/65 text-xs font-body mb-1.5">Nome completo *</label>
                   <input
                     type="text"
                     value={editForm.name}
@@ -464,7 +464,7 @@ const DashboardEquipe = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-white/45 text-xs font-body mb-1.5">Especialidade *</label>
+                  <label className="block text-white/65 text-xs font-body mb-1.5">Especialidade *</label>
                   <input
                     type="text"
                     value={editForm.specialty}
@@ -474,7 +474,7 @@ const DashboardEquipe = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-white/45 text-xs font-body mb-1.5">Função</label>
+                  <label className="block text-white/65 text-xs font-body mb-1.5">Função</label>
                   <select
                     value={editForm.role}
                     onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
@@ -484,7 +484,7 @@ const DashboardEquipe = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-white/45 text-xs font-body mb-1.5">Tempo de corte (min) *</label>
+                  <label className="block text-white/65 text-xs font-body mb-1.5">Tempo de corte (min) *</label>
                   <input
                     type="number"
                     min="5"
@@ -495,12 +495,12 @@ const DashboardEquipe = () => {
                     placeholder="15"
                     className={inputCls}
                   />
-                  <p className="mt-1.5 text-white/25 text-[11px] font-body">
+                  <p className="mt-1.5 text-white/55 text-[11px] font-body">
                     Um agendamento às 15:00 com 15 min bloqueia de 15:00 a 15:15.
                   </p>
                 </div>
                 <div>
-                  <label className="block text-white/45 text-xs font-body mb-1.5">Comissão (%)</label>
+                  <label className="block text-white/65 text-xs font-body mb-1.5">Comissão (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -511,12 +511,12 @@ const DashboardEquipe = () => {
                     placeholder="50"
                     className={inputCls}
                   />
-                  <p className="mt-1.5 text-white/25 text-[11px] font-body">
+                  <p className="mt-1.5 text-white/55 text-[11px] font-body">
                     % da receita gerada que fica com o barbeiro (aparece no Financeiro).
                   </p>
                 </div>
                 <div>
-                  <label className="block text-white/45 text-xs font-body mb-1.5">Bio (opcional)</label>
+                  <label className="block text-white/65 text-xs font-body mb-1.5">Bio (opcional)</label>
                   <textarea
                     value={editForm.bio}
                     onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}

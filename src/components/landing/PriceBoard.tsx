@@ -18,13 +18,13 @@ const EQUIPES: { id: Equipe; rotulo: string }[] = [
 ]
 
 const SITES: { id: Site; rotulo: string }[] = [
-  { id: 'agenda', rotulo: 'Só a agenda' },
-  { id: 'pagina', rotulo: 'Página pronta' },
+  { id: 'agenda', rotulo: 'Agendar online' },
+  { id: 'pagina', rotulo: 'Agendar e vender produtos' },
   { id: 'proprio', rotulo: 'Design e domínio meus' },
 ]
 
-// Segue os limites da própria lista de planos: Básico vai até 2 barbeiros e não tem site;
-// domínio e design próprios só no Premium.
+// Segue os limites da própria lista de planos: Básico vai até 2 barbeiros, com site de
+// agendamento e 1 produto; loja completa a partir do Pro; domínio e design próprios só no Premium.
 const planoPara = (equipe: Equipe, site: Site): SaasPlan => {
   if (site === 'proprio') return 'premium'
   if (site === 'pagina' || equipe === 'mais') return 'pro'
@@ -71,7 +71,7 @@ const PriceBoard = () => {
               ))}
             </fieldset>
             <fieldset>
-              <legend>E o site da barbearia?</legend>
+              <legend>E o site, vai fazer o quê?</legend>
               {SITES.map((item) => (
                 <button key={item.id} type="button" aria-pressed={site === item.id} onClick={() => setSite(item.id)}>
                   {item.rotulo}

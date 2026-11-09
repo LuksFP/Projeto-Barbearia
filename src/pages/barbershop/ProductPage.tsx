@@ -1,7 +1,7 @@
 // /b/:slug/loja/:productId — página do produto, com link próprio pra mandar
 // no WhatsApp/Instagram. Galeria, quantidade, sacola e relacionados.
 import { useEffect, useState } from 'react'
-import { Link, useOutletContext, useParams } from 'react-router-dom'
+import { Link, Navigate, useOutletContext, useParams } from 'react-router-dom'
 import { Minus, Plus, ShoppingBag, Store, Share2, Check } from 'lucide-react'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import ProductCard from '@/components/barbershop/store/ProductCard'
@@ -10,7 +10,7 @@ import { brl, useBag } from '@/components/barbershop/store/bag'
 import { toast } from '@/hooks/use-toast'
 
 const ProductPage = () => {
-  const { barbershop, products } = useOutletContext<PublicSiteOutletCtx>()
+  const { barbershop, products, storeMode } = useOutletContext<PublicSiteOutletCtx>()
   const { productId } = useParams<{ productId: string }>()
   const bag = useBag()
   const primary = barbershop.primaryColor
@@ -27,6 +27,9 @@ const ProductPage = () => {
     document.title = `${product.name} · ${barbershop.name}`
     return () => { document.title = prev }
   }, [product, barbershop.name])
+
+  // Básico não tem página de produto: ele aparece só no agendamento
+  if (storeMode === 'leve_junto') return <Navigate to={`/b/${barbershop.slug}#agendar`} replace />
 
   if (!product) {
     return (

@@ -1139,6 +1139,7 @@ export type Database = {
           price: number
         }[]
       }
+      public_store_mode: { Args: { p_barbershop_id: string }; Returns: string }
       public_place_product_order: {
         Args: {
           p_barbershop_id: string

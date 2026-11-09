@@ -7,7 +7,7 @@ import { toast } from '@/hooks/use-toast'
 import type { Barbershop, BarbershopAppointment } from '@/types/tenant'
 
 const STATUS = {
-  pending:   { label: 'A confirmar', text: 'text-white/50', dot: 'bg-white/30' },
+  pending:   { label: 'A confirmar', text: 'text-white/70', dot: 'bg-white/30' },
   confirmed: { label: 'Confirmado',  text: 'text-amber-400', dot: 'bg-amber-400' },
 } as const
 
@@ -50,7 +50,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
             </span>
           )}
         </div>
-        <p className="text-white/40 text-xs font-body truncate">{apt.serviceName}{apt.barberName ? ` · ${apt.barberName}` : ''}</p>
+        <p className="text-white/65 text-xs font-body truncate">{apt.serviceName}{apt.barberName ? ` · ${apt.barberName}` : ''}</p>
       </div>
 
       {/* Status */}
@@ -64,7 +64,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
           onClick={sendWhatsapp}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-body transition-colors ${
             reminded
-              ? 'bg-white/5 border-[#2e2e2e] text-white/50 hover:text-white'
+              ? 'bg-white/5 border-[#2e2e2e] text-white/70 hover:text-white'
               : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
           }`}
         >
@@ -83,7 +83,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
         <button
           onClick={onNoShow}
           title="Marcar falta / cancelar"
-          className="p-1.5 rounded-lg text-white/30 hover:text-red-400 transition-colors"
+          className="p-1.5 rounded-lg text-white/55 hover:text-red-400 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -107,7 +107,7 @@ const Section = ({ title, icon: Icon, list, ...rest }: {
     <div>
       <div className="flex items-center gap-2 mb-3 px-1">
         <Icon className="w-3.5 h-3.5 text-amber-400/50" />
-        <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body">{title} · {list.length}</p>
+        <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body">{title} · {list.length}</p>
       </div>
       <div className="space-y-2">
         {list.map(apt => (
@@ -149,7 +149,7 @@ const DashboardLembretes = () => {
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
-        <p className="text-white/30 text-sm font-body mb-1">Reduza faltas confirmando por WhatsApp</p>
+        <p className="text-white/55 text-sm font-body mb-1">Reduza faltas confirmando por WhatsApp</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">LEMBRETES</h1>
       </div>
 
@@ -162,7 +162,7 @@ const DashboardLembretes = () => {
             className="p-5 rounded-xl bg-[#161616] border border-[#262626]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-white/40 text-xs font-body">{k.label}</span>
+              <span className="text-white/65 text-xs font-body">{k.label}</span>
               <div className="w-7 h-7 rounded-lg bg-amber-500/[0.15] border border-amber-500/25 flex items-center justify-center">
                 <k.icon className="w-3.5 h-3.5 text-amber-400" />
               </div>
@@ -174,9 +174,9 @@ const DashboardLembretes = () => {
 
       {/* Listas */}
       {!ready ? (
-        <div className="flex items-center justify-center py-16 text-white/30"><Loader2 className="w-5 h-5 animate-spin" /></div>
+        <div className="flex items-center justify-center py-16 text-white/55"><Loader2 className="w-5 h-5 animate-spin" /></div>
       ) : upcoming.length === 0 ? (
-        <div className="text-center py-16 text-white/25 font-body text-sm">
+        <div className="text-center py-16 text-white/55 font-body text-sm">
           <CheckCircle2 className="w-8 h-8 mx-auto mb-3 text-emerald-400/40" />
           Nenhum horário pra hoje ou amanhã. Tudo tranquilo por aqui.
         </div>

@@ -95,20 +95,6 @@ const ANNOUNCEMENTS: Announcement[] = [
     ctaLabel: 'Abrir a Agenda',
     ctaTo: '/dashboard/agenda',
   },
-  {
-    key: 'ai-financeiro-2026-06',
-    badge: 'Novidade no ar',
-    title: 'Inteligência Artificial chegou no BarberOS',
-    description:
-      'Agora a IA analisa o faturamento da sua barbearia e gera um resumo do mês com dicas práticas — sem você fazer nada.',
-    steps: [
-      'Abra o menu Financeiro',
-      'No topo da página, veja o card “Resumo do mês · IA”',
-      'A IA monta o resumo automático com os seus números (planos Pro e Premium)',
-    ],
-    ctaLabel: 'Ver no Financeiro',
-    ctaTo: '/dashboard/financeiro',
-  },
 ]
 
 const cacheKey = (accountId: string) => `barberos:announcements:${accountId}`

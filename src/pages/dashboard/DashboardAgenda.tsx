@@ -14,7 +14,7 @@ import { buildBookingConfirmation, waUrl } from '@/lib/whatsapp'
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
   confirmed: { label: 'Confirmado', color: 'text-amber-400',  bg: 'bg-amber-400/10 border-amber-400/20',  icon: Clock },
-  pending:   { label: 'Pendente',   color: 'text-white/50',   bg: 'bg-white/5 border-white/10',            icon: AlertCircle },
+  pending:   { label: 'Pendente',   color: 'text-white/70',   bg: 'bg-white/5 border-white/10',            icon: AlertCircle },
   cancelled: { label: 'Cancelado',  color: 'text-red-400',    bg: 'bg-red-400/10 border-red-400/20',       icon: XCircle },
 }
 
@@ -430,7 +430,7 @@ const DashboardAgenda = () => {
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-white/30 text-sm font-body mb-1">
+          <p className="text-white/55 text-sm font-body mb-1">
             Semana {weekOffset === 0 ? 'atual' : weekOffset > 0 ? `+${weekOffset}` : weekOffset}
           </p>
           <h1 className="font-heading text-3xl tracking-wide text-white">AGENDA</h1>
@@ -446,7 +446,7 @@ const DashboardAgenda = () => {
 
       {/* Navegação dias */}
       <div className="flex items-center gap-2">
-        <button onClick={prevWeek} className="p-2 rounded-lg border border-[#262626] text-white/45 hover:text-white hover:border-[#333] transition-all">
+        <button onClick={prevWeek} className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
           <ChevronLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 flex gap-2 overflow-x-auto pb-1">
@@ -461,7 +461,7 @@ const DashboardAgenda = () => {
                     ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
                     : isToday
                       ? 'border border-white/15 text-white/70 hover:border-[#333]'
-                      : 'border border-[#262626] text-white/45 hover:border-[#333] hover:text-white/70'
+                      : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white/70'
                 }`}
               >
                 {day.label}
@@ -469,7 +469,7 @@ const DashboardAgenda = () => {
             )
           })}
         </div>
-        <button onClick={nextWeek} className="p-2 rounded-lg border border-[#262626] text-white/45 hover:text-white hover:border-[#333] transition-all">
+        <button onClick={nextWeek} className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -481,7 +481,7 @@ const DashboardAgenda = () => {
           className={`px-3 py-1.5 rounded-full text-xs font-body transition-all ${
             filterBarber === 'all'
               ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
-              : 'border border-[#262626] text-white/45 hover:border-[#333] hover:text-white/70'
+              : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white/70'
           }`}
         >
           Todos
@@ -493,7 +493,7 @@ const DashboardAgenda = () => {
             className={`px-3 py-1.5 rounded-full text-xs font-body transition-all ${
               filterBarber === b.id
                 ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
-                : 'border border-[#262626] text-white/45 hover:border-[#333] hover:text-white/70'
+                : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white/70'
             }`}
           >
             {b.name.split(' ')[0]}
@@ -508,7 +508,7 @@ const DashboardAgenda = () => {
       )}
 
       {!loading && filtered.length === 0 && (
-        <p className="text-white/25 text-sm font-body text-center py-12">
+        <p className="text-white/55 text-sm font-body text-center py-12">
           Nenhum agendamento para {weekDays[selectedIdx]?.label ?? 'este dia'}.
         </p>
       )}
@@ -536,7 +536,7 @@ const DashboardAgenda = () => {
       {/* Lista agrupada por barbeiro */}
       {!loading && Object.entries(grouped).map(([barberName, apts]) => (
         <motion.div key={barberName} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-          <p className="text-white/30 text-xs font-semibold tracking-widest uppercase font-body px-1 mb-3">
+          <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body px-1 mb-3">
             {barberName}
           </p>
           {apts.map(apt => {
@@ -552,16 +552,16 @@ const DashboardAgenda = () => {
                 className="p-4 rounded-xl bg-[#161616] border border-[#262626] hover:bg-[#1c1c1c] hover:border-[#303030] transition-all"
               >
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <span className="font-heading text-xl text-white/60 w-14 shrink-0 text-center">
+                  <span className="font-heading text-xl text-white/75 w-14 shrink-0 text-center">
                     {apt.time}
                   </span>
                   <div className="w-px h-10 bg-[#2a2a2a] shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-semibold truncate">{apt.clientName}</p>
-                    <p className="text-white/45 text-xs">
+                    <p className="text-white/65 text-xs">
                       {apt.serviceName}
                       {apt.price != null && (
-                        <span className="text-white/25"> · R$ {apt.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</span>
+                        <span className="text-white/55"> · R$ {apt.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</span>
                       )}
                     </p>
                   </div>
@@ -610,7 +610,7 @@ const DashboardAgenda = () => {
                       className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-body font-semibold border transition-all disabled:opacity-40 ${
                         armedDelete === apt.id
                           ? 'bg-red-500 text-white border-red-500'
-                          : 'text-white/40 border-[#2a2a2a] hover:text-red-400 hover:border-red-400/30'
+                          : 'text-white/65 border-[#2a2a2a] hover:text-red-400 hover:border-red-400/30'
                       }`}
                     >
                       <Trash2 className="w-3 h-3" />
@@ -655,7 +655,7 @@ const DashboardAgenda = () => {
                   <p className="text-amber-500/80 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Agenda</p>
                   <h2 className="font-heading text-2xl tracking-wide text-white leading-none mt-1">NOVO AGENDAMENTO</h2>
                 </div>
-                <button onClick={() => setModalOpen(false)} aria-label="Fechar" className="text-white/30 hover:text-white transition-colors p-1 -mr-1">
+                <button onClick={() => setModalOpen(false)} aria-label="Fechar" className="text-white/55 hover:text-white transition-colors p-1 -mr-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -666,8 +666,8 @@ const DashboardAgenda = () => {
                     <Check className="w-7 h-7 text-emerald-400" />
                   </div>
                   <p className="font-heading text-2xl tracking-wide text-white mt-4">AGENDADO</p>
-                  <p className="text-sm font-body text-white/55 mt-1">{justBooked.clientName}</p>
-                  <p className="text-xs font-body text-white/35 mt-0.5">{justBooked.summary}</p>
+                  <p className="text-sm font-body text-white/70 mt-1">{justBooked.clientName}</p>
+                  <p className="text-xs font-body text-white/60 mt-0.5">{justBooked.summary}</p>
                   <a
                     href={justBooked.waHref}
                     target="_blank"
@@ -678,12 +678,12 @@ const DashboardAgenda = () => {
                     <MessageCircle className="w-4 h-4" />
                     Confirmar no WhatsApp
                   </a>
-                  <p className="text-[11px] font-body text-white/30 mt-2 max-w-sm">
+                  <p className="text-[11px] font-body text-white/55 mt-2 max-w-sm">
                     Abre a conversa com dia, horário, serviço e valor já escritos — é só tocar em enviar.
                   </p>
                   <button
                     onClick={() => setModalOpen(false)}
-                    className="mt-5 text-sm font-body text-white/40 hover:text-white/70 transition-colors"
+                    className="mt-5 text-sm font-body text-white/65 hover:text-white/70 transition-colors"
                   >
                     Agora não
                   </button>
@@ -694,7 +694,7 @@ const DashboardAgenda = () => {
                 <div className="p-6 space-y-6">
                   <section className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-white/35 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Cliente</h3>
+                      <h3 className="text-white/60 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Cliente</h3>
                       {clients.length > 0 && (
                         <button
                           type="button"
@@ -715,11 +715,11 @@ const DashboardAgenda = () => {
                               onClick={() => pickClient(c)}
                               className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl border border-[#272727] bg-[#161616] hover:border-amber-500/40 hover:bg-amber-500/5 text-left transition-colors"
                             >
-                              <span className="w-7 h-7 rounded-full bg-[#222] text-white/60 group-hover:text-amber-400 flex items-center justify-center text-[11px] font-heading shrink-0 transition-colors">
+                              <span className="w-7 h-7 rounded-full bg-[#222] text-white/75 group-hover:text-amber-400 flex items-center justify-center text-[11px] font-heading shrink-0 transition-colors">
                                 {c.name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                               </span>
                               <span className="text-sm font-body text-white/80 group-hover:text-white flex-1 min-w-0 truncate">{c.name}</span>
-                              <span className="text-xs font-body text-white/35 shrink-0">{c.phone}</span>
+                              <span className="text-xs font-body text-white/60 shrink-0">{c.phone}</span>
                             </button>
                           ))}
                         </div>
@@ -727,7 +727,7 @@ const DashboardAgenda = () => {
 
                     <div className="grid sm:grid-cols-2 gap-3">
                   <div className="relative">
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Nome do cliente *</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Nome do cliente *</label>
                     <input
                       type="text"
                       value={form.clientName}
@@ -736,7 +736,7 @@ const DashboardAgenda = () => {
                       onBlur={() => setSuggestField(null)}
                       autoComplete="off"
                       placeholder="Nome completo"
-                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                     />
                     {suggestField === 'name' && clientSuggestions.length > 0 && (
                       <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-[#2a2a2a] bg-[#161616] shadow-xl overflow-hidden">
@@ -748,7 +748,7 @@ const DashboardAgenda = () => {
                               className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors"
                             >
                               <span className="text-white text-sm font-body truncate">{c.name}</span>
-                              <span className="text-white/40 text-xs font-body shrink-0">{c.phone}</span>
+                              <span className="text-white/65 text-xs font-body shrink-0">{c.phone}</span>
                             </button>
                           </li>
                         ))}
@@ -756,7 +756,7 @@ const DashboardAgenda = () => {
                     )}
                   </div>
                   <div className="relative">
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Telefone *</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Telefone *</label>
                     <input
                       type="tel"
                       value={form.clientPhone}
@@ -765,7 +765,7 @@ const DashboardAgenda = () => {
                       onBlur={() => setSuggestField(null)}
                       autoComplete="off"
                       placeholder="(00) 00000-0000"
-                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                     />
                     {suggestField === 'phone' && clientSuggestions.length > 0 && (
                       <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-[#2a2a2a] bg-[#161616] shadow-xl overflow-hidden">
@@ -777,7 +777,7 @@ const DashboardAgenda = () => {
                               className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors"
                             >
                               <span className="text-white text-sm font-body truncate">{c.name}</span>
-                              <span className="text-white/40 text-xs font-body shrink-0">{c.phone}</span>
+                              <span className="text-white/65 text-xs font-body shrink-0">{c.phone}</span>
                             </button>
                           </li>
                         ))}
@@ -788,9 +788,9 @@ const DashboardAgenda = () => {
                   </section>
 
                   <section className="space-y-3">
-                    <h3 className="text-white/35 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Atendimento</h3>
+                    <h3 className="text-white/60 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Atendimento</h3>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Serviços *</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Serviços *</label>
                     {/* Trigger do accordion — fechado mostra só o resumo */}
                     <button
                       type="button"
@@ -800,7 +800,7 @@ const DashboardAgenda = () => {
                         ? { borderColor: 'rgba(245,158,11,0.45)', backgroundColor: 'rgba(245,158,11,0.08)' }
                         : { borderColor: '#272727', backgroundColor: '#161616' }}
                     >
-                      <span className={`text-sm font-body flex-1 min-w-0 truncate ${form.serviceNames.length > 0 ? 'text-white font-medium' : 'text-white/40'}`}>
+                      <span className={`text-sm font-body flex-1 min-w-0 truncate ${form.serviceNames.length > 0 ? 'text-white font-medium' : 'text-white/65'}`}>
                         {form.serviceNames.length === 0
                           ? 'Selecionar serviços…'
                           : form.serviceNames.length === 1
@@ -810,7 +810,7 @@ const DashboardAgenda = () => {
                       {form.serviceNames.length > 0 && (
                         <span className="text-amber-400 text-sm font-heading shrink-0">R$ {servicesTotalPrice}</span>
                       )}
-                      <ChevronDown className={`w-4 h-4 text-white/40 shrink-0 transition-transform duration-200 ${servicesOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 text-white/65 shrink-0 transition-transform duration-200 ${servicesOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {form.serviceNames.length > 0 && !servicesOpen && (
@@ -845,7 +845,7 @@ const DashboardAgenda = () => {
                               <span className={`text-sm font-body flex-1 min-w-0 truncate transition-colors ${checked ? 'text-white font-medium' : 'text-white/70 group-hover:text-white/90'}`}>
                                 {s.name}
                               </span>
-                              <span className="text-[11px] font-body text-white/35 shrink-0 tabular-nums">{s.durationMin}min</span>
+                              <span className="text-[11px] font-body text-white/60 shrink-0 tabular-nums">{s.durationMin}min</span>
                               <span className="text-sm font-heading text-amber-400 shrink-0">R$ {s.price}</span>
                             </button>
                           )
@@ -854,7 +854,7 @@ const DashboardAgenda = () => {
                     )}
                   </div>
                   <div>
-                    <label className="block text-white/45 text-xs font-body mb-1.5">Barbeiro *</label>
+                    <label className="block text-white/65 text-xs font-body mb-1.5">Barbeiro *</label>
                     <div className="relative">
 <select
                       value={form.barberId}
@@ -868,25 +868,25 @@ const DashboardAgenda = () => {
                           time: '',
                         }))
                       }}
-                      className={`appearance-none pr-9 w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-sm font-body focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors ${form.barberId ? 'text-white' : 'text-white/40'}`}
+                      className={`appearance-none pr-9 w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-sm font-body focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors ${form.barberId ? 'text-white' : 'text-white/65'}`}
                     >
                       <option value="">Selecione o barbeiro…</option>
                       {barbers.map(b => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
                     </select>
-<ChevronDown className="w-4 h-4 text-white/40 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+<ChevronDown className="w-4 h-4 text-white/65 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
 </div>
-                    <p className="text-white/30 text-[11px] font-body mt-1.5">Garante que ninguém marque em cima do horário de outro.</p>
+                    <p className="text-white/55 text-[11px] font-body mt-1.5">Garante que ninguém marque em cima do horário de outro.</p>
                   </div>
                     <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Observação <span className="text-white/25">(vai para o cadastro do cliente)</span></label>
+                      <label className="block text-white/65 text-xs font-body mb-1.5">Observação <span className="text-white/55">(vai para o cadastro do cliente)</span></label>
                       <textarea
                         value={form.notes}
                         onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                         rows={2}
                         placeholder="Ex: pai e filho, cabelo cacheado…"
-                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors resize-none"
+                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors resize-none"
                       />
                     </div>
                   </section>
@@ -894,22 +894,22 @@ const DashboardAgenda = () => {
 
                 <div className="p-6 space-y-5 bg-[#0d0d0d] lg:border-l border-t lg:border-t-0 border-[#1f1f1f]">
                   <section className="space-y-3">
-                    <h3 className="text-white/35 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Quando</h3>
+                    <h3 className="text-white/60 text-[11px] font-body font-semibold tracking-[0.18em] uppercase">Quando</h3>
                     <input
                       type="date"
                       aria-label="Data"
                       min={todayStr}
                       value={form.date}
                       onChange={e => setForm(f => ({ ...f, date: e.target.value, time: '' }))}
-                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                      className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                       style={{ colorScheme: 'dark' }}
                     />
                     {!form.barberId || !form.date ? (
-                      <p className="rounded-xl border border-dashed border-[#2a2a2a] px-4 py-6 text-center text-white/35 text-xs font-body">
+                      <p className="rounded-xl border border-dashed border-[#2a2a2a] px-4 py-6 text-center text-white/60 text-xs font-body">
                         {!form.barberId ? 'Escolha o barbeiro para ver os horários livres.' : 'Escolha a data para ver os horários livres.'}
                       </p>
                     ) : formDayLoading ? (
-                      <p className="rounded-xl border border-dashed border-[#2a2a2a] px-4 py-6 text-center text-white/35 text-xs font-body">
+                      <p className="rounded-xl border border-dashed border-[#2a2a2a] px-4 py-6 text-center text-white/60 text-xs font-body">
                         Vendo os horários ocupados desse dia…
                       </p>
                     ) : daySlots.length === 0 ? (
@@ -918,8 +918,8 @@ const DashboardAgenda = () => {
                       </p>
                     ) : (
                       <div>
-                        <p className="text-white/45 text-xs font-body mb-2">
-                          Horários <span className="text-white/25">· bloco de {slotDuration} min · {freeSlotCount} {freeSlotCount === 1 ? 'livre' : 'livres'}</span>
+                        <p className="text-white/65 text-xs font-body mb-2">
+                          Horários <span className="text-white/55">· bloco de {slotDuration} min · {freeSlotCount} {freeSlotCount === 1 ? 'livre' : 'livres'}</span>
                         </p>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {daySlots.map(sl => {
@@ -954,7 +954,7 @@ const DashboardAgenda = () => {
                             )
                           })}
                         </div>
-                        <p className="text-white/30 text-[11px] font-body mt-2">
+                        <p className="text-white/55 text-[11px] font-body mt-2">
                           {freeSlotCount === 0
                             ? `${formBarber?.name ?? 'Esse barbeiro'} está lotado nesse dia com ${slotDuration} min. Tente outra data ou outro barbeiro.`
                             : `Vermelho = não dá pra marcar. “Não cabe”: o horário está livre, mas ${slotDuration} min invadem o próximo cliente.`}
@@ -965,9 +965,9 @@ const DashboardAgenda = () => {
 
                   <section className="grid grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">
+                      <label className="block text-white/65 text-xs font-body mb-1.5">
                         Duração (min)
-                        {servicesTotalDuration > 0 && <span className="text-white/25"> · soma dos serviços</span>}
+                        {servicesTotalDuration > 0 && <span className="text-white/55"> · soma dos serviços</span>}
                       </label>
                       <input
                         type="number"
@@ -976,11 +976,11 @@ const DashboardAgenda = () => {
                         value={form.durationMin}
                         onChange={e => setForm(f => ({ ...f, durationMin: e.target.value, time: '' }))}
                         placeholder="30"
-                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-white/45 text-xs font-body mb-1.5">Valor (R$)</label>
+                      <label className="block text-white/65 text-xs font-body mb-1.5">Valor (R$)</label>
                       <input
                         type="number"
                         step="0.01"
@@ -988,7 +988,7 @@ const DashboardAgenda = () => {
                         value={form.price}
                         onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
                         placeholder="0,00"
-                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/20 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
+                        className="w-full bg-[#161616] border border-[#272727] rounded-xl px-3.5 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus-visible:outline-none focus:border-amber-500/40 transition-colors"
                       />
                     </div>
                   </section>
@@ -997,7 +997,7 @@ const DashboardAgenda = () => {
 
               {/* Rodapé fixo: resumo + confirmar */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 px-6 py-4 border-t border-[#1f1f1f] bg-[#111]">
-                <p className="flex-1 min-w-0 text-xs font-body text-white/45 leading-relaxed">
+                <p className="flex-1 min-w-0 text-xs font-body text-white/65 leading-relaxed">
                   {[
                     form.clientName.trim() || null,
                     form.date ? new Date(form.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).replace('.', '') : null,

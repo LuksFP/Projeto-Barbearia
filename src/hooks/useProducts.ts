@@ -4,7 +4,7 @@
 // exemplos, mesmas regras reproduzidas aqui — e o site demo (/b/atlas) grava
 // os pedidos no mesmo lugar, então dá pra ver o fluxo inteiro sem banco.
 import { useCallback, useEffect, useState } from 'react'
-import { isDemoMode } from '@/lib/demo'
+import { getDemoBarbershop, isDemoMode } from '@/lib/demo'
 import {
   productRepository,
   type OrderItem,
@@ -22,7 +22,13 @@ interface DemoState {
   sales: ProductSale[]
 }
 
-const demoKey = (bsId: string) => `barberos:loja2:${bsId}`
+/** Barbearia demo do Básico: 1 produto, só no agendamento (como no banco). */
+export const isDemoBasicShop = (bsId: string) => bsId === getDemoBarbershop('basic').id
+
+const demoKey = (bsId: string) => `barberos:loja2:${bsId}${isDemoBasicShop(bsId) ? ':basico' : ''}`
+
+/** Mesmo texto do gatilho products_plan_limit. */
+export const BASIC_STORE_LIMIT_MSG = 'No plano Básico cabe 1 produto, o do agendamento. A loja completa vem no Pro.'
 
 function demoSeed(bsId: string): DemoState {
   const p = (id: string, name: string, category: string, price: number, cost: number, stock: number, description = ''): Product => ({
@@ -43,6 +49,9 @@ function demoSeed(bsId: string): DemoState {
     clientName: client, clientPhone: '11987654321', appointmentId: withBooking ? 'demo-apt' : null, status,
     createdAt: new Date(now - hoursAgo * 3600_000).toISOString(),
   })
+  if (isDemoBasicShop(bsId)) {
+    return { products: [products[0]], sales: [line('demo-o1', products[0], 1, 3, 'Rafael Souza', 'reservado', true)] }
+  }
   return {
     products,
     sales: [
@@ -74,7 +83,7 @@ const saveDemo = (bsId: string, s: DemoState) => {
 /** Erros do banco que fazem sentido pro barbeiro; o resto vira mensagem genérica. */
 export function productErrorMessage(err: unknown): string {
   const msg = err instanceof Error ? err.message : (err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : '')
-  if (/cancelado não volta|Mudança de status/.test(msg)) return msg
+  if (/cancelado não volta|Mudança de status|No plano Básico cabe 1 produto/.test(msg)) return msg
   if (/row-level security|violates row-level|42501|permission denied/.test(msg)) return 'Só o dono ou admin da barbearia pode fazer isso.'
   if (/Upload falhou|Imagem muito grande|Arquivo inválido|ler essa imagem/.test(msg)) return msg
   return 'Não deu certo. Tente de novo em instantes.'
@@ -133,6 +142,9 @@ export function useProducts(barbershopId: string | undefined) {
   const save = async (input: ProductInput, id?: string): Promise<Product> => {
     if (!barbershopId) throw new Error('sem barbearia')
     if (demo) {
+      if (!id && isDemoBasicShop(barbershopId) && loadDemo(barbershopId).products.some(p => p.active)) {
+        throw new Error(BASIC_STORE_LIMIT_MSG)
+      }
       const product: Product = { id: id ?? `demo-${crypto.randomUUID()}`, barbershopId, active: true, ...input }
       mutateDemo(s => ({
         ...s,
@@ -195,8 +207,8 @@ export function useProducts(barbershopId: string | undefined) {
 // ─── Demo do site do cliente ─────────────────────────────────────────────────
 
 export function demoPublicProducts(bsId: string): PublicProduct[] {
-  return loadDemo(bsId).products
-    .filter(p => p.active && p.visibleOnSite)
+  const onSite = loadDemo(bsId).products.filter(p => p.active && p.visibleOnSite)
+  return (isDemoBasicShop(bsId) ? onSite.slice(0, 1) : onSite)
     .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.category.localeCompare(b.category) || a.name.localeCompare(b.name))
     .map(p => ({
       id: p.id, name: p.name, description: p.description, category: p.category,
@@ -207,6 +219,7 @@ export function demoPublicProducts(bsId: string): PublicProduct[] {
 /** Mesmas regras do public_place_product_order: tudo ou nada, baixa estoque. */
 export function demoPlaceOrder(bsId: string, input: { items: OrderItem[]; clientName: string; clientPhone: string; withBooking: boolean }): string {
   const s = loadDemo(bsId)
+  if (isDemoBasicShop(bsId) && !input.withBooking) throw new Error('Produto indisponível')
   const orderId = `demo-${crypto.randomUUID()}`
   const lines: ProductSale[] = []
   const stock = new Map(s.products.map(p => [p.id, p.stock]))

@@ -1,10 +1,14 @@
 // Loja da barbearia (lado do barbeiro): catálogo, estoque e os pedidos que
 // chegam do site do cliente (reserva avulsa ou "leve junto" no agendamento).
 // Dono/admin cadastra e edita; a equipe marca retirado ou cancela.
+// Básico: 1 produto, oferecido só no fim do agendamento (o banco trava o
+// resto). Pro/Premium: loja completa no site.
 
 import { useMemo, useState } from 'react'
-import { Plus, Pencil, Search, Package } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, Pencil, Search, Package, ArrowUpRight } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { useProducts, productErrorMessage } from '@/hooks/useProducts'
 import { toast } from '@/hooks/use-toast'
 import ProductFormDialog from '@/components/dashboard/products/ProductFormDialog'
@@ -20,6 +24,8 @@ const stockState = (p: Product): 'ok' | 'acabando' | 'esgotado' =>
 
 const DashboardProdutos = () => {
   const { barbershop, isAdmin } = useTenant()
+  const { account } = useSaasAccount()
+  const fullStore = account?.plan === 'pro' || account?.plan === 'premium'
   const { products, sales, loading, demo, save, remove, setOrderStatus } = useProducts(barbershop?.id)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string | null>(null)
@@ -53,6 +59,8 @@ const DashboardProdutos = () => {
 
   if (!barbershop) return null
 
+  const canAdd = isAdmin && (fullStore || products.length === 0)
+
   const openNew = () => { setEditing(null); setFormOpen(true) }
   const openEdit = (p: Product) => { setEditing(p); setFormOpen(true) }
 
@@ -72,14 +80,34 @@ const DashboardProdutos = () => {
       <div className="flex flex-wrap items-end gap-4">
         <div className="mr-auto">
           <h1 className="font-heading text-3xl tracking-wide text-white">LOJA</h1>
-          <p className="text-white/65 text-sm font-body mt-1">O cliente reserva pelo site da barbearia, sozinho ou junto com o horário, e paga aqui. O estoque desce na hora.</p>
+          <p className="text-white/65 text-sm font-body mt-1">
+            {fullStore
+              ? 'O cliente reserva pelo site da barbearia, sozinho ou junto com o horário, e paga aqui. O estoque desce na hora.'
+              : 'No Básico você escolhe 1 produto pra oferecer no fim do agendamento, no “Leve junto no dia”. O cliente separa e paga aqui junto com o corte.'}
+          </p>
         </div>
-        {isAdmin && (
+        {canAdd && (
           <button onClick={openNew} className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-amber-500 text-black text-sm font-semibold font-body hover:bg-amber-400 transition-colors">
             <Plus className="w-4 h-4" />Cadastrar produto
           </button>
         )}
       </div>
+
+      {!fullStore && (
+        <div className="border-l-2 border-amber-500/60 pl-4 py-1">
+          <p className="text-white/80 text-sm font-body">
+            {products.length > 1
+              ? `Só “${products[0]?.name ?? ''}” aparece no agendamento. Os outros ficam guardados aqui até você voltar pro Pro ou arquivar.`
+              : products.length === 1 && isAdmin
+                ? 'Pra trocar o produto, edite este ou exclua e cadastre outro.'
+                : 'O produto aparece pro cliente na última etapa do agendamento, com foto e preço.'}
+          </p>
+          <Link to="/dashboard/assinatura" className="mt-1 inline-flex items-center gap-1 text-amber-300 text-xs font-body hover:text-amber-200">
+            Loja completa no Pro: produtos sem limite, página da loja no site e reserva sem horário
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       {/* Resumo do mês numa linha só, com os alertas de estoque clicáveis */}
       {products.length > 0 && (
@@ -113,7 +141,7 @@ const DashboardProdutos = () => {
         </div>
       )}
 
-      {products.length > 0 && (
+      {fullStore && products.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 text-white/55 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -134,11 +162,13 @@ const DashboardProdutos = () => {
       ) : products.length === 0 ? (
         <div className="py-12 max-w-sm">
           <Package className="w-7 h-7 text-amber-400/60 mb-3" />
-          <p className="text-white/80 font-body">Nenhum produto na loja ainda.</p>
+          <p className="text-white/80 font-body">{fullStore ? 'Nenhum produto na loja ainda.' : 'Nenhum produto no agendamento ainda.'}</p>
           <p className="text-white/65 text-sm font-body mt-1">
-            {isAdmin
-              ? 'Cadastre pomada, óleo, shampoo… com preço e estoque. Daí é só tocar em “Vender” no balcão.'
-              : 'O dono da barbearia cadastra os produtos; depois você vende por aqui.'}
+            {!isAdmin
+              ? 'O dono da barbearia cadastra os produtos; os pedidos aparecem aqui.'
+              : fullStore
+                ? 'Cadastre pomada, óleo, shampoo… com preço e estoque. Eles aparecem na loja do site e no agendamento.'
+                : 'Escolha o que mais sai no balcão, uma pomada ou um óleo, com preço e estoque. Ele aparece no fim do agendamento.'}
           </p>
           {isAdmin && (
             <button onClick={openNew} className="mt-4 flex items-center gap-2 px-4 py-2.5 rounded-md border border-amber-500/40 text-amber-300 text-sm font-body hover:bg-amber-500/10">
@@ -189,7 +219,9 @@ const DashboardProdutos = () => {
         </p>
         {orders.length === 0 ? (
           <p className="text-white/55 text-sm font-body py-4">
-            Nenhum pedido ainda. Os produtos marcados “mostrar no site” aparecem na loja do site e no agendamento.
+            {fullStore
+              ? 'Nenhum pedido ainda. Os produtos marcados “mostrar no site” aparecem na loja do site e no agendamento.'
+              : 'Nenhum pedido ainda. Quando um cliente separar o produto ao agendar, o pedido aparece aqui.'}
           </p>
         ) : (
           <OrdersList orders={orders} onStatus={changeStatus} />
