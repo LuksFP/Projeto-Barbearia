@@ -17,6 +17,7 @@ import { toast } from '@/hooks/use-toast'
 import ProductFormDialog from '@/components/dashboard/products/ProductFormDialog'
 import OrdersList, { groupOrders } from '@/components/dashboard/products/OrdersList'
 import type { Product } from '@/repositories/productRepository'
+import { PLAN_NAME } from '@/types/saas'
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -30,7 +31,7 @@ const DashboardProdutos = () => {
   const { account } = useSaasAccount()
   const fullStore = hasFullStore(account?.plan)
   const limit = bumpLimit(account?.plan)
-  const planName = account?.plan === 'pro' ? 'Pro' : 'Básico'
+  const planName = PLAN_NAME[account?.plan ?? 'basic']
   const { products, sales, loading, demo, save, remove, setOrderStatus } = useProducts(barbershop?.id)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string | null>(null)

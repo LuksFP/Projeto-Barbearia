@@ -12,8 +12,8 @@ import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { demoStoreSettings, productErrorMessage, saveDemoStoreSettings, useProducts } from '@/hooks/useProducts'
 import { bumpLimit, hasFullStore } from '@/lib/storePlan'
 import { toast } from '@/hooks/use-toast'
+import { PLAN_NAME } from '@/types/saas'
 
-const PLAN_NAME = { basic: 'Básico', pro: 'Pro', premium: 'Premium' } as const
 
 const StoreSettings = ({ canEdit }: { canEdit: boolean }) => {
   const { barbershop, updateBarbershop } = useTenant()

@@ -2,6 +2,9 @@
 // Separado do auth de clientes da barbearia (AuthContext)
 
 export type SaasPlan = 'basic' | 'pro' | 'premium'
+
+/** Nome do plano como aparece na tela. */
+export const PLAN_NAME: Record<SaasPlan, string> = { basic: 'Básico', pro: 'Pro', premium: 'Premium' }
 export type SaasPlanStatus = 'pending' | 'active' | 'trial' | 'past_due' | 'cancelling' | 'cancelled'
 
 export interface SaasAccount {
@@ -96,7 +99,6 @@ export const SAAS_PLANS: SaasPlanConfig[] = [
       'Aviso de novo agendamento com som e notificação no celular',
       'Clube VIP com controle de mensalidade e cobrança por PIX',
       'Comissão por barbeiro e exportação em CSV',
-      'Suporte prioritário',
     ],
     cta: 'Começar com Pro',
   },
