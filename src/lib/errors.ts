@@ -15,3 +15,8 @@ export function planLimitMessage(err: unknown): string | null {
   const hint = err && typeof err === 'object' && 'hint' in err ? (err as { hint: unknown }).hint : null
   return hint === 'plan_limit' ? errorText(err) || null : null
 }
+
+/** Mesma recusa, nascida no front (modo demo, que não passa pelo banco). */
+export function planLimitError(message: string): Error & { hint: 'plan_limit' } {
+  return Object.assign(new Error(message), { hint: 'plan_limit' as const })
+}

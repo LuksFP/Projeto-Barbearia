@@ -3,7 +3,7 @@
 // Real: Supabase (estoque é mexido pelo banco). Demo: localStorage com
 // exemplos, mesmas regras reproduzidas aqui — e o site demo (/b/atlas) grava
 // os pedidos no mesmo lugar, então dá pra ver o fluxo inteiro sem banco.
-import { errorText } from '@/lib/errors'
+import { errorText, planLimitError, planLimitMessage } from '@/lib/errors'
 import { useCallback, useEffect, useState } from 'react'
 import { getDemoBarbershop, isDemoMode } from '@/lib/demo'
 import {
@@ -106,8 +106,10 @@ const saveDemo = (bsId: string, s: DemoState) => {
 
 /** Erros do banco que fazem sentido pro barbeiro; o resto vira mensagem genérica. */
 export function productErrorMessage(err: unknown): string {
+  const plan = planLimitMessage(err)
+  if (plan) return plan
   const msg = errorText(err)
-  if (/cancelado não volta|Mudança de status|No plano (Básico|Pro) cabe/.test(msg)) return msg
+  if (/cancelado não volta|Mudança de status/.test(msg)) return msg
   if (/row-level security|violates row-level|42501|permission denied/.test(msg)) return 'Só o dono ou admin da barbearia pode fazer isso.'
   if (/Upload falhou|Imagem muito grande|Arquivo inválido|ler essa imagem/.test(msg)) return msg
   return 'Não deu certo. Tente de novo em instantes.'
@@ -169,7 +171,7 @@ export function useProducts(barbershopId: string | undefined) {
       const plan = demoPlanOf(barbershopId)
       const limit = bumpLimit(plan)
       if (!id && limit !== null && loadDemo(barbershopId).products.filter(p => p.active).length >= limit) {
-        throw new Error(storeLimitMessage(plan))
+        throw planLimitError(storeLimitMessage(plan))
       }
       const before = loadDemo(barbershopId).products.find(p => p.id === id)
       const product: Product = { id: id ?? `demo-${crypto.randomUUID()}`, barbershopId, active: true, inBump: before?.inBump ?? true, ...input }
