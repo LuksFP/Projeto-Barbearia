@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Crown, Users, TrendingUp, Plus, Check, X, Pencil, Scissors, Building2, Loader2, Receipt } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
+import { PRO_MSG, isBasicPlan } from '@/lib/planFeatures'
+import ProUpsell from '@/components/dashboard/ProUpsell'
 import { membershipRepository } from '@/repositories/membershipRepository'
 import { isDemoMode } from '@/lib/demo'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -291,6 +294,7 @@ const PlanCard = ({ mem, onEdit, editing }: PlanCardProps) => {
 
 const DashboardClube = () => {
   const { barbershop, barbers, memberships, updateMemberships } = useTenant()
+  const { account } = useSaasAccount()
 
   const [view, setView]             = useState<'planos' | 'cobrancas'>('planos')
   const [editingId, setEditingId]   = useState<string | null>(null)
@@ -393,6 +397,23 @@ const DashboardClube = () => {
 
   const barbershopPlans = memberships.filter(m => !m.barberId)
   const barberPlans     = memberships.filter(m => !!m.barberId)
+
+  // Básico: o Clube é do Pro. Quem já tinha clube criado continua usando.
+  if (isBasicPlan(account?.plan) && memberships.length === 0) {
+    return (
+      <div className="space-y-6 max-w-2xl">
+        <div>
+          <p className="text-white/55 text-sm font-body mb-1">Recorrência e benefícios</p>
+          <h1 className="font-heading text-3xl tracking-wide text-white">CLUBE VIP</h1>
+        </div>
+        <p className="text-white/70 text-sm font-body leading-relaxed">
+          Cliente paga todo mês e volta sempre: você cria os planos (corte livre, barba inclusa,
+          plano por barbeiro), acompanha quem está em dia e manda a cobrança por PIX no WhatsApp.
+        </p>
+        <ProUpsell message={PRO_MSG.club} />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">

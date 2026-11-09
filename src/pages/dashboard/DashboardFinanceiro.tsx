@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
+import { PRO_MSG, commissionInUse, isBasicPlan } from '@/lib/planFeatures'
+import ProUpsell from '@/components/dashboard/ProUpsell'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
 import { toast } from '@/hooks/use-toast'
@@ -9,7 +12,7 @@ import {
 } from 'recharts'
 import {
   TrendingUp, TrendingDown, DollarSign, Scissors, Users,
-  Download, Loader2,
+  Download, Lock, Loader2,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { MonthRevenue } from '@/types/tenant'
@@ -85,6 +88,10 @@ function exportCSV(months: MonthRevenue[]) {
 
 const DashboardFinanceiro = () => {
   const { barbershop, barbers } = useTenant()
+  const { account } = useSaasAccount()
+  // Básico: sem CSV e sem comissão (a não ser que a barbearia já usasse comissão)
+  const basic = isBasicPlan(account?.plan)
+  const showCommission = !basic || commissionInUse(barbers)
   const [period, setPeriod] = useState<Period>(6)
   // fetching = true apenas na primeira carga; refreshing = true nas subsequentes (mantém dados visíveis)
   const [fetching, setFetching] = useState(true)
@@ -199,12 +206,15 @@ const DashboardFinanceiro = () => {
             <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400/60" />
           )}
           <button
-            onClick={() => exportCSV(byMonth)}
+            onClick={() => basic
+              ? toast({ title: 'CSV no plano Pro', description: PRO_MSG.csv })
+              : exportCSV(byMonth)}
             disabled={byMonth.length === 0}
+            title={basic ? PRO_MSG.csv : undefined}
             className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all disabled:opacity-30"
           >
-            <Download className="w-3.5 h-3.5" />
-            CSV
+            {basic ? <Lock className="w-3.5 h-3.5 text-amber-400" /> : <Download className="w-3.5 h-3.5" />}
+            CSV{basic && <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">Pro</span>}
           </button>
         </div>
       </div>
@@ -544,7 +554,8 @@ const DashboardFinanceiro = () => {
           </div>
 
           {/* Comissões por barbeiro */}
-          {byBarber.length > 0 && (
+          {byBarber.length > 0 && !showCommission && <ProUpsell message={PRO_MSG.commission} />}
+          {byBarber.length > 0 && showCommission && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

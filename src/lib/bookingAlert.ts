@@ -16,10 +16,12 @@ export interface BookingAlertPrefs {
   sound: boolean
 }
 
-export function readAlertPrefs(): BookingAlertPrefs {
+/** `locked` = plano Básico (avisos são do Pro): aí o padrão é desligado e só
+ *  vale ligado o aparelho que ligou de propósito antes da trava. */
+export function readAlertPrefs(locked = false): BookingAlertPrefs {
   try {
     const raw = localStorage.getItem(PREFS_KEY)
-    if (!raw) return { sound: true }
+    if (!raw) return { sound: !locked }
     const parsed: unknown = JSON.parse(raw)
     if (parsed && typeof parsed === 'object' && 'sound' in parsed) {
       return { sound: (parsed as { sound: unknown }).sound !== false }
@@ -27,7 +29,7 @@ export function readAlertPrefs(): BookingAlertPrefs {
   } catch {
     // localStorage indisponível ou corrompido — cai no padrão
   }
-  return { sound: true }
+  return { sound: !locked }
 }
 
 export function writeAlertPrefs(prefs: BookingAlertPrefs) {
@@ -176,12 +178,14 @@ async function showSystemNotification(title: string, body: string, tag: string) 
 const recentTags = new Map<string, number>()
 
 /** true se é aviso novo (aí quem chamou mostra o toast); false se repetido. */
-export function alertNewBooking(title: string, body: string, tag: string): boolean {
+export function alertNewBooking(title: string, body: string, tag: string, locked = false): boolean {
   const now = Date.now()
   for (const [k, at] of recentTags) if (now - at > 120_000) recentTags.delete(k)
   if (recentTags.has(tag)) return false
   recentTags.set(tag, now)
 
+  // Básico sem aviso ligado: fica só o toast (a agenda ao vivo é de todo plano)
+  if (locked && !readAlertPrefs(true).sound) return true
   if (readAlertPrefs().sound) playCoinSound()
   if ('vibrate' in navigator) navigator.vibrate([90, 60, 140])
   // Com o painel na frente, o toast já aparece; a notificação do sistema é pra

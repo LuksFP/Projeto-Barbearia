@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react'
 import { Plus, Scissors, X, Loader2, Pencil, Upload, Clock, Percent } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
+import { useSaasAccount } from '@/contexts/SaasAccountContext'
+import { BASIC_TEAM_LIMIT, PRO_MSG, commissionInUse, isBasicPlan } from '@/lib/planFeatures'
+import ProUpsell from '@/components/dashboard/ProUpsell'
 import { teamRepository } from '@/repositories/teamRepository'
 import { isDemoMode } from '@/lib/demo'
 import { uploadBarberAvatar } from '@/lib/storage'
@@ -33,6 +36,12 @@ const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py
 
 const DashboardEquipe = () => {
   const { barbershop, barbers, updateBarbers } = useTenant()
+  const { account } = useSaasAccount()
+  // Básico: equipe de 2 e sem comissão. Quem já tinha mais gente ou já usava
+  // comissão continua igual (o banco faz a mesma conta).
+  const basic = isBasicPlan(account?.plan)
+  const teamFull = basic && barbers.length >= BASIC_TEAM_LIMIT
+  const showCommission = !basic || commissionInUse(barbers)
 
   // Modal de convite
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -52,6 +61,7 @@ const DashboardEquipe = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const openInvite = () => {
+    if (teamFull) return
     setInviteForm({ name: '', specialty: '', bio: '', role: 'barber' })
     setInviteError('')
     setInviteOpen(true)
@@ -106,8 +116,9 @@ const DashboardEquipe = () => {
         active: row.active,
       }])
       setInviteOpen(false)
-    } catch (err) {
-      setInviteError(err instanceof Error ? err.message : 'Erro ao adicionar barbeiro.')
+    } catch (err: unknown) {
+      const msg = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
+      setInviteError(msg || 'Erro ao adicionar barbeiro.')
     } finally {
       setInviting(false)
     }
@@ -154,7 +165,7 @@ const DashboardEquipe = () => {
         bio: editForm.bio,
         role: editForm.role,
         cut_duration_minutes: Number(editForm.cutDurationMin),
-        commission_percent: Number(editForm.commissionPercent),
+        ...(showCommission ? { commission_percent: Number(editForm.commissionPercent) } : {}),
       })
       updateBarbers(barbers.map(b =>
         b.id === editingBarber.id
@@ -170,8 +181,9 @@ const DashboardEquipe = () => {
           : b
       ))
       setEditingBarber(null)
-    } catch {
-      setEditError('Erro ao salvar. Tente novamente.')
+    } catch (err: unknown) {
+      const msg = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
+      setEditError(msg.includes('plano Pro') ? msg : 'Erro ao salvar. Tente novamente.')
     } finally {
       setEditSaving(false)
     }
@@ -216,14 +228,18 @@ const DashboardEquipe = () => {
           <p className="text-white/55 text-sm font-body mb-1">Barbearia ativa</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">EQUIPE</h1>
         </div>
-        <button
-          onClick={openInvite}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Adicionar barbeiro
-        </button>
+        {!teamFull && (
+          <button
+            onClick={openInvite}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar barbeiro
+          </button>
+        )}
       </div>
+
+      {teamFull && <ProUpsell message={PRO_MSG.team} />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {barbers.map((barber, i) => (
@@ -256,10 +272,12 @@ const DashboardEquipe = () => {
               <Clock className="w-3 h-3" />
               Bloqueia {barber.cutDurationMin} min por atendimento
             </div>
-            <div className="flex items-center gap-1.5 text-white/60 text-xs font-body mb-3">
-              <Percent className="w-3 h-3" />
-              {barber.commissionPercent}% de comissão
-            </div>
+            {showCommission ? (
+              <div className="flex items-center gap-1.5 text-white/60 text-xs font-body mb-3">
+                <Percent className="w-3 h-3" />
+                {barber.commissionPercent}% de comissão
+              </div>
+            ) : <div className="mb-3" />}
             {barber.bio && (
               <p className="text-white/70 text-sm font-body leading-relaxed mb-4 line-clamp-2">{barber.bio}</p>
             )}
@@ -284,7 +302,7 @@ const DashboardEquipe = () => {
         ))}
 
         {/* Slot vazio */}
-        <motion.button
+        {!teamFull && <motion.button
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: barbers.length * 0.07 }}
@@ -295,7 +313,7 @@ const DashboardEquipe = () => {
             <Scissors className="w-5 h-5" />
           </div>
           <span className="text-sm font-body">Adicionar barbeiro</span>
-        </motion.button>
+        </motion.button>}
       </div>
 
       {/* Modal — Adicionar barbeiro */}
@@ -499,7 +517,7 @@ const DashboardEquipe = () => {
                     Um agendamento às 15:00 com 15 min bloqueia de 15:00 a 15:15.
                   </p>
                 </div>
-                <div>
+                {showCommission ? <div>
                   <label className="block text-white/65 text-xs font-body mb-1.5">Comissão (%)</label>
                   <input
                     type="number"
@@ -514,7 +532,7 @@ const DashboardEquipe = () => {
                   <p className="mt-1.5 text-white/55 text-[11px] font-body">
                     % da receita gerada que fica com o barbeiro (aparece no Financeiro).
                   </p>
-                </div>
+                </div> : <ProUpsell message={PRO_MSG.commission} />}
                 <div>
                   <label className="block text-white/65 text-xs font-body mb-1.5">Bio (opcional)</label>
                   <textarea

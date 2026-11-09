@@ -1,8 +1,8 @@
 // Sino dos avisos de agendamento: som de moeda + vibração com o painel aberto e
 // push no aparelho com o navegador fechado. Ao ligar, toca o som uma vez — serve
 // de teste e libera o áudio do navegador (que só toca depois de um toque).
-import { useState } from 'react'
-import { Bell, BellOff, Download } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Bell, BellOff, Download, Lock } from 'lucide-react'
 import {
   notifyPermission,
   playCoinSound,
@@ -14,20 +14,32 @@ import {
 } from '@/lib/bookingAlert'
 import { disablePush, enablePush, needsInstallForPush, sendTestPush } from '@/lib/push'
 import { toast } from '@/hooks/use-toast'
+import { PRO_MSG } from '@/lib/planFeatures'
 
 interface Props {
   /** null no modo demo: lá não existe usuário pra receber push. */
   barbershopId: string | null
   compact?: boolean
+  /** Plano Básico: avisos são do Pro. Aparelho que já tinha ligado continua
+   *  ligado (e pode desligar); desligado, não liga de novo. */
+  locked?: boolean
 }
 
 const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
 
-const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
-  const [on, setOn] = useState(() => readAlertPrefs().sound)
+const BookingAlertToggle = ({ barbershopId, compact = false, locked = false }: Props) => {
+  const [on, setOn] = useState(() => readAlertPrefs(locked).sound)
+  // O plano pode chegar depois do primeiro render
+  useEffect(() => { setOn(readAlertPrefs(locked).sound) }, [locked])
   const [perm, setPerm] = useState<NotifyPermission>(() => notifyPermission())
 
+  const blocked = locked && !on
+
   const toggle = async () => {
+    if (blocked) {
+      toast({ title: 'Avisos no plano Pro', description: PRO_MSG.push })
+      return
+    }
     unlockAudio()
     const next = !on
     setOn(next)
@@ -66,15 +78,20 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
   }
 
   const hint =
-    perm === 'denied'
+    blocked
+      ? PRO_MSG.push
+      : perm === 'denied'
       ? 'Notificação bloqueada no navegador — libere nas configurações do site.'
       : on
         ? 'Avisos ligados: moeda com o painel aberto, notificação com ele fechado.'
         : 'Avisos desligados. Toque pra ligar.'
 
-  const Icon = on ? Bell : BellOff
+  const Icon = blocked ? Lock : on ? Bell : BellOff
 
   if (compact) {
+    // Travado (Básico): no topo do celular um cadeado solto confunde — o item
+    // com selo "Pro" já aparece no menu.
+    if (blocked) return null
     return (
       <button
         type="button"
@@ -104,10 +121,10 @@ const BookingAlertToggle = ({ barbershopId, compact = false }: Props) => {
       <span className={`whitespace-nowrap ${on ? 'text-white/70' : 'text-white/65'}`}>Avisos de agenda</span>
       <span
         className={`ml-auto text-[10px] font-semibold uppercase tracking-wider ${
-          on ? 'text-amber-400' : 'text-white/55'
+          on || blocked ? 'text-amber-400' : 'text-white/55'
         }`}
       >
-        {on ? 'Ligado' : 'Desligado'}
+        {blocked ? 'Pro' : on ? 'Ligado' : 'Desligado'}
       </span>
     </button>
     {on && isAndroid && (
