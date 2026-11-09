@@ -7,7 +7,8 @@
 
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Pencil, Search, Package, ArrowUpRight } from 'lucide-react'
+import { Plus, Pencil, Search, Package } from 'lucide-react'
+import ProUpsell from '@/components/dashboard/ProUpsell'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { useProducts, productErrorMessage } from '@/hooks/useProducts'
@@ -98,20 +99,18 @@ const DashboardProdutos = () => {
       </div>
 
       {!fullStore && (
-        <div className="border-l-2 border-amber-500/60 pl-4 py-1">
-          <p className="text-white/80 text-sm font-body">
+        <ProUpsell
+          icon={false}
+          linkLabel="Loja completa no Premium: produtos sem limite, página da loja no site e reserva sem horário"
+          message={<>
             {limit !== null && products.length > limit
               ? `Só ${limit === 1 ? 'o mais antigo aparece' : `os ${limit} mais antigos aparecem`} no agendamento. Os outros ficam guardados aqui até você voltar pro Premium ou arquivar.`
               : limit !== null && products.length >= limit && isAdmin
                 ? `${products.length === 1 ? 'Seu produto já está cadastrado' : `Os ${limit} produtos já estão cadastrados`}. Pra trocar, edite ou exclua e cadastre outro.`
                 : 'O produto aparece pro cliente na última etapa do agendamento, com foto e preço.'}{' '}
             <Link to="/dashboard/configuracoes" className="text-amber-300 hover:text-amber-200 underline underline-offset-2">Ligar ou desligar em Configurações</Link>
-          </p>
-          <Link to="/dashboard/assinatura" className="mt-1 inline-flex items-center gap-1 text-amber-300 text-xs font-body hover:text-amber-200">
-            Loja completa no Premium: produtos sem limite, página da loja no site e reserva sem horário
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
+          </>}
+        />
       )}
 
       {/* Resumo do mês numa linha só, com os alertas de estoque clicáveis */}

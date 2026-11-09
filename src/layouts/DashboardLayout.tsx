@@ -23,7 +23,6 @@ import {
   UserPlus,
   Lightbulb,
   ShoppingBag,
-  Lock,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
@@ -34,7 +33,8 @@ import BookingAlertToggle from '@/components/dashboard/BookingAlertToggle'
 import InstallAppButton from '@/components/dashboard/InstallAppButton'
 import { alertNewBooking, listenPushWhileOpen, notifyPermission, readAlertPrefs, unlockAudio, warmUpNotifications } from '@/lib/bookingAlert'
 import { enablePush } from '@/lib/push'
-import { isBasicPlan } from '@/lib/planFeatures'
+import { usePlanGates } from '@/hooks/usePlanGates'
+import { ProBadge } from '@/components/dashboard/ProUpsell'
 import { clearDemoSession, getDemoPlan, isDemoMode } from '@/lib/demo'
 
 const navItems = [
@@ -112,11 +112,7 @@ const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOu
         >
           <item.icon className="w-4 h-4 shrink-0" />
           {item.label}
-          {'pro' in item && clubLocked && (
-            <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-amber-400/80">
-              <Lock className="w-3 h-3" />Pro
-            </span>
-          )}
+          {'pro' in item && clubLocked && <ProBadge className="ml-auto opacity-80" />}
         </NavLink>
       ))}
     </nav>
@@ -150,13 +146,13 @@ const SidebarContent = ({ barbershop, tenantUser, userRole, onNavigate, onSignOu
 )
 
 const DashboardLayout = () => {
-  const { barbershop, tenantUser, userRole, isLoading, refreshAppointments, refreshClients, memberships } = useTenant()
+  const { barbershop, tenantUser, userRole, isLoading, refreshAppointments, refreshClients } = useTenant()
   const { account } = useSaasAccount()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const demo = isDemoMode()
-  const basic = isBasicPlan(account?.plan)
+  const gates = usePlanGates()
 
   // Fecha o menu sempre que a rota muda — garante que o drawer do celular não
   // fique travado aberto se o clique de fechar se perder no toque.
@@ -199,9 +195,9 @@ const DashboardLayout = () => {
   const pushBarbershopId = demo ? null : barbershop?.id ?? null
   useEffect(() => {
     if (!pushBarbershopId) return
-    if (!readAlertPrefs(basic).sound || notifyPermission() !== 'granted') return
+    if (!readAlertPrefs(gates.alertsLocked).sound || notifyPermission() !== 'granted') return
     void enablePush(pushBarbershopId)
-  }, [pushBarbershopId, basic])
+  }, [pushBarbershopId, gates.alertsLocked])
 
   useAppointmentsLive(barbershop?.id, event => {
     void refreshAppointments()
@@ -214,7 +210,7 @@ const DashboardLayout = () => {
           ? ` · ${price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
           : ''
         const description = `${event.row.client_name} · ${d}/${m} às ${event.row.time.slice(0, 5)} · ${event.row.service_name}${valor}`
-        if (alertNewBooking('Parabéns! Novo horário agendado!', description, `agendamento-${event.row.id}`, basic)) {
+        if (alertNewBooking('Parabéns! Novo horário agendado!', description, `agendamento-${event.row.id}`, gates.alertsLocked)) {
           toast({ title: 'Parabéns! Novo horário agendado!', description })
         }
       }
@@ -265,8 +261,8 @@ const DashboardLayout = () => {
     onNavigate: () => setSidebarOpen(false),
     onSignOut: () => navigate('/'),
     pushBarbershopId,
-    clubLocked: basic && memberships.length === 0,
-    alertsLocked: basic,
+    clubLocked: !gates.club,
+    alertsLocked: gates.alertsLocked,
   }
 
   return (
@@ -310,7 +306,7 @@ const DashboardLayout = () => {
           </button>
           <span className="font-heading text-lg tracking-wide text-amber-400 truncate min-w-0">{barbershop.logoText}</span>
           <div className="ml-auto shrink-0">
-            <BookingAlertToggle barbershopId={pushBarbershopId} locked={basic} compact />
+            <BookingAlertToggle barbershopId={pushBarbershopId} locked={gates.alertsLocked} compact />
           </div>
         </div>
 

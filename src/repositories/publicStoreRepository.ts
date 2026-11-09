@@ -3,6 +3,7 @@
 //   pedido  → public_place_product_order (tudo ou nada; baixa o estoque no banco)
 //   modo    → public_store_mode: 'loja' (Premium com a loja ligada),
 //             'leve_junto' (só a oferta no fim do agendamento) ou 'nenhuma'
+import { errorText } from '@/lib/errors'
 import { supabasePublic } from '@/lib/supabase-public'
 import type { OrderItem } from '@/repositories/productRepository'
 
@@ -64,7 +65,7 @@ export const publicStoreRepository = {
 
 /** Mensagens do banco que fazem sentido pro cliente; o resto vira genérica. */
 export function orderErrorMessage(err: unknown): string {
-  const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : ''
+  const msg = errorText(err)
   if (/Sem estoque suficiente|Produto indisponível|Muitas reservas|Telefone inválido|Informe seu nome|Escolha de 1 a 10/.test(msg)) return msg
   return 'Não deu pra reservar agora. Tente de novo em instantes.'
 }

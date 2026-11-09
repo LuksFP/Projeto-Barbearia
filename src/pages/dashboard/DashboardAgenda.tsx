@@ -1,3 +1,4 @@
+import { errorText } from '@/lib/errors'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
@@ -388,7 +389,7 @@ const DashboardAgenda = () => {
       finishBooked()
     } catch (err: unknown) {
       // 23P01 = exclusion_violation da trava de sobreposição por barbeiro
-      const msg = (err && typeof err === 'object' && 'message' in err) ? String((err as { message: unknown }).message) : ''
+      const msg = errorText(err)
       const overlap = msg.includes('23P01') || msg.includes('appointments_no_overlap_per_barber')
       if (overlap) {
         // Alguém marcou antes (site/outro aparelho): rebusca pra o horário aparecer em vermelho

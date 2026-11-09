@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Crown, Users, TrendingUp, Plus, Check, X, Pencil, Scissors, Building2, Loader2, Receipt } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
-import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { PRO_MSG, isBasicPlan } from '@/lib/planFeatures'
+import { usePlanGates } from '@/hooks/usePlanGates'
+import { PRO_MSG } from '@/lib/planFeatures'
 import ProUpsell from '@/components/dashboard/ProUpsell'
 import { membershipRepository } from '@/repositories/membershipRepository'
 import { isDemoMode } from '@/lib/demo'
@@ -294,7 +294,7 @@ const PlanCard = ({ mem, onEdit, editing }: PlanCardProps) => {
 
 const DashboardClube = () => {
   const { barbershop, barbers, memberships, updateMemberships } = useTenant()
-  const { account } = useSaasAccount()
+  const { club } = usePlanGates()
 
   const [view, setView]             = useState<'planos' | 'cobrancas'>('planos')
   const [editingId, setEditingId]   = useState<string | null>(null)
@@ -399,7 +399,7 @@ const DashboardClube = () => {
   const barberPlans     = memberships.filter(m => !!m.barberId)
 
   // Básico: o Clube é do Pro. Quem já tinha clube criado continua usando.
-  if (isBasicPlan(account?.plan) && memberships.length === 0) {
+  if (!club) {
     return (
       <div className="space-y-6 max-w-2xl">
         <div>

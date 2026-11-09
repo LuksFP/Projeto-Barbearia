@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react'
 import { Plus, Scissors, X, Loader2, Pencil, Upload, Clock, Percent } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
-import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { BASIC_TEAM_LIMIT, PRO_MSG, commissionInUse, isBasicPlan } from '@/lib/planFeatures'
+import { usePlanGates } from '@/hooks/usePlanGates'
+import { PRO_MSG } from '@/lib/planFeatures'
+import { planLimitMessage } from '@/lib/errors'
 import ProUpsell from '@/components/dashboard/ProUpsell'
 import { teamRepository } from '@/repositories/teamRepository'
 import { isDemoMode } from '@/lib/demo'
@@ -36,12 +37,7 @@ const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py
 
 const DashboardEquipe = () => {
   const { barbershop, barbers, updateBarbers } = useTenant()
-  const { account } = useSaasAccount()
-  // Básico: equipe de 2 e sem comissão. Quem já tinha mais gente ou já usava
-  // comissão continua igual (o banco faz a mesma conta).
-  const basic = isBasicPlan(account?.plan)
-  const teamFull = basic && barbers.length >= BASIC_TEAM_LIMIT
-  const showCommission = !basic || commissionInUse(barbers)
+  const { teamFull, commission: showCommission } = usePlanGates()
 
   // Modal de convite
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -117,8 +113,7 @@ const DashboardEquipe = () => {
       }])
       setInviteOpen(false)
     } catch (err: unknown) {
-      const msg = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
-      setInviteError(msg || 'Erro ao adicionar barbeiro.')
+      setInviteError(planLimitMessage(err) ?? 'Erro ao adicionar barbeiro.')
     } finally {
       setInviting(false)
     }
@@ -182,8 +177,7 @@ const DashboardEquipe = () => {
       ))
       setEditingBarber(null)
     } catch (err: unknown) {
-      const msg = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
-      setEditError(msg.includes('plano Pro') ? msg : 'Erro ao salvar. Tente novamente.')
+      setEditError(planLimitMessage(err) ?? 'Erro ao salvar. Tente novamente.')
     } finally {
       setEditSaving(false)
     }
