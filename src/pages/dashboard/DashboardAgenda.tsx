@@ -4,7 +4,8 @@ import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, Chevron
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
-import { isDemoMode } from '@/lib/demo'
+import { isDemoMode, getDemoPlan, getDemoAppointments } from '@/lib/demo'
+import { addDemoBooking, updateDemoBooking, removeDemoBookings, onDemoBookingsChange } from '@/lib/demoBookings'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
@@ -71,7 +72,7 @@ const EMPTY_APT: NewAptForm = {
 }
 
 const DashboardAgenda = () => {
-  const { barbershop, barbers, services, clients, addClient, refreshClients, appointments: demoAppointments, isAdmin } = useTenant()
+  const { barbershop, barbers, services, clients, addClient, refreshClients, isAdmin } = useTenant()
   const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [weekOffset, setWeekOffset]     = useState(0)
@@ -215,9 +216,14 @@ const DashboardAgenda = () => {
     if (!barbershop || !selectedDate) return
 
     if (isDemoMode()) {
-      const filtered = demoAppointments.filter(a => a.date === selectedDate)
-      setAppointments(filtered.length > 0 ? filtered : demoAppointments)
-      return
+      // Demo: exemplos + o que foi marcado no site ou aqui; atualiza se marcarem em outra aba
+      const plan = getDemoPlan()
+      const loadDay = () => {
+        const all = plan ? getDemoAppointments(plan) : []
+        setAppointments(all.filter(a => a.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time)))
+      }
+      loadDay()
+      return onDemoBookingsChange(loadDay)
     }
 
     setLoading(true)
@@ -240,9 +246,9 @@ const DashboardAgenda = () => {
 
   const handleStatusChange = async (apt: BarbershopAppointment, nextStatus: string) => {
     if (isDemoMode()) {
-      setAppointments(prev =>
-        prev.map(a => a.id === apt.id ? { ...a, status: nextStatus as BarbershopAppointment['status'] } : a)
-      )
+      const status = nextStatus as BarbershopAppointment['status']
+      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, status } : a))
+      updateDemoBooking(apt.barbershopId, apt.id, { status })
       return
     }
     setUpdatingId(apt.id)
@@ -265,6 +271,7 @@ const DashboardAgenda = () => {
     setArmedDelete(null)
     if (isDemoMode()) {
       setAppointments(prev => prev.filter(a => !ids.includes(a.id)))
+      if (barbershop) removeDemoBookings(barbershop.id, ids)
       return
     }
     setDeleting(true)
@@ -358,9 +365,8 @@ const DashboardAgenda = () => {
           status: 'confirmed',
           price: form.price ? Number(form.price) : totalPrice,
         }
-        if (form.date === selectedDate) {
-          setAppointments(prev => [...prev, demoApt].sort((a, b) => a.time.localeCompare(b.time)))
-        }
+        // Guarda na demo: o aviso de mudança recarrega o dia aberto na tela
+        addDemoBooking(demoApt)
         finishBooked()
         return
       }

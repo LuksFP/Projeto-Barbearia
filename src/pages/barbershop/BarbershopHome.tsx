@@ -12,6 +12,7 @@ import { buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 import BookingBump from '@/components/barbershop/BookingBump'
 import StoreSection from '@/components/barbershop/StoreSection'
 import { placeOrder } from '@/lib/placeOrder'
+import { addDemoBooking, listDemoBookings } from '@/lib/demoBookings'
 import { orderErrorMessage, type PublicProduct } from '@/repositories/publicStoreRepository'
 
 const fadeUp = {
@@ -119,11 +120,15 @@ const BookingSection = ({
 
     // Demo: injeta ocupados fixos pra dar pra ver o bloqueio na tela
     if (isDemoBarbershop) {
+      const marcados = listDemoBookings(barbershop.id)
+        .filter(a => a.date === selectedDate && a.status !== 'cancelled' && (!pickedBarber || a.barberId === pickedBarber.id))
+        .map(a => ({ start: toMin(a.time), end: toMin(a.time) + a.durationMin }))
       setBusy([
         { start: toMin('10:00'), end: toMin('10:00') + 45 },
         { start: toMin('11:30'), end: toMin('11:30') + 30 },
         { start: toMin('15:00'), end: toMin('15:00') + 60 },
         { start: toMin('18:30'), end: toMin('18:30') + 45 },
+        ...marcados,
       ])
       return
     }
@@ -223,8 +228,24 @@ const BookingSection = ({
       }
     }
 
-    // Demo: não grava agendamento no banco (id não é real), só mostra a confirmação
+    // Demo: não grava no banco (id não é real); guarda no navegador pra aparecer na Agenda da demo
     if (isDemoBarbershop) {
+      addDemoBooking({
+        id: appointmentId,
+        barbershopId: barbershop.id,
+        clientName,
+        clientPhone,
+        barberId: barberObj?.id ?? '',
+        barberName: barberObj?.name ?? 'A definir',
+        serviceId: selectedServices[0]?.id ?? '',
+        serviceName: servicesLabel,
+        serviceCategory: category ?? undefined,
+        date: selectedDate,
+        time: selectedTime,
+        durationMin: slotDuration,
+        status: 'pending',
+        price: totalPrice,
+      })
       await reserveBump()
       setTimeout(() => { setSubmitting(false); setStep('done') }, 500)
       return

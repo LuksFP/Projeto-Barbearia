@@ -9,6 +9,7 @@ import {
   MOCK_BARBERS, MOCK_SERVICES, MOCK_APPOINTMENTS,
   MOCK_CLIENTS, MOCK_MEMBERSHIPS,
 } from '@/mocks/tenant'
+import { listDemoBookings, clearDemoBookings } from '@/lib/demoBookings'
 
 export const DEMO_SESSION_KEY = '__barberos_demo__'
 
@@ -210,14 +211,24 @@ export function getDemoServices(plan: DemoPlan): BarbershopService[] {
   return MOCK_SERVICES.filter(s => s.barbershopId === id)
 }
 
+/** Data de hoje no fuso local, AAAA-MM-DD. */
+function todayISO(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+/** Agenda da demo: exemplos fixos caem sempre no dia de hoje + o que foi marcado na demo. */
 export function getDemoAppointments(plan: DemoPlan): BarbershopAppointment[] {
   const id = BS_ID[plan]
-  if (plan === 'basic') {
-    return MOCK_APPOINTMENTS.filter(a => a.barbershopId === 'bs-001').slice(0, 3).map(a => ({
-      ...a, barbershopId: id,
-    }))
-  }
-  return MOCK_APPOINTMENTS.filter(a => a.barbershopId === id)
+  const today = todayISO()
+  const samples = plan === 'basic'
+    ? MOCK_APPOINTMENTS.filter(a => a.barbershopId === 'bs-001').slice(0, 3)
+    : MOCK_APPOINTMENTS.filter(a => a.barbershopId === id)
+  return [
+    ...samples.map(a => ({ ...a, barbershopId: id, date: today })),
+    ...listDemoBookings(id),
+  ]
 }
 
 export function getDemoClients(plan: DemoPlan): BarbershopClient[] {
@@ -389,6 +400,8 @@ export function getDemoPlan(): DemoPlan | null {
 }
 
 export function setDemoSession(plan: DemoPlan): void {
+  // Entrar na demo começa do zero: apaga horários marcados numa visita anterior
+  clearDemoBookings(BS_ID[plan])
   sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ plan }))
 }
 
