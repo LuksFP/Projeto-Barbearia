@@ -682,12 +682,15 @@ const DashboardClientes = () => {
                 <Phone className="w-3 h-3 text-white/45" />
                 <p className="text-white/65 text-xs font-body">{client.phone}</p>
               </div>
+              <p className="sm:hidden mt-0.5 text-white/55 text-xs font-body">
+                {client.totalVisits} visitas · {client.lastVisit ? `última ${fmtDate(client.lastVisit)}` : 'sem visitas'}
+              </p>
             </div>
 
-            <div className="text-right shrink-0">
+            <div className="hidden sm:block text-right shrink-0">
               <p className="text-white/70 text-sm font-body">{client.totalVisits} visitas</p>
               <p className="text-white/60 text-xs font-body">
-                {client.lastVisit ? `última: ${client.lastVisit}` : 'sem visitas'}
+                {client.lastVisit ? `última: ${fmtDate(client.lastVisit)}` : 'sem visitas'}
               </p>
             </div>
           </motion.button>

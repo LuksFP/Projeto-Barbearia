@@ -107,7 +107,7 @@ const Registrar = () => {
       <div className="shrink-0 border-b border-white/5">
         <div className="max-w-xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
-            {['Plano', 'Cadastro', 'Dashboard'].map((step, i) => (
+            {['Plano', 'Cadastro', 'Painel'].map((step, i) => (
               <div key={step} className="flex items-center gap-3 flex-1">
                 <div className="flex items-center gap-2">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-heading ${

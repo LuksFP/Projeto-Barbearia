@@ -281,7 +281,7 @@ const DashboardConfiguracoes = () => {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <p className="text-white/55 text-sm font-body mb-1">Workspace</p>
+        <p className="text-white/55 text-sm font-body mb-1">Dados da barbearia</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">CONFIGURAÇÕES</h1>
       </div>
 

@@ -160,8 +160,8 @@ const DEMO_BARBERSHOPS: Record<DemoPlan, Barbershop> = {
     city: 'São Paulo',
     state: 'SP',
     instagram: '@atlasbarber.sp',
-    primaryColor: '#3B82F6',
-    accentColor: '#1D4ED8',
+    primaryColor: '#C9A84C',
+    accentColor: '#8B6914',
     logoText: 'ATLAS',
     plan: 'premium',
     active: true,
@@ -169,8 +169,8 @@ const DEMO_BARBERSHOPS: Record<DemoPlan, Barbershop> = {
     closeTime: '20:00',
     storeEnabled: true,
     bumpEnabled: true,
-    siteType: 'external',
-    customDomain: 'atlasbarber.com.br',
+    siteType: 'generic',
+    customDomain: '',
     embedKey: 'bos_atlas_demo0000000000000000',
   },
 }
@@ -363,8 +363,22 @@ const FINANCIAL_DATA: Record<DemoPlan, MonthRevenue[]> = {
   ],
 }
 
+const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho',
+  'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+/** Os 12 meses de exemplo terminam sempre no mês atual (o último é o "parcial"),
+ *  pra demo não mostrar "Abril — parcial" em novembro. */
 export function getDemoFinancials(plan: DemoPlan): MonthRevenue[] {
-  return FINANCIAL_DATA[plan]
+  const data = FINANCIAL_DATA[plan]
+  const now = new Date()
+  return data.map((m, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (data.length - 1 - i), 1)
+    return {
+      ...m,
+      month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: MONTH_NAMES[d.getMonth()],
+    }
+  })
 }
 
 // ─── Política de cancelamento mock ───────────────────────────────────────────

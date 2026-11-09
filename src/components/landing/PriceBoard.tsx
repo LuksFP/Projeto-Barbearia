@@ -8,7 +8,7 @@ import { useLandingCta } from './useLandingCta'
 const preco = (valor: number) => valor.toFixed(2).replace('.', ',')
 
 type Equipe = 'ate2' | 'mais'
-type Site = 'agenda' | 'pagina' | 'proprio'
+type Site = 'agenda' | 'pagina'
 
 const FERRAMENTA: Record<SaasPlan, Ferramenta> = { basic: 'pente', pro: 'tesoura', premium: 'navalha' }
 
@@ -20,14 +20,12 @@ const EQUIPES: { id: Equipe; rotulo: string }[] = [
 const SITES: { id: Site; rotulo: string }[] = [
   { id: 'agenda', rotulo: 'Agendar online' },
   { id: 'pagina', rotulo: 'Loja completa no site' },
-  { id: 'proprio', rotulo: 'Design e domínio meus' },
 ]
 
 // Segue os limites da própria lista de planos: Básico vai até 2 barbeiros, com site de
-// agendamento e 1 produto; Pro até 3 produtos no agendamento; loja completa, domínio e design
-// próprios só no Premium.
+// agendamento e 1 produto; Pro até 3 produtos no agendamento; loja completa só no Premium.
 const planoPara = (equipe: Equipe, site: Site): SaasPlan => {
-  if (site === 'proprio' || site === 'pagina') return 'premium'
+  if (site === 'pagina') return 'premium'
   if (equipe === 'mais') return 'pro'
   return 'basic'
 }

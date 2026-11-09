@@ -18,9 +18,7 @@ const fadeUp = {
 
 // Features exclusivas do Premium — destacadas visualmente
 const PREMIUM_FEATURES = [
-  'Site personalizado (design exclusivo)',
-  'Domínio próprio incluso',
-  'SEO local configurado',
+  'Loja completa no site: produtos sem limite, sacola e reserva sem horário',
 ]
 
 const Planos = () => {
@@ -115,11 +113,11 @@ const Planos = () => {
                 </div>
                 <div>
                   <p className="text-white font-semibold font-body">Básico</p>
-                  <p className="text-white/35 text-xs font-body">Só a agenda</p>
+                  <p className="text-white/35 text-xs font-body">Agenda + site de agendamento</p>
                 </div>
               </div>
               <p className="text-white/45 text-sm font-body leading-relaxed">
-                Sistema de agendamento completo. Seus clientes marcam horário online 24h, você gerencia pelo dashboard.
+                Agenda da equipe e site da barbearia onde o cliente marca horário 24h. Até 2 barbeiros e 1 produto oferecido no agendamento.
               </p>
             </div>
 
@@ -131,11 +129,11 @@ const Planos = () => {
                 </div>
                 <div>
                   <p className="text-white font-semibold font-body">Pro</p>
-                  <p className="text-emerald-400 text-xs font-body font-semibold tracking-wide">Agenda + site genérico</p>
+                  <p className="text-emerald-400 text-xs font-body font-semibold tracking-wide">Equipe sem limite</p>
                 </div>
               </div>
               <p className="text-white/45 text-sm font-body leading-relaxed">
-                Tudo do Básico + site publicado na hora em <span className="text-white/65 font-mono text-xs">barberos.io/b/slug</span>. Template profissional com cores, logo e equipe.
+                Tudo do Básico + barbeiros ilimitados, aviso de agendamento no celular, Clube VIP, comissão por barbeiro e até 3 produtos no agendamento.
               </p>
             </div>
 
@@ -151,11 +149,11 @@ const Planos = () => {
                 </div>
                 <div>
                   <p className="text-white font-semibold font-body">Premium</p>
-                  <p className="text-amber-400 text-xs font-body font-semibold tracking-wide">Agenda + site personalizado + domínio</p>
+                  <p className="text-amber-400 text-xs font-body font-semibold tracking-wide">Loja completa no site</p>
                 </div>
               </div>
               <p className="text-white/45 text-sm font-body leading-relaxed">
-                Tudo do Pro + site com design exclusivo para a sua barbearia, domínio próprio incluso e SEO local configurado.
+                Tudo do Pro + loja no site: produtos sem limite, sacola e reserva sem horário. E a gente configura a barbearia junto com você.
               </p>
             </div>
           </div>
@@ -263,9 +261,9 @@ const Planos = () => {
         >
           <div>
             <p className="text-white/60 text-sm font-body leading-relaxed">
-              <span className="text-white font-semibold">Básico</span> tem agenda, agendamento online em barberos.io e 1 produto no agendamento.{' '}
+              <span className="text-white font-semibold">Básico</span> tem agenda, site com agendamento online e 1 produto no agendamento.{' '}
               <span className="text-white font-semibold">Pro</span> libera equipe sem limite e até 3 produtos no agendamento.{' '}
-              <span className="text-white font-semibold">Premium</span> abre a loja completa no site e entrega site exclusivo com domínio próprio incluso.
+              <span className="text-white font-semibold">Premium</span> abre a loja completa no site, com produtos sem limite.
             </p>
           </div>
           <p className="text-white/25 text-xs font-body shrink-0">Cancele quando quiser. Sem multa.</p>

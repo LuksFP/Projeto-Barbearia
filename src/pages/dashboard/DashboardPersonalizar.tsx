@@ -3,12 +3,13 @@ import { openOutsideApp } from '@/lib/pwaHead'
 import { useTenant } from '@/contexts/TenantContext'
 import {
   ExternalLink, Palette, Type, Phone, Image, Check, RefreshCw,
-  Globe, Code2, Copy, CheckCheck, Link2, Zap, Upload, Loader2,
+  Globe, Copy, CheckCheck, Upload, Loader2,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Barbershop } from '@/types/tenant'
 import { uploadCoverImage } from '@/lib/storage'
 import { isDemoMode } from '@/lib/demo'
+import { publicSiteLabel, publicSiteUrl } from '@/lib/siteUrl'
 
 const COLOR_PRESETS = [
   { label: 'Âmbar',     primary: '#C9A84C', accent: '#8B6914' },
@@ -90,17 +91,14 @@ const DashboardPersonalizar = () => {
 
   if (!barbershop || !draft) return null
 
-  const supportsExternalSite = draft.plan === 'premium'
-
   const handleField = (name: keyof Barbershop, val: string) => {
     setDraft(prev => (prev ? { ...prev, [name]: val } : prev))
   }
 
   const handleSave = async () => {
     if (validationErrors.length > 0) return
-    const nextDraft = supportsExternalSite
-      ? draft
-      : { ...draft, siteType: 'generic' as const, customDomain: '' }
+    // Site externo/domínio próprio ainda não existe: todo site é o /b/slug
+    const nextDraft = { ...draft, siteType: 'generic' as const, customDomain: '' }
 
     await updateBarbershop(nextDraft)
     setDraft(nextDraft)
@@ -136,45 +134,18 @@ const DashboardPersonalizar = () => {
   // [A3] Só aceita hex de 3 ou 6 dígitos
   const isValidHex = (v: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v)
 
-  // [A2] Domínio sem path, sem protocolo, sem espaço
-  const isValidDomain = (v: string) => /^[a-zA-Z0-9][a-zA-Z0-9\-_.]{0,252}$/.test(v)
-
   const validationErrors: string[] = []
   if (!isValidHex(draft.primaryColor)) validationErrors.push('Cor principal inválida')
   if (!isValidHex(draft.accentColor)) validationErrors.push('Cor de destaque inválida')
   if (draft.logoText.length > 20) validationErrors.push('Logo: máximo 20 caracteres')
-  if (draft.siteType === 'external' && draft.customDomain && !isValidDomain(draft.customDomain)) {
-    validationErrors.push('Domínio inválido (sem https://, sem espaços)')
-  }
 
-  const previewUrl =
-    draft.siteType === 'external' && draft.customDomain && isValidDomain(draft.customDomain)
-      ? `https://${draft.customDomain}`
-      : `/b/${barbershop.slug}`
+  const previewUrl = `/b/${barbershop.slug}`
 
-  const copyToClipboard = (text: string, id: string) => {
+  const copyToClipboard =(text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopied(id)
     setTimeout(() => setCopied(null), 2000)
   }
-
-  const embedSnippet = `<!-- BarberOS Widget -->
-<script>
-  window.BarberOSConfig = {
-    slug: "${barbershop.slug}",
-    key: "${barbershop.embedKey ?? ''}",
-  };
-</script>
-<script src="https://barberos.io/embed/widget.js" async></script>`
-
-  const jsApiSnippet = `// Abrir modal de agendamento
-BarberOS.openBooking()
-
-// Buscar serviços ativos
-const services = await BarberOS.getServices()
-
-// Buscar equipe
-const team = await BarberOS.getTeam()`
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -356,7 +327,7 @@ const team = await BarberOS.getTeam()`
 
                   {/* Botão CTA simulado */}
                   <div className="px-4 py-3 flex items-center justify-between bg-[#141414]">
-                    <span className="text-white/65 text-xs font-body">barberos.io/b/{barbershop.slug}</span>
+                    <span className="text-white/65 text-xs font-body">{publicSiteLabel(barbershop.slug)}</span>
                     <div
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold font-body"
                       style={{ backgroundColor: draft.primaryColor, color: '#0a0a0a' }}
@@ -464,213 +435,37 @@ const team = await BarberOS.getTeam()`
             transition={{ duration: 0.2 }}
             className="space-y-5"
           >
-            {/* Tipo de site */}
-            <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-5">
+            <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-4">
               <div>
-                <h2 className="text-white font-semibold font-body mb-1">Tipo de site</h2>
+                <h2 className="text-white font-semibold font-body mb-1">Endereço do seu site</h2>
                 <p className="text-white/65 text-xs font-body">
-                  Escolha como seus clientes acessam seu site
+                  É aqui que seus clientes veem os serviços e marcam horário. Mande no WhatsApp ou coloque na bio do Instagram.
                 </p>
               </div>
-
-              {!supportsExternalSite && (
-                <div className="flex items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/[0.05] px-4 py-3">
-                  <Link2 className="h-3.5 w-3.5 shrink-0 text-blue-400" />
-                  <p className="text-xs font-body text-blue-300/85">
-                    Site externo e domínio próprio ficam disponíveis nos planos Pro e Scale.
-                  </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
+                <p className="min-w-0 text-white/80 text-sm font-mono break-all">{publicSiteLabel(barbershop.slug)}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => copyToClipboard(publicSiteUrl(barbershop.slug), 'public-url')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all"
+                  >
+                    {copied === 'public-url'
+                      ? <><CheckCheck className="w-3 h-3 text-emerald-400" />Copiado</>
+                      : <><Copy className="w-3 h-3" />Copiar link</>}
+                  </button>
+                  <a
+                    href={`/b/${barbershop.slug}`}
+                    onClick={openOutsideApp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Abrir
+                  </a>
                 </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                {/* Opção: Genérico */}
-                <button
-                  onClick={() => setDraft(p => (p ? { ...p, siteType: 'generic' } : p))}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    draft.siteType !== 'external'
-                      ? 'border-amber-500/35 bg-amber-500/[0.06]'
-                      : 'border-[#262626] bg-[#161616] hover:border-[#333]'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                      draft.siteType !== 'external' ? 'bg-amber-500/20' : 'bg-[#222]'
-                    }`}>
-                      <Globe className={`w-3.5 h-3.5 ${draft.siteType !== 'external' ? 'text-amber-400' : 'text-white/55'}`} />
-                    </div>
-                    <span className={`text-sm font-semibold font-body ${draft.siteType !== 'external' ? 'text-white' : 'text-white/70'}`}>
-                      Genérico BarberOS
-                    </span>
-                  </div>
-                  <p className="text-white/60 text-xs font-body leading-relaxed">
-                    Template pronto em <span className="text-white/70 font-mono">/b/{barbershop.slug}</span>
-                  </p>
-                </button>
-
-                {/* Opção: Externo */}
-                <button
-                  onClick={() => setDraft(p => (p ? { ...p, siteType: 'external' } : p))}
-                  disabled={!supportsExternalSite}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    draft.siteType === 'external'
-                      ? 'border-amber-500/35 bg-amber-500/[0.06]'
-                      : 'border-[#262626] bg-[#161616] hover:border-[#333]'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                      draft.siteType === 'external' ? 'bg-amber-500/20' : 'bg-[#222]'
-                    }`}>
-                      <Link2 className={`w-3.5 h-3.5 ${draft.siteType === 'external' ? 'text-amber-400' : 'text-white/55'}`} />
-                    </div>
-                    <span className={`text-sm font-semibold font-body ${draft.siteType === 'external' ? 'text-white' : 'text-white/70'}`}>
-                      Site externo
-                    </span>
-                  </div>
-                  <p className="text-white/60 text-xs font-body leading-relaxed">
-                    {supportsExternalSite
-                      ? 'Seu domínio próprio com widget embed'
-                      : 'Upgrade para Pro ou Scale para liberar embed'}
-                  </p>
-                </button>
               </div>
-
-              {/* Preview do site genérico */}
-              {draft.siteType !== 'external' && (
-                <div className="flex items-center justify-between p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
-                  <div>
-                    <p className="text-white/55 text-xs font-body mb-1">URL pública</p>
-                    <p className="text-white/70 text-sm font-mono">barberos.io/b/{barbershop.slug}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => copyToClipboard(`${window.location.origin}/b/${barbershop.slug}`, 'public-url')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all"
-                    >
-                      {copied === 'public-url'
-                        ? <><CheckCheck className="w-3 h-3 text-emerald-400" />Copiado</>
-                        : <><Copy className="w-3 h-3" />Copiar link</>}
-                    </button>
-                    <a
-                      href={previewUrl}
-                      onClick={openOutsideApp}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      Abrir
-                    </a>
-                  </div>
-                </div>
-              )}
             </div>
-
-            {/* Site externo — configurações */}
-            {draft.siteType === 'external' && (
-              <>
-                <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-4">
-                  <h3 className="text-white font-semibold font-body flex items-center gap-2">
-                    <Link2 className="w-4 h-4 text-amber-400" />
-                    Configuração do domínio
-                  </h3>
-                  <Field
-                    label="Domínio do site"
-                    name="customDomain"
-                    value={draft.customDomain ?? ''}
-                    onChange={handleField}
-                    placeholder="barbearia-corvo.com.br"
-                    hint="sem https://"
-                  />
-                  {draft.customDomain && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="text-emerald-400 text-xs font-body">
-                        Domínio vinculado — adicione o snippet abaixo ao seu site
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Chave de API + Embed */}
-                <div className="p-6 rounded-xl bg-[#141414] border border-[#252525] space-y-5">
-                  <h3 className="text-white font-semibold font-body flex items-center gap-2">
-                    <Code2 className="w-4 h-4 text-amber-400" />
-                    Código de integração
-                  </h3>
-
-                  {/* Embed key */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">
-                        Chave do widget
-                      </label>
-                      <span className="text-white/45 text-xs font-body">somente leitura</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 px-4 py-3 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f] text-white/65 text-xs font-mono overflow-hidden text-ellipsis whitespace-nowrap">
-                        {barbershop.embedKey ?? 'Salve para gerar'}
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(barbershop.embedKey ?? '', 'key')}
-                        className="p-3 rounded-xl bg-[#161616] border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all shrink-0"
-                      >
-                        {copied === 'key' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Snippet HTML */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase">
-                        Snippet — cole antes do {'</body>'}
-                      </label>
-                      <button
-                        onClick={() => copyToClipboard(embedSnippet, 'snippet')}
-                        className="flex items-center gap-1 text-white/55 hover:text-amber-400 text-xs font-body transition-colors"
-                      >
-                        {copied === 'snippet' ? <><CheckCheck className="w-3 h-3 text-emerald-400" /> Copiado</> : <><Copy className="w-3 h-3" /> Copiar</>}
-                      </button>
-                    </div>
-                    <pre className="p-4 rounded-xl bg-[#0a0a0a] border border-[#1a1a1a] text-white/70 text-xs font-mono leading-relaxed overflow-x-auto">
-                      {embedSnippet}
-                    </pre>
-                  </div>
-
-                  {/* JS API */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-white/55 font-body tracking-wide uppercase flex items-center gap-1.5">
-                        <Zap className="w-3 h-3" />
-                        API JavaScript
-                      </label>
-                      <button
-                        onClick={() => copyToClipboard(jsApiSnippet, 'api')}
-                        className="flex items-center gap-1 text-white/55 hover:text-amber-400 text-xs font-body transition-colors"
-                      >
-                        {copied === 'api' ? <><CheckCheck className="w-3 h-3 text-emerald-400" /> Copiado</> : <><Copy className="w-3 h-3" /> Copiar</>}
-                      </button>
-                    </div>
-                    <pre className="p-4 rounded-xl bg-[#0a0a0a] border border-[#1a1a1a] text-white/70 text-xs font-mono leading-relaxed overflow-x-auto">
-                      {jsApiSnippet}
-                    </pre>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      {[
-                        { fn: 'openBooking()', desc: 'Abre modal de agendamento' },
-                        { fn: 'getServices()', desc: 'Lista serviços ativos' },
-                        { fn: 'getTeam()', desc: 'Retorna a equipe' },
-                      ].map(item => (
-                        <div key={item.fn} className="p-3 rounded-lg bg-[#0f0f0f] border border-[#1a1a1a]">
-                          <p className="text-amber-400/80 text-xs font-mono mb-1">{item.fn}</p>
-                          <p className="text-white/60 text-xs font-body">{item.desc}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

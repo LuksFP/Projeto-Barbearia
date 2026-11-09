@@ -1,6 +1,7 @@
+import { publicSiteLabel, publicSiteUrl } from '@/lib/siteUrl'
 import {
   CalendarDays, Users, TrendingUp, TrendingDown, Crown,
-  Clock, CheckCircle2, AlertCircle, Globe, Link2,
+  Clock, CheckCircle2, AlertCircle, Globe,
   ExternalLink, PartyPopper, DollarSign, Copy, Check,
 } from 'lucide-react'
 import { openOutsideApp } from '@/lib/pwaHead'
@@ -209,9 +210,7 @@ const DashboardOverview = () => {
 
   // Todo plano tem site público com agendamento; sem plano, sem link
   const hasSite = !!account?.plan
-  const publicUrl = barbershop?.siteType === 'external' && barbershop.customDomain
-    ? `https://${barbershop.customDomain}`
-    : `${window.location.origin}/b/${barbershop?.slug ?? ''}`
+  const publicUrl = publicSiteUrl(barbershop?.slug ?? '')
 
   const copyPublicLink = async () => {
     try {
@@ -245,7 +244,6 @@ const DashboardOverview = () => {
       .catch(() => toast({ title: 'Erro ao carregar dados financeiros', variant: 'destructive' }))
   }, [barbershop?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const vipCount  = clients.filter(c => c.membershipType === 'vip').length
   const totalSubs = memberships.reduce((acc, m) => acc + m.subscriberCount, 0)
   const mrr       = memberships.reduce((acc, m) => acc + m.price * m.subscriberCount, 0)
 
@@ -253,10 +251,20 @@ const DashboardOverview = () => {
   const previousMonth = financialMonths[financialMonths.length - 2]
   const revDelta      = currentMonth && previousMonth ? pct(currentMonth.total, previousMonth.total) : null
 
+  // Legendas dos cartões: só contas feitas com o que já está carregado (nada fixo no código)
+  const toConfirm = todayApts.filter(a => a.status === 'pending').length
+  const aptsNote = todayApts.length === 0
+    ? 'nenhum horário hoje'
+    : toConfirm > 0 ? `${toConfirm} a confirmar` : 'todos confirmados'
+  const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+  const recentClients = clients.filter(c => c.lastVisit && new Date(c.lastVisit).getTime() >= monthAgo).length
+  const activePlans = memberships.filter(m => m.active).length
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
   const stats = [
-    { label: 'Agendamentos hoje', value: todayApts.length, icon: CalendarDays, delta: '+2 vs ontem' },
-    { label: 'Clientes ativos',   value: clients.length,   icon: Users,        delta: '+1 esta semana' },
-    { label: 'Assinantes VIP',    value: totalSubs,        icon: Crown,        delta: `${vipCount} clientes VIP` },
+    { label: 'Agendamentos hoje', value: todayApts.length, icon: CalendarDays, delta: aptsNote },
+    { label: 'Clientes', value: clients.length, icon: Users, delta: recentClients === 0 ? 'nenhum veio nos últimos 30 dias' : `${plural(recentClients, 'veio', 'vieram')} nos últimos 30 dias` },
+    { label: 'Assinantes VIP', value: totalSubs, icon: Crown, delta: activePlans > 0 ? `em ${plural(activePlans, 'plano', 'planos')}` : 'nenhum plano criado' },
     {
       label: 'Receita este mês',
       value: currentMonth ? `R$ ${fmt(currentMonth.total)}` : `R$ ${fmt(mrr)}`,
@@ -376,20 +384,12 @@ const DashboardOverview = () => {
 
       {/* Site strip */}
       <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-[#161616] border border-[#262626]">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-          barbershop?.siteType === 'external'
-            ? 'bg-blue-500/15 border border-blue-500/25'
-            : 'bg-emerald-500/15 border border-emerald-500/25'
-        }`}>
-          {barbershop?.siteType === 'external'
-            ? <Link2 className="w-3.5 h-3.5 text-blue-400" />
-            : <Globe className="w-3.5 h-3.5 text-emerald-400" />}
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-500/15 border border-emerald-500/25">
+          <Globe className="w-3.5 h-3.5 text-emerald-400" />
         </div>
         <div className="flex-1 min-w-[12rem]">
           <p className="text-white/70 text-sm font-body break-words">
-            {barbershop?.siteType === 'external'
-              ? <>Site vinculado — <span className="text-white/70 font-mono text-xs">{barbershop?.customDomain || 'domínio não configurado'}</span></>
-              : <>Site genérico — <span className="text-white/70 font-mono text-xs">barberos.io/b/{barbershop?.slug}</span></>}
+            Seu site — <span className="text-white/70 font-mono text-xs break-all">{publicSiteLabel(barbershop?.slug ?? '')}</span>
           </p>
         </div>
         {hasSite && (
@@ -403,9 +403,7 @@ const DashboardOverview = () => {
           </button>
         )}
         <a
-          href={barbershop?.siteType === 'external' && barbershop.customDomain
-            ? `https://${barbershop.customDomain}`
-            : `/b/${barbershop?.slug}`}
+          href={`/b/${barbershop?.slug}`}
           target="_blank" rel="noopener noreferrer"
           onClick={openOutsideApp}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/65 hover:text-white hover:border-[#333] text-xs font-body transition-all shrink-0"

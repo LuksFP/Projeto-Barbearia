@@ -43,7 +43,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
       {/* Cliente + serviço */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-white text-sm font-semibold font-body truncate">{apt.clientName}</p>
+          <p className="text-white text-sm font-semibold font-body break-words">{apt.clientName}</p>
           {reminded && (
             <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-body shrink-0">
               <Check className="w-2.5 h-2.5" />lembrado
@@ -53,7 +53,8 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
         <p className="text-white/65 text-xs font-body truncate">{apt.serviceName}{apt.barberName ? ` · ${apt.barberName}` : ''}</p>
       </div>
 
-      {/* Status */}
+      {/* Status + ações: no celular descem pra linha de baixo e o nome fica inteiro */}
+      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end sm:gap-3">
       <div className={`shrink-0 flex items-center gap-1.5 text-xs font-body ${s.text}`}>
         <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{s.label}
       </div>
@@ -69,7 +70,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
           }`}
         >
           <MessageCircle className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{reminded ? 'Lembrar de novo' : 'Lembrar'}</span>
+          <span>{reminded ? 'Lembrar de novo' : 'Lembrar'}</span>
         </button>
         {apt.status === 'pending' && (
           <button
@@ -77,7 +78,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
             title="Marcar como confirmado"
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500 text-[#0a0a0a] hover:bg-amber-400 text-xs font-semibold font-body transition-colors"
           >
-            <Check className="w-3.5 h-3.5" /><span className="hidden sm:inline">Confirmar</span>
+            <Check className="w-3.5 h-3.5" /><span>Confirmar</span>
           </button>
         )}
         <button
@@ -87,6 +88,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
         >
           <X className="w-3.5 h-3.5" />
         </button>
+      </div>
       </div>
     </div>
   )
