@@ -80,7 +80,7 @@ export const PERGUNTAS: Pergunta[] = [
   {
     pergunta: 'Preciso contratar um site por fora?',
     resposta:
-      'Não. Desde o Básico a página da barbearia já vem junto, com serviços, equipe e agendamento no mesmo endereço. No Pro ela ganha a loja de produtos.',
+      'Não. Desde o Básico a página da barbearia já vem junto, com serviços, equipe e agendamento no mesmo endereço. No Básico e no Pro dá pra oferecer produtos no fim do agendamento; a loja completa vem no Premium.',
   },
   {
     pergunta: 'Tem fidelidade?',

@@ -13,27 +13,35 @@ import {
   type ProductInput,
   type ProductSale,
 } from '@/repositories/productRepository'
-import type { PublicProduct } from '@/repositories/publicStoreRepository'
+import type { PublicProduct, StoreMode } from '@/repositories/publicStoreRepository'
+import { bumpLimit, hasFullStore, storeLimitMessage } from '@/lib/storePlan'
+import type { SaasPlan } from '@/types/saas'
 
 export const monthStartISO = (d = new Date()) => new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
 
 interface DemoState {
   products: Product[]
   sales: ProductSale[]
+  /** Chaves de Configurações no demo (no banco: barbershops.store_enabled/bump_enabled) */
+  storeEnabled?: boolean
+  bumpEnabled?: boolean
 }
 
-/** Barbearia demo do Básico: 1 produto, só no agendamento (como no banco). */
-export const isDemoBasicShop = (bsId: string) => bsId === getDemoBarbershop('basic').id
+/** Plano da barbearia demo (mendes = Básico, corvo = Pro, atlas = Premium). */
+export function demoPlanOf(bsId: string): SaasPlan | null {
+  for (const plan of ['basic', 'pro', 'premium'] as const) {
+    if (getDemoBarbershop(plan).id === bsId) return plan
+  }
+  return null
+}
 
-const demoKey = (bsId: string) => `barberos:loja2:${bsId}${isDemoBasicShop(bsId) ? ':basico' : ''}`
-
-/** Mesmo texto do gatilho products_plan_limit. */
-export const BASIC_STORE_LIMIT_MSG = 'No plano Básico cabe 1 produto, o do agendamento. A loja completa vem no Pro.'
+const DEMO_KEY_SUFFIX: Partial<Record<SaasPlan, string>> = { basic: ':basico', pro: ':pro' }
+const demoKey = (bsId: string) => `barberos:loja2:${bsId}${DEMO_KEY_SUFFIX[demoPlanOf(bsId) ?? 'premium'] ?? ''}`
 
 function demoSeed(bsId: string): DemoState {
   const p = (id: string, name: string, category: string, price: number, cost: number, stock: number, description = ''): Product => ({
     id, barbershopId: bsId, name, description, category, price, cost, stock, lowStockAt: 2,
-    imageUrls: [], visibleOnSite: true, active: true,
+    imageUrls: [], visibleOnSite: true, inBump: true, active: true,
   })
   const products = [
     p('demo-p1', 'Pomada efeito matte 120g', 'Cabelo', 45, 22, 8, 'Fixação média, sem brilho.'),
@@ -49,8 +57,19 @@ function demoSeed(bsId: string): DemoState {
     clientName: client, clientPhone: '11987654321', appointmentId: withBooking ? 'demo-apt' : null, status,
     createdAt: new Date(now - hoursAgo * 3600_000).toISOString(),
   })
-  if (isDemoBasicShop(bsId)) {
+  const plan = demoPlanOf(bsId)
+  if (plan === 'basic') {
     return { products: [products[0]], sales: [line('demo-o1', products[0], 1, 3, 'Rafael Souza', 'reservado', true)] }
+  }
+  if (plan === 'pro') {
+    const three = [products[0], products[1], products[4]]
+    return {
+      products: three,
+      sales: [
+        line('demo-o1', products[0], 1, 3, 'Rafael Souza', 'reservado', true),
+        line('demo-o2', products[1], 2, 26, 'Marcos Lima', 'retirado', true),
+      ],
+    }
   }
   return {
     products,
@@ -68,7 +87,11 @@ function loadDemo(bsId: string): DemoState {
     const raw = localStorage.getItem(demoKey(bsId))
     if (raw) {
       const parsed: unknown = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object' && 'products' in parsed && 'sales' in parsed) return parsed as DemoState
+      if (parsed && typeof parsed === 'object' && 'products' in parsed && 'sales' in parsed) {
+        const st = parsed as DemoState
+        // Estado salvo antes do "Leve junto" configurável: todo produto entra
+        return { ...st, products: st.products.map(p => ({ ...p, inBump: p.inBump ?? true })) }
+      }
     }
   } catch {
     // corrompido: volta pros exemplos
@@ -83,7 +106,7 @@ const saveDemo = (bsId: string, s: DemoState) => {
 /** Erros do banco que fazem sentido pro barbeiro; o resto vira mensagem genérica. */
 export function productErrorMessage(err: unknown): string {
   const msg = err instanceof Error ? err.message : (err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : '')
-  if (/cancelado não volta|Mudança de status|No plano Básico cabe 1 produto/.test(msg)) return msg
+  if (/cancelado não volta|Mudança de status|No plano (Básico|Pro) cabe/.test(msg)) return msg
   if (/row-level security|violates row-level|42501|permission denied/.test(msg)) return 'Só o dono ou admin da barbearia pode fazer isso.'
   if (/Upload falhou|Imagem muito grande|Arquivo inválido|ler essa imagem/.test(msg)) return msg
   return 'Não deu certo. Tente de novo em instantes.'
@@ -142,10 +165,13 @@ export function useProducts(barbershopId: string | undefined) {
   const save = async (input: ProductInput, id?: string): Promise<Product> => {
     if (!barbershopId) throw new Error('sem barbearia')
     if (demo) {
-      if (!id && isDemoBasicShop(barbershopId) && loadDemo(barbershopId).products.some(p => p.active)) {
-        throw new Error(BASIC_STORE_LIMIT_MSG)
+      const plan = demoPlanOf(barbershopId)
+      const limit = bumpLimit(plan)
+      if (!id && limit !== null && loadDemo(barbershopId).products.filter(p => p.active).length >= limit) {
+        throw new Error(storeLimitMessage(plan))
       }
-      const product: Product = { id: id ?? `demo-${crypto.randomUUID()}`, barbershopId, active: true, ...input }
+      const before = loadDemo(barbershopId).products.find(p => p.id === id)
+      const product: Product = { id: id ?? `demo-${crypto.randomUUID()}`, barbershopId, active: true, inBump: before?.inBump ?? true, ...input }
       mutateDemo(s => ({
         ...s,
         products: id ? s.products.map(p => (p.id === id ? product : p)) : [...s.products, product],
@@ -179,6 +205,16 @@ export function useProducts(barbershopId: string | undefined) {
     return result
   }
 
+  /** Liga/desliga o produto no "Leve junto no dia". */
+  const setInBump = async (id: string, inBump: boolean) => {
+    if (demo) {
+      mutateDemo(s => ({ ...s, products: s.products.map(p => (p.id === id ? { ...p, inBump } : p)) }))
+      return
+    }
+    await productRepository.setInBump(id, inBump)
+    setProducts(prev => prev.map(p => (p.id === id ? { ...p, inBump } : p)))
+  }
+
   /** Retirou (reservado → retirado) ou cancelou (estoque volta). */
   const setOrderStatus = async (orderId: string, status: 'retirado' | 'cancelado') => {
     if (demo) {
@@ -193,7 +229,7 @@ export function useProducts(barbershopId: string | undefined) {
           }
           return x
         })
-        return { sales, products: s.products.map(p => ({ ...p, stock: p.stock + (back.get(p.id) ?? 0) })) }
+        return { ...s, sales, products: s.products.map(p => ({ ...p, stock: p.stock + (back.get(p.id) ?? 0) })) }
       })
       return
     }
@@ -201,30 +237,57 @@ export function useProducts(barbershopId: string | undefined) {
     await reload() // estoque novo vem do banco
   }
 
-  return { products, sales, loading, demo, save, remove, setOrderStatus, reload }
+  return { products, sales, loading, demo, save, remove, setInBump, setOrderStatus, reload }
 }
 
 // ─── Demo do site do cliente ─────────────────────────────────────────────────
 
-export function demoPublicProducts(bsId: string): PublicProduct[] {
-  const onSite = loadDemo(bsId).products.filter(p => p.active && p.visibleOnSite)
-  return (isDemoBasicShop(bsId) ? onSite.slice(0, 1) : onSite)
+/** Chaves de Configurações no demo. */
+export function demoStoreSettings(bsId: string): { storeEnabled: boolean; bumpEnabled: boolean } {
+  const s = loadDemo(bsId)
+  return { storeEnabled: s.storeEnabled ?? true, bumpEnabled: s.bumpEnabled ?? true }
+}
+
+export function saveDemoStoreSettings(bsId: string, next: { storeEnabled?: boolean; bumpEnabled?: boolean }) {
+  saveDemo(bsId, { ...loadDemo(bsId), ...next })
+}
+
+/** Mesmas regras de public_store_mode / barbershop_bump_products. */
+function demoRules(bsId: string) {
+  const s = loadDemo(bsId)
+  const plan = demoPlanOf(bsId)
+  const { storeEnabled, bumpEnabled } = demoStoreSettings(bsId)
+  const open = hasFullStore(plan) && storeEnabled
+  const onSite = s.products.filter(p => p.active && p.visibleOnSite)
+  const limit = bumpLimit(plan)
+  const bumpIds = new Set(
+    bumpEnabled ? onSite.filter(p => p.inBump).slice(0, limit ?? undefined).map(p => p.id) : [],
+  )
+  const mode: StoreMode = open ? 'loja' : bumpEnabled ? 'leve_junto' : 'nenhuma'
+  return { s, open, onSite, bumpIds, mode }
+}
+
+export function demoPublicStore(bsId: string): { mode: StoreMode; products: PublicProduct[] } {
+  const { open, onSite, bumpIds, mode } = demoRules(bsId)
+  const products = onSite
+    .filter(p => open || bumpIds.has(p.id))
     .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.category.localeCompare(b.category) || a.name.localeCompare(b.name))
     .map(p => ({
       id: p.id, name: p.name, description: p.description, category: p.category,
-      price: p.price, imageUrls: p.imageUrls, available: Math.min(p.stock, 10),
+      price: p.price, imageUrls: p.imageUrls, available: Math.min(p.stock, 10), inBump: bumpIds.has(p.id),
     }))
+  return { mode, products }
 }
 
 /** Mesmas regras do public_place_product_order: tudo ou nada, baixa estoque. */
 export function demoPlaceOrder(bsId: string, input: { items: OrderItem[]; clientName: string; clientPhone: string; withBooking: boolean }): string {
-  const s = loadDemo(bsId)
-  if (isDemoBasicShop(bsId) && !input.withBooking) throw new Error('Produto indisponível')
+  const { s, open, bumpIds } = demoRules(bsId)
+  if (!open && !input.withBooking) throw new Error('Produto indisponível')
   const orderId = `demo-${crypto.randomUUID()}`
   const lines: ProductSale[] = []
   const stock = new Map(s.products.map(p => [p.id, p.stock]))
   for (const it of input.items) {
-    const prod = s.products.find(p => p.id === it.productId && p.active && p.visibleOnSite)
+    const prod = s.products.find(p => p.id === it.productId && p.active && p.visibleOnSite && (open || bumpIds.has(p.id)))
     if (!prod) throw new Error('Produto indisponível')
     const left = stock.get(prod.id) ?? 0
     if (left < it.quantity) throw new Error(`Sem estoque suficiente: ${prod.name}`)
@@ -237,6 +300,7 @@ export function demoPlaceOrder(bsId: string, input: { items: OrderItem[]; client
     })
   }
   saveDemo(bsId, {
+    ...s,
     products: s.products.map(p => ({ ...p, stock: stock.get(p.id) ?? p.stock })),
     sales: [...lines, ...s.sales],
   })

@@ -1,8 +1,9 @@
 // Loja da barbearia (lado do barbeiro): catálogo, estoque e os pedidos que
 // chegam do site do cliente (reserva avulsa ou "leve junto" no agendamento).
 // Dono/admin cadastra e edita; a equipe marca retirado ou cancela.
-// Básico: 1 produto, oferecido só no fim do agendamento (o banco trava o
-// resto). Pro/Premium: loja completa no site.
+// Básico: 1 produto, Pro: até 3 — oferecidos no fim do agendamento ("Leve
+// junto"; o banco trava o resto). Premium: loja completa no site. As chaves
+// e a escolha do "Leve junto" ficam em Configurações › Vendas no site.
 
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -10,6 +11,7 @@ import { Plus, Pencil, Search, Package, ArrowUpRight } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { useProducts, productErrorMessage } from '@/hooks/useProducts'
+import { bumpLimit, hasFullStore } from '@/lib/storePlan'
 import { toast } from '@/hooks/use-toast'
 import ProductFormDialog from '@/components/dashboard/products/ProductFormDialog'
 import OrdersList, { groupOrders } from '@/components/dashboard/products/OrdersList'
@@ -25,7 +27,9 @@ const stockState = (p: Product): 'ok' | 'acabando' | 'esgotado' =>
 const DashboardProdutos = () => {
   const { barbershop, isAdmin } = useTenant()
   const { account } = useSaasAccount()
-  const fullStore = account?.plan === 'pro' || account?.plan === 'premium'
+  const fullStore = hasFullStore(account?.plan)
+  const limit = bumpLimit(account?.plan)
+  const planName = account?.plan === 'pro' ? 'Pro' : 'Básico'
   const { products, sales, loading, demo, save, remove, setOrderStatus } = useProducts(barbershop?.id)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string | null>(null)
@@ -59,7 +63,7 @@ const DashboardProdutos = () => {
 
   if (!barbershop) return null
 
-  const canAdd = isAdmin && (fullStore || products.length === 0)
+  const canAdd = isAdmin && (limit === null || products.length < limit)
 
   const openNew = () => { setEditing(null); setFormOpen(true) }
   const openEdit = (p: Product) => { setEditing(p); setFormOpen(true) }
@@ -83,7 +87,7 @@ const DashboardProdutos = () => {
           <p className="text-white/65 text-sm font-body mt-1">
             {fullStore
               ? 'O cliente reserva pelo site da barbearia, sozinho ou junto com o horário, e paga aqui. O estoque desce na hora.'
-              : 'No Básico você escolhe 1 produto pra oferecer no fim do agendamento, no “Leve junto no dia”. O cliente separa e paga aqui junto com o corte.'}
+              : `No ${planName} você oferece ${limit === 1 ? '1 produto' : `até ${limit} produtos`} no fim do agendamento, no “Leve junto no dia”. O cliente separa e paga aqui junto com o corte.`}
           </p>
         </div>
         {canAdd && (
@@ -96,14 +100,15 @@ const DashboardProdutos = () => {
       {!fullStore && (
         <div className="border-l-2 border-amber-500/60 pl-4 py-1">
           <p className="text-white/80 text-sm font-body">
-            {products.length > 1
-              ? `Só “${products[0]?.name ?? ''}” aparece no agendamento. Os outros ficam guardados aqui até você voltar pro Pro ou arquivar.`
-              : products.length === 1 && isAdmin
-                ? 'Pra trocar o produto, edite este ou exclua e cadastre outro.'
-                : 'O produto aparece pro cliente na última etapa do agendamento, com foto e preço.'}
+            {limit !== null && products.length > limit
+              ? `Só ${limit === 1 ? 'o mais antigo aparece' : `os ${limit} mais antigos aparecem`} no agendamento. Os outros ficam guardados aqui até você voltar pro Premium ou arquivar.`
+              : limit !== null && products.length >= limit && isAdmin
+                ? `${products.length === 1 ? 'Seu produto já está cadastrado' : `Os ${limit} produtos já estão cadastrados`}. Pra trocar, edite ou exclua e cadastre outro.`
+                : 'O produto aparece pro cliente na última etapa do agendamento, com foto e preço.'}{' '}
+            <Link to="/dashboard/configuracoes" className="text-amber-300 hover:text-amber-200 underline underline-offset-2">Ligar ou desligar em Configurações</Link>
           </p>
           <Link to="/dashboard/assinatura" className="mt-1 inline-flex items-center gap-1 text-amber-300 text-xs font-body hover:text-amber-200">
-            Loja completa no Pro: produtos sem limite, página da loja no site e reserva sem horário
+            Loja completa no Premium: produtos sem limite, página da loja no site e reserva sem horário
             <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
         </div>

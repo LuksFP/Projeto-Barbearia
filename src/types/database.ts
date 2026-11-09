@@ -368,6 +368,8 @@ export type Database = {
           logo_text: string
           name: string
           open_time: string
+          store_enabled: boolean
+          bump_enabled: boolean
           phone: string
           primary_color: string
           saas_account_id: string
@@ -395,6 +397,8 @@ export type Database = {
           logo_text?: string
           name: string
           open_time?: string
+          store_enabled?: boolean
+          bump_enabled?: boolean
           phone?: string
           primary_color?: string
           saas_account_id: string
@@ -422,6 +426,8 @@ export type Database = {
           logo_text?: string
           name?: string
           open_time?: string
+          store_enabled?: boolean
+          bump_enabled?: boolean
           phone?: string
           primary_color?: string
           saas_account_id?: string
@@ -851,6 +857,7 @@ export type Database = {
           stock: number
           updated_at: string
           visible_on_site: boolean
+          in_bump: boolean
         }
         Insert: {
           active?: boolean
@@ -867,6 +874,7 @@ export type Database = {
           stock?: number
           updated_at?: string
           visible_on_site?: boolean
+          in_bump?: boolean
         }
         Update: {
           active?: boolean
@@ -883,6 +891,7 @@ export type Database = {
           stock?: number
           updated_at?: string
           visible_on_site?: boolean
+          in_bump?: boolean
         }
         Relationships: [
           {
@@ -1135,6 +1144,7 @@ export type Database = {
           description: string
           id: string
           image_urls: string[]
+          in_bump: boolean
           name: string
           price: number
         }[]

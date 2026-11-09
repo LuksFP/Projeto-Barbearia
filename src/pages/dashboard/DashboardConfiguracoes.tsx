@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2 } from 'lucide-react'
+import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2, ShoppingBag } from 'lucide-react'
+import StoreSettings from '@/components/dashboard/products/StoreSettings'
 import { getDefaultCancellationPolicy, isDemoMode } from '@/lib/demo'
 import type { CancellationPolicy } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
@@ -326,6 +327,13 @@ const DashboardConfiguracoes = () => {
         </div>
         <Field label="Logo texto" value={barbershop.logoText} hint="fallback sem logo" />
       </Section>
+
+      {/* Vendas no site: "Leve junto" no agendamento e loja completa (Premium) */}
+      <div id="vendas">
+        <Section title="Vendas no Site" icon={ShoppingBag}>
+          <StoreSettings canEdit={canEdit} />
+        </Section>
+      </div>
 
       {/* Horário de funcionamento */}
       <Section title="Horário de Funcionamento" icon={Clock} accent>

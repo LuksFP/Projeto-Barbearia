@@ -30,6 +30,9 @@ export interface Barbershop {
   // deles em silêncio e a barbearia volta a abrir 08:00 pra quem agenda.
   openTime: string          // horário de abertura 'HH:MM'
   closeTime: string         // horário de fechamento 'HH:MM'
+  // Configurações › Vendas no site
+  storeEnabled: boolean     // loja completa no site (só vale no Premium)
+  bumpEnabled: boolean      // "Leve junto no dia" no fim do agendamento
 }
 
 export interface BarbershopMember {

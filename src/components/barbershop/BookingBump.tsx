@@ -1,5 +1,6 @@
-// "Leve junto" no fim do agendamento: produtos da loja da barbearia que o
-// cliente separa pra pegar no dia, pagando tudo lá. Só aparece com estoque.
+// "Leve junto" no fim do agendamento: os produtos que a barbearia marcou em
+// Configurações (e o que já veio da sacola), pra pegar no dia pagando tudo lá.
+// Só aparece com estoque.
 import { Minus, Plus, ShoppingBag } from 'lucide-react'
 import type { PublicProduct } from '@/repositories/publicStoreRepository'
 
@@ -14,7 +15,7 @@ const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', curren
 
 const BookingBump = ({ products, picked, onChange, primary }: Props) => {
   // O que já está escolhido (ex.: veio da sacola) aparece primeiro
-  const offer = products.filter(p => p.available > 0)
+  const offer = products.filter(p => p.available > 0 && (p.inBump || picked[p.id]))
     .sort((a, b) => Number(!!picked[b.id]) - Number(!!picked[a.id]))
     .slice(0, Math.max(6, Object.keys(picked).length))
   if (offer.length === 0) return null

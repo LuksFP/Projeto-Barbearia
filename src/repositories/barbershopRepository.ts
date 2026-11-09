@@ -41,6 +41,8 @@ export function mapBarbershopRow(row: BarbershopRow, plan: Barbershop['plan']): 
     clubPixKey: row.club_pix_key ?? '',
     openTime: row.open_time ?? DEFAULT_OPEN,
     closeTime: row.close_time ?? DEFAULT_CLOSE,
+    storeEnabled: row.store_enabled ?? true,
+    bumpEnabled: row.bump_enabled ?? true,
   }
 }
 

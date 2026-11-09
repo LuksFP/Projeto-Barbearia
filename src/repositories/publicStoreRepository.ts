@@ -1,8 +1,8 @@
 // Loja no site do cliente (anon). Só RPC: o cliente não lê nem grava tabela.
 //   vitrine → public_barbershop_products (só o que a barbearia marcou pro site)
 //   pedido  → public_place_product_order (tudo ou nada; baixa o estoque no banco)
-//   modo    → public_store_mode: 'loja' (Pro/Premium) ou 'leve_junto' (Básico:
-//             1 produto, só no fim do agendamento)
+//   modo    → public_store_mode: 'loja' (Premium com a loja ligada),
+//             'leve_junto' (só a oferta no fim do agendamento) ou 'nenhuma'
 import { supabasePublic } from '@/lib/supabase-public'
 import type { OrderItem } from '@/repositories/productRepository'
 
@@ -14,9 +14,10 @@ export interface PublicProduct {
   price: number
   imageUrls: string[]
   available: number   // até 10; 0 = esgotado
+  inBump: boolean     // aparece no "Leve junto no dia"
 }
 
-export type StoreMode = 'loja' | 'leve_junto'
+export type StoreMode = 'loja' | 'leve_junto' | 'nenhuma'
 
 export interface PlaceOrderInput {
   barbershopId: string
@@ -30,7 +31,7 @@ export const publicStoreRepository = {
   async mode(barbershopId: string): Promise<StoreMode> {
     const { data, error } = await supabasePublic.rpc('public_store_mode', { p_barbershop_id: barbershopId })
     if (error) throw error
-    return data === 'leve_junto' ? 'leve_junto' : 'loja'
+    return data === 'loja' || data === 'nenhuma' ? data : 'leve_junto'
   },
 
   async list(barbershopId: string): Promise<PublicProduct[]> {
@@ -44,6 +45,7 @@ export const publicStoreRepository = {
       price: Number(r.price),
       imageUrls: r.image_urls ?? [],
       available: r.available,
+      inBump: r.in_bump,
     }))
   },
 

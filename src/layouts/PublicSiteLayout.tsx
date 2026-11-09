@@ -9,7 +9,7 @@ import BagDrawer from '@/components/barbershop/store/BagDrawer'
 import { supabasePublic } from '@/lib/supabase-public'
 import { getDemoPublicSiteBySlug, isDemoMode } from '@/lib/demo'
 import { publicStoreRepository, type PublicProduct, type StoreMode } from '@/repositories/publicStoreRepository'
-import { demoPublicProducts, isDemoBasicShop } from '@/hooks/useProducts'
+import { demoPublicStore } from '@/hooks/useProducts'
 import type { Barbershop, BarbershopService, BarbershopBarber, BarbershopMembership } from '@/types/tenant'
 import type { Database, Tables } from '@/types/database'
 import { mapBarbershopRow } from '@/repositories/barbershopRepository'
@@ -25,7 +25,7 @@ type PublicBarbershopRow =
 // Site público lê pela RPC, que não devolve colunas internas (chave PIX,
 // embed_key, conta SaaS). Elas entram vazias; o site não conhece o plano.
 const mapBarbershop = (row: PublicBarbershopRow): Barbershop =>
-  mapBarbershopRow({ ...row, saas_account_id: '', embed_key: '', club_pix_key: '', created_at: '' }, null)
+  mapBarbershopRow({ ...row, saas_account_id: '', embed_key: '', club_pix_key: '', created_at: '', store_enabled: true, bump_enabled: true }, null)
 
 export interface PublicReview {
   rating: number
@@ -44,8 +44,9 @@ export interface PublicSiteOutletCtx {
   ratingCount: number
   /** Loja: só o que a barbearia marcou pra aparecer no site */
   products: PublicProduct[]
-  /** 'loja' = página da loja e sacola (Pro/Premium); 'leve_junto' = Básico,
-   *  1 produto oferecido só no fim do agendamento; null = ainda carregando */
+  /** 'loja' = página da loja e sacola (Premium com a loja ligada);
+   *  'leve_junto' = só a oferta no fim do agendamento; 'nenhuma' = nada;
+   *  null = ainda carregando */
   storeMode: StoreMode | null
   /** Rebusca a loja (estoque mudou depois de um pedido) */
   refreshProducts: () => void
@@ -302,19 +303,20 @@ const PublicSiteLayout = () => {
   useEffect(() => {
     if (!shopId) { setProducts([]); setStoreMode(null); return }
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(shopId)) {
-      setStoreMode(isDemoBasicShop(shopId) ? 'leve_junto' : 'loja')
-      setProducts(demoPublicProducts(shopId))
+      const demoStore = demoPublicStore(shopId)
+      setStoreMode(demoStore.mode)
+      setProducts(demoStore.products)
       return
     }
     let active = true
     publicStoreRepository.list(shopId)
       .then(list => { if (active) setProducts(list) })
       .catch(() => { if (active) setProducts([]) })
-    // Sem a resposta do modo, o site fica na loja completa: o banco já
-    // devolve só 1 produto pro Básico e recusa reserva avulsa.
+    // Sem a resposta do modo, fica só o "Leve junto": o banco já devolve
+    // só os produtos permitidos e recusa reserva avulsa fora do Premium.
     publicStoreRepository.mode(shopId)
       .then(m => { if (active) setStoreMode(m) })
-      .catch(() => { if (active) setStoreMode('loja') })
+      .catch(() => { if (active) setStoreMode('leve_junto') })
     return () => { active = false }
   }, [shopId, productsNonce])
 

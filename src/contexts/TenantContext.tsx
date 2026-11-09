@@ -253,6 +253,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     if (updates.clubPixKey !== undefined) payload.club_pix_key = updates.clubPixKey
     if (updates.openTime !== undefined) payload.open_time = updates.openTime
     if (updates.closeTime !== undefined) payload.close_time = updates.closeTime
+    if (updates.storeEnabled !== undefined) payload.store_enabled = updates.storeEnabled
+    if (updates.bumpEnabled !== undefined) payload.bump_enabled = updates.bumpEnabled
     const row = await barbershopRepository.update(barbershop.id, payload as BarbershopUpdate)
     // Mantém o plano injetado da conta SaaS (o mapper traz 'pro' fixo e o
     // efeito que injeta o plano não roda de novo depois de salvar).

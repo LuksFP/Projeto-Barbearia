@@ -19,6 +19,7 @@ export interface Product {
   lowStockAt: number
   imageUrls: string[]          // até 4; a primeira é a capa
   visibleOnSite: boolean
+  inBump: boolean              // oferecido no "Leve junto no dia" (escolha em Configurações)
   active: boolean
 }
 
@@ -70,6 +71,7 @@ export const mapProduct = (r: Tables<'products'>): Product => ({
   lowStockAt: r.low_stock_at,
   imageUrls: r.image_urls ?? [],
   visibleOnSite: r.visible_on_site,
+  inBump: r.in_bump,
   active: r.active,
 })
 
@@ -148,6 +150,12 @@ export const productRepository = {
       return 'archived'
     }
     throw error
+  },
+
+  /** Liga/desliga o produto no "Leve junto no dia" (Configurações). */
+  async setInBump(id: string, inBump: boolean): Promise<void> {
+    const { error } = await supabase.from('products').update({ in_bump: inBump }).eq('id', id)
+    if (error) throw error
   },
 
   async archive(id: string): Promise<void> {

@@ -26,18 +26,18 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
-    key: 'loja-produtos-2026-11',
+    key: 'vendas-no-site-2026-11',
     badge: 'Novidade no ar',
-    title: 'Sua barbearia agora tem loja no site',
+    title: 'Venda produtos junto com o agendamento',
     description:
-      'Cadastre pomada, óleo, shampoo… O cliente reserva pelo seu site, sozinho ou junto com o horário, e paga aí na barbearia. O estoque desce na hora e a venda entra no Financeiro.',
+      'No fim do agendamento o cliente vê o “Leve junto no dia” e separa uma pomada, um óleo… pra pagar aí junto com o corte. Básico oferece 1 produto, Pro até 3. No Premium abre a loja completa no seu site.',
     steps: [
-      'Abra o menu e toque em “Loja”',
-      'Cadastre o produto com fotos, preço, quanto pagou e o estoque',
-      'Quando o cliente reservar, chega notificação. Ele retirou? Toque em “Retirou”',
+      'Cadastre o produto em “Loja”, com foto, preço e estoque',
+      'Em Configurações › Vendas no site, ligue o “Leve junto” e marque os produtos',
+      'Quando o cliente separar, chega notificação. Ele retirou? Toque em “Retirou”',
     ],
-    ctaLabel: 'Abrir a Loja',
-    ctaTo: '/dashboard/loja',
+    ctaLabel: 'Abrir Configurações',
+    ctaTo: '/dashboard/configuracoes#vendas',
   },
   {
     key: 'sugestoes-2026-11',
