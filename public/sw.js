@@ -49,7 +49,9 @@ self.addEventListener('push', event => {
     icon: '/icon-192.png',
     badge: '/icon-badge-96.png',
     tag: data.tag || 'agendamento',
-    renotify: true,
+    // false = troca o aviso de mesma tag sem tocar de novo (pedido que chega
+    // logo depois do agendamento dele)
+    renotify: data.renotify !== false,
     vibrate: [90, 60, 140],
     data: { url: data.url || '/dashboard/agenda' },
   }

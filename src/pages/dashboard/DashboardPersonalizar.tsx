@@ -142,7 +142,7 @@ const DashboardPersonalizar = () => {
   const validationErrors: string[] = []
   if (!isValidHex(draft.primaryColor)) validationErrors.push('Cor principal inválida')
   if (!isValidHex(draft.accentColor)) validationErrors.push('Cor de destaque inválida')
-  if (draft.logoText.length > 8) validationErrors.push('Logo: máximo 8 caracteres')
+  if (draft.logoText.length > 20) validationErrors.push('Logo: máximo 20 caracteres')
   if (draft.siteType === 'external' && draft.customDomain && !isValidDomain(draft.customDomain)) {
     validationErrors.push('Domínio inválido (sem https://, sem espaços)')
   }
@@ -322,7 +322,7 @@ const team = await BarberOS.getTeam()`
                   <Image className="w-4 h-4 text-amber-400" />
                   Logo
                 </h2>
-                <Field label="Texto do logo" name="logoText" value={draft.logoText} onChange={handleField} placeholder="CORVO" hint="até 8 caracteres" />
+                <Field label="Texto do logo" name="logoText" value={draft.logoText} onChange={handleField} placeholder="CORVO" hint="até 20 caracteres" />
               </div>
             </div>
 

@@ -102,13 +102,31 @@ Deno.serve(async (req) => {
 
     const items = open.map(l => `${l.quantity}× ${l.product_name}`).join(', ')
     const total = open.reduce((a, l) => a + Number(l.total), 0)
-    const withBooking = open.some(l => l.appointment_id)
+    const apptId = open.find(l => l.appointment_id)?.appointment_id ?? null
+
+    // Pedido junto do agendamento: o aviso do horário saiu segundos antes.
+    // Mesma tag = este substitui aquele no celular, com horário + produto num
+    // aviso só, em vez de dois.
+    let when: string | null = null
+    if (apptId) {
+      const { data: a } = await supabase
+        .from('appointments')
+        .select('date, time, service_name')
+        .eq('id', apptId)
+        .maybeSingle()
+      if (a) {
+        const [, m, d] = String(a.date).split('-')
+        when = `${d}/${m} às ${String(a.time).slice(0, 5)} · ${a.service_name}`
+      }
+    }
     return json(
       await sendAll(supabase, orderSubs, {
-        title: withBooking ? 'Cliente agendado e venda realizada!' : 'Nova reserva na loja!',
-        body: [open[0].client_name, items, brl(total)].join(' · '),
-        tag: `pedido-${orderId}`,
+        title: apptId ? 'Cliente agendado e venda realizada!' : 'Nova reserva na loja!',
+        body: [open[0].client_name, when, items, brl(total)].filter(Boolean).join(' · '),
+        tag: apptId ? `agendamento-${apptId}` : `pedido-${orderId}`,
         url: '/dashboard/loja',
+        // Trocar o aviso do horário pelo combinado sem tocar/vibrar de novo
+        renotify: !apptId,
       }),
     )
   }
@@ -159,7 +177,7 @@ type Sub = { id: string; endpoint: string; p256dh: string; auth: string }
 async function sendAll(
   supabase: ReturnType<typeof createAdminClient>,
   subs: Sub[],
-  message: { title: string; body: string; tag: string; url: string },
+  message: { title: string; body: string; tag: string; url: string; renotify?: boolean },
 ): Promise<{ sent: number; removed: number }> {
   if (!subs.length) return { sent: 0, removed: 0 }
   const payload = JSON.stringify(message)

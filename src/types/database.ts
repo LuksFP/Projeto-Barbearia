@@ -1171,7 +1171,7 @@ export type Database = {
         }[]
       }
       public_barber_busy_slots: {
-        Args: { p_barber_id: string; p_barbershop_id: string; p_date: string }
+        Args: { p_barber_id: string | null; p_barbershop_id: string; p_date: string }
         Returns: {
           slot_duration: number
           slot_time: string

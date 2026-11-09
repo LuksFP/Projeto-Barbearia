@@ -88,8 +88,12 @@ const BookingSection = ({
 
   const todayStr = new Date().toISOString().split('T')[0]
 
-  // Barbeiro é obrigatório (garante a checagem de conflito por barbeiro)
+  // Barbeiro é obrigatório quando a barbearia tem equipe (garante a checagem
+  // de conflito por barbeiro). Sem ninguém cadastrado, a etapa some e a
+  // barbearia conta como uma cadeira só (ocupados = agendamentos sem barbeiro).
   const pickedBarber = selectedBarber
+  const noBarbers = barbers.length === 0
+  const canPickTime = !!pickedBarber || noBarbers
   // Serviços somam preço e tempo (cada serviço tem sua duração)
   const totalPrice = selectedServices.reduce((acc, s) => acc + s.price, 0)
   const bumpLines = products.filter(p => bump[p.id]).map(p => ({ product: p, qty: bump[p.id] }))
@@ -111,7 +115,7 @@ const BookingSection = ({
 
   // Busca horários ocupados do barbeiro na data (RPC seguro — só horário+duração)
   useEffect(() => {
-    if (step !== 'datetime' || !selectedDate || !pickedBarber) { setBusy([]); return }
+    if (step !== 'datetime' || !selectedDate || !canPickTime) { setBusy([]); return }
 
     // Demo: injeta ocupados fixos pra dar pra ver o bloqueio na tela
     if (isDemoBarbershop) {
@@ -129,7 +133,7 @@ const BookingSection = ({
     supabasePublic
       .rpc('public_barber_busy_slots', {
         p_barbershop_id: barbershop.id,
-        p_barber_id: pickedBarber.id,
+        p_barber_id: pickedBarber?.id ?? null,
         p_date: selectedDate,
       })
       .then(({ data, error }) => {
@@ -142,13 +146,13 @@ const BookingSection = ({
         }))
       })
     return () => { active = false }
-  }, [step, selectedDate, pickedBarber?.id, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step, selectedDate, pickedBarber?.id, canPickTime, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Grade do dia: dentro do expediente, no passo do tempo de corte, sem os que
   // já passaram. Os ocupados ficam na grade (riscados) pra o cliente ver que
   // aquele horário não está disponível, em vez de sumirem.
   const allSlots = useMemo(() => {
-    if (!selectedDate || !pickedBarber) return []
+    if (!selectedDate || !canPickTime) return []
     return buildDaySlots({
       step: Math.min(30, slotDuration),
       duration: slotDuration,
@@ -158,7 +162,7 @@ const BookingSection = ({
       open: barbershop.openTime,
       close: barbershop.closeTime,
     })
-  }, [selectedDate, pickedBarber, slotDuration, busy, barbershop.openTime, barbershop.closeTime])
+  }, [selectedDate, canPickTime, slotDuration, busy, barbershop.openTime, barbershop.closeTime])
   const slots = useMemo(() => allSlots.filter(s => s.available), [allSlots])
   // Aviso na tela de horários quando o escolhido foi pego por outra pessoa
   const [slotNotice, setSlotNotice] = useState('')
@@ -262,7 +266,7 @@ const BookingSection = ({
       }
       setBookError(
         overlap
-          ? 'Esse horário acabou de ser reservado para esse barbeiro. Escolha outro horário.'
+          ? 'Esse horário acabou de ser reservado. Escolha outro horário.'
           : /Muitos agendamentos|já passou|fora do expediente|Preço inválido|inválido para esta barbearia/.test(msg)
             ? msg
             : 'Não foi possível criar o agendamento. Tente novamente.',
@@ -272,9 +276,12 @@ const BookingSection = ({
     }
   }
 
+  const stepOrder = noBarbers ? ['service', 'datetime', 'contact'] : ['service', 'barber', 'datetime', 'contact']
+  const stepLabels = noBarbers ? ['Serviço', 'Data & Hora', 'Contato'] : ['Serviço', 'Barbeiro', 'Data & Hora', 'Contato']
+
   const StepIndicator = ({ current }: { current: number }) => (
     <div className="flex items-center gap-2 mb-8">
-      {['Serviço', 'Barbeiro', 'Data & Hora', 'Contato'].map((label, i) => (
+      {stepLabels.map((label, i) => (
         <div key={i} className="flex items-center gap-2">
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all"
@@ -292,7 +299,7 @@ const BookingSection = ({
           >
             {label}
           </span>
-          {i < 3 && <div className="w-6 h-px" style={{ backgroundColor: i + 1 < current ? primary + '55' : '#2a2a2a' }} />}
+          {i < stepLabels.length - 1 && <div className="w-6 h-px" style={{ backgroundColor: i + 1 < current ? primary + '55' : '#2a2a2a' }} />}
         </div>
       ))}
     </div>
@@ -341,7 +348,7 @@ const BookingSection = ({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <StepIndicator current={['service','barber','datetime','contact'].indexOf(step) + 1} />
+      <StepIndicator current={stepOrder.indexOf(step) + 1} />
 
       {/* Step 1: Serviço */}
       {step === 'service' && (
@@ -403,7 +410,7 @@ const BookingSection = ({
               )}
             </div>
             <button
-              onClick={() => setStep('barber')}
+              onClick={() => setStep(noBarbers ? 'datetime' : 'barber')}
               disabled={selectedServices.length === 0}
               className="flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ backgroundColor: primary, color: '#0a0a0a' }}
@@ -547,7 +554,7 @@ const BookingSection = ({
           )}
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setStep('barber')}
+              onClick={() => setStep(noBarbers ? 'service' : 'barber')}
               className="flex items-center gap-1.5 text-sm text-white/35 hover:text-white/60 font-body transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />

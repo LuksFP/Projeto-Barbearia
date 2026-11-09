@@ -362,15 +362,15 @@ const PublicSiteLayout = () => {
     <BagProvider barbershopId={barbershop.id} products={products}>
     <div className="flex flex-col min-h-screen bg-[#0a0a0a] text-white">
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-[#1a1a1a]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to={`/b/${barbershop.slug}`} className="flex items-center gap-2 group">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-3">
+          <Link to={`/b/${barbershop.slug}`} className="flex items-center gap-2 group min-w-0">
             <div
-              className="w-8 h-8 rounded flex items-center justify-center"
+              className="w-8 h-8 rounded flex items-center justify-center shrink-0"
               style={{ backgroundColor: primary + '22', border: `1px solid ${primary}44` }}
             >
               <Scissors className="w-4 h-4" style={{ color: primary }} />
             </div>
-            <span className="font-heading text-xl tracking-wider" style={{ color: primary }}>
+            <span className="font-heading text-xl tracking-wider truncate" style={{ color: primary }}>
               {barbershop.logoText}
             </span>
           </Link>
@@ -383,7 +383,7 @@ const PublicSiteLayout = () => {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
             {storeMode === 'loja' && products.length > 0 && <BagButton primary={primary} />}
             <a
               href={`https://wa.me/${safeWhatsapp}`}
