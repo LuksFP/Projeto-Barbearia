@@ -288,13 +288,13 @@ const Registrar = () => {
 
             <p className="text-white/20 text-xs font-body text-center mt-6">
               Ao continuar você concorda com os{' '}
-              <span className="text-white/40 hover:text-white/60 cursor-pointer transition-colors">
+              <Link to="/termos" target="_blank" className="text-white/50 underline underline-offset-2 hover:text-white/80 transition-colors">
                 Termos de Uso
-              </span>{' '}
+              </Link>{' '}
               e{' '}
-              <span className="text-white/40 hover:text-white/60 cursor-pointer transition-colors">
+              <Link to="/privacidade" target="_blank" className="text-white/50 underline underline-offset-2 hover:text-white/80 transition-colors">
                 Política de Privacidade
-              </span>
+              </Link>
               .
             </p>
           </motion.div>

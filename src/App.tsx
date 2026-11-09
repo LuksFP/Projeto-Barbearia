@@ -39,7 +39,6 @@ import { SaasAccountProvider } from "@/contexts/SaasAccountContext";
 import SaasGuard from "@/guards/SaasGuard";
 
 // Layouts — 3 áreas distintas do produto (eager: estruturais, sempre no wrapper)
-import LandingLayout from "@/layouts/LandingLayout";
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
@@ -58,21 +57,16 @@ const CompletarRegistro = lazy(() => import("./pages/saas/CompletarRegistro"));
 
 // Landing do SaaS
 const Index = lazy(() => import("./pages/Index"));
-const Sobre = lazy(() => import("./pages/Sobre"));
-const Cortes = lazy(() => import("./pages/Cortes"));
-const TiposCabelo = lazy(() => import("./pages/TiposCabelo"));
-const CabeloLiso = lazy(() => import("./pages/CabeloLiso"));
-const CabeloOndulado = lazy(() => import("./pages/CabeloOndulado"));
-const CabeloCrespo = lazy(() => import("./pages/CabeloCrespo"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Admin = lazy(() => import("./pages/Admin"));
-const Agendamento = lazy(() => import("./pages/Agendamento"));
-const AgendamentoVisitante = lazy(() => import("./pages/AgendamentoVisitante"));
-const ConsultaAgendamento = lazy(() => import("./pages/ConsultaAgendamento"));
-const Depoimentos = lazy(() => import("./pages/Depoimentos"));
-const Fidelidade = lazy(() => import("./pages/Fidelidade"));
-const Assinatura = lazy(() => import("./pages/Assinatura"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Termos = lazy(() => import("./pages/legal/Termos"));
+const Privacidade = lazy(() => import("./pages/legal/Privacidade"));
+
+// Páginas do modelo antigo que já foram indexadas: mandam pro início em vez de 404
+const OLD_PATHS = [
+  "/sobre", "/cortes", "/tipos-cabelo", "/tipos-cabelo/*", "/loja", "/perfil", "/admin",
+  "/checkout", "/confirmacao", "/rastreamento", "/agendamento", "/agendamento-visitante",
+  "/consulta-agendamento", "/depoimentos", "/fidelidade", "/assinatura",
+];
 
 // Site público da barbearia (/b/:slug)
 const BarbershopHome = lazy(() => import("./pages/barbershop/BarbershopHome"));
@@ -134,28 +128,15 @@ const App = () => (
                         {/* ── Landing do SaaS ── menu e rodapé próprios (src/components/landing) */}
                         <Route path="/" element={<Index />} />
 
-                        {/* ── Páginas com o Header + Footer do projeto */}
-                        <Route element={<LandingLayout />}>
-                          <Route path="/sobre" element={<Sobre />} />
-                          <Route path="/cortes" element={<Cortes />} />
-                          <Route path="/tipos-cabelo" element={<TiposCabelo />} />
-                          <Route path="/tipos-cabelo/liso" element={<CabeloLiso />} />
-                          <Route path="/tipos-cabelo/ondulado" element={<CabeloOndulado />} />
-                          <Route path="/tipos-cabelo/crespo" element={<CabeloCrespo />} />
-                          <Route path="/loja" element={<Navigate to="/" replace />} />
-                          <Route path="/login" element={<Navigate to="/entrar" replace />} />
-                          <Route path="/perfil" element={<Profile />} />
-                          <Route path="/admin" element={<Admin />} />
-                          <Route path="/checkout" element={<Navigate to="/" replace />} />
-                          <Route path="/confirmacao" element={<Navigate to="/" replace />} />
-                          <Route path="/rastreamento" element={<Navigate to="/" replace />} />
-                          <Route path="/agendamento" element={<Agendamento />} />
-                          <Route path="/agendamento-visitante" element={<AgendamentoVisitante />} />
-                          <Route path="/consulta-agendamento" element={<ConsultaAgendamento />} />
-                          <Route path="/depoimentos" element={<Depoimentos />} />
-                          <Route path="/fidelidade" element={<Fidelidade />} />
-                          <Route path="/assinatura" element={<Assinatura />} />
-                        </Route>
+                        {/* ── Endereços do modelo antigo ("Barber Pro") → início */}
+                        <Route path="/login" element={<Navigate to="/entrar" replace />} />
+                        {OLD_PATHS.map(path => (
+                          <Route key={path} path={path} element={<Navigate to="/" replace />} />
+                        ))}
+
+                        {/* ── Documentos legais */}
+                        <Route path="/termos" element={<Termos />} />
+                        <Route path="/privacidade" element={<Privacidade />} />
 
                         {/* ── Fluxo de assinatura SaaS ── sem Header/Footer da landing */}
                         <Route path="/planos" element={<Planos />} />

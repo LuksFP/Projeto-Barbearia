@@ -283,7 +283,8 @@
 
 .lp-rodape__linha nav {
   display: flex;
-  gap: 1.8rem;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.8rem;
 }
 
 .lp-rodape__linha .lp-link {

@@ -38,6 +38,12 @@ const Closing = () => {
             <Link to="/entrar" className="lp-link">
               Entrar
             </Link>
+            <Link to="/termos" className="lp-link">
+              Termos
+            </Link>
+            <Link to="/privacidade" className="lp-link">
+              Privacidade
+            </Link>
           </nav>
         </div>
       </footer>

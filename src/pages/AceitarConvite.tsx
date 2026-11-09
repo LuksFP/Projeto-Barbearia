@@ -2,7 +2,7 @@
 // Acessada via link no email: /aceitar-convite?token=xxx&email=yyy&name=zzz&barbershop=www
 
 import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { Scissors, Eye, EyeOff, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { getAuthErrorMessage } from '@/lib/authErrors'
@@ -203,8 +203,11 @@ const AceitarConvite = () => {
           </button>
         </form>
 
-        <p className="text-white/20 text-xs font-body text-center mt-6">
-          Ao criar sua conta, você concorda com os termos de uso do BarberOS.
+        <p className="text-white/30 text-xs font-body text-center mt-6">
+          Ao criar sua conta, você concorda com os{' '}
+          <Link to="/termos" target="_blank" className="text-white/50 underline underline-offset-2 hover:text-white/80">Termos de Uso</Link>
+          {' '}e a{' '}
+          <Link to="/privacidade" target="_blank" className="text-white/50 underline underline-offset-2 hover:text-white/80">Política de Privacidade</Link>.
         </p>
       </motion.div>
     </div>
