@@ -57,6 +57,10 @@ const DashboardAssinatura = () => {
   const StatusIcon = statusCfg.icon
   const daysLeft = trialDaysLeft(account.trialEndsAt)
   const isDemo = isDemoMode()
+  // Assinatura viva no Stripe: dá pra abrir o portal e trocar de plano sem checkout.
+  // Teste grátis, pendente ou cancelado: o caminho é o checkout do plano.
+  const hasSubscription = ['active', 'past_due', 'cancelling'].includes(account.planStatus ?? '')
+  const fmt = (v: number) => v.toFixed(2).replace('.', ',')
 
   const handleChangePlan = async (planId: string) => {
     if (isDemo) {
@@ -304,25 +308,52 @@ const DashboardAssinatura = () => {
 
         {/* Ações */}
         <div className="flex flex-col gap-2 pt-2 border-t border-[#252525]">
-          <button
-            onClick={handleManageStripe}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold text-sm font-body hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Abrindo portal...</>
-            ) : (
-              <><ExternalLink className="w-4 h-4" /> Gerenciar no Stripe</>
-            )}
-          </button>
+          {hasSubscription ? (
+            <>
+              <button
+                onClick={handleManageStripe}
+                disabled={loading}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold text-sm font-body hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Abrindo portal...</>
+                ) : (
+                  <><ExternalLink className="w-4 h-4" /> Gerenciar no Stripe</>
+                )}
+              </button>
 
-          {portalError && (
-            <p className="text-red-400 text-xs font-body text-center">{portalError}</p>
+              {portalError && (
+                <p className="text-red-400 text-xs font-body text-center">{portalError}</p>
+              )}
+
+              <p className="text-white/55 text-xs font-body text-center">
+                Atualizar cartão, ver faturas ou cancelar no portal Stripe. Pra mudar de plano, use a lista abaixo.
+              </p>
+            </>
+          ) : planConfig ? (
+            <>
+              <button
+                onClick={() => handleChangePlan(planConfig.id)}
+                disabled={upgradeLoading !== null}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold text-sm font-body hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {upgradeLoading === planConfig.id ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Abrindo pagamento...</>
+                ) : (
+                  <><CreditCard className="w-4 h-4" /> Assinar o {planConfig.name} — R$ {fmt(planConfig.price)}/{planConfig.period}</>
+                )}
+              </button>
+              <p className="text-white/55 text-xs font-body text-center">
+                {account.planStatus === 'trial'
+                  ? 'O teste continua até o fim. Assinando agora, nada do que você já configurou se perde.'
+                  : 'Pagamento pelo Stripe. O acesso libera assim que a cobrança confirmar.'}
+              </p>
+            </>
+          ) : (
+            <p className="text-white/55 text-xs font-body text-center">
+              Escolha um plano abaixo pra voltar a usar o painel.
+            </p>
           )}
-
-          <p className="text-white/55 text-xs font-body text-center">
-            Atualizar cartão, ver faturas, cancelar ou mudar plano diretamente no portal Stripe.
-          </p>
         </div>
       </motion.div>
 
@@ -336,10 +367,14 @@ const DashboardAssinatura = () => {
         >
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
-            <h2 className="text-white font-semibold font-body">Mudar plano</h2>
+            <h2 className="text-white font-semibold font-body">
+              {hasSubscription ? 'Mudar plano' : planConfig ? 'Ou escolha outro plano' : 'Escolha um plano'}
+            </h2>
           </div>
           <p className="text-white/65 text-sm font-body">
-            Troque para qualquer plano. A diferença de valor é calculada proporcionalmente.
+            {hasSubscription
+              ? 'Troque para qualquer plano. A diferença de valor é calculada proporcionalmente.'
+              : 'Você vai pro pagamento do plano escolhido, sem passar por cadastro de novo.'}
           </p>
           <div className="grid grid-cols-1 gap-3">
             {SAAS_PLANS.filter(p => p.id !== account.plan).map(plan => {

@@ -338,7 +338,7 @@ const DashboardLayout = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate('/planos')}
+              onClick={() => navigate('/dashboard/assinatura')}
               className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold font-body transition-colors ${
                 trial.urgent
                   ? 'bg-red-500 text-white hover:bg-red-400'

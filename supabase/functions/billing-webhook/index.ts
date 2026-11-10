@@ -16,6 +16,19 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
 
 const WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')!
 
+// Preço do Stripe → plano. Quem troca de plano pelo Customer Portal muda o preço
+// mas não o metadata.plan (só o nosso billing-update-subscription escreve ali),
+// então o plano de verdade é o do item da assinatura.
+const PLAN_BY_PRICE: Record<string, string> = {}
+for (const plan of ['basic', 'pro', 'premium']) {
+  const id = Deno.env.get(`STRIPE_PRICE_ID_${plan.toUpperCase()}`)
+  if (id) PLAN_BY_PRICE[id] = plan
+}
+function planFromSubscription(sub: Stripe.Subscription): string | undefined {
+  const priceId = sub.items?.data?.[0]?.price?.id
+  return (priceId && PLAN_BY_PRICE[priceId]) || sub.metadata?.plan || undefined
+}
+
 // Mapeia status de subscription Stripe → status interno
 function toPlanStatus(status: Stripe.Subscription.Status): string {
   switch (status) {
@@ -133,7 +146,7 @@ Deno.serve(async (req) => {
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription
       const accountId = sub.metadata?.saas_account_id
-      const plan      = sub.metadata?.plan
+      const plan      = planFromSubscription(sub)
 
       if (!accountId) break
 

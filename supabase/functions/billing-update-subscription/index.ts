@@ -77,6 +77,8 @@ Deno.serve(async (req) => {
   await stripe.subscriptions.update(subscription.id, {
     items: [{ id: itemId, price: priceId }],
     proration_behavior: 'create_prorations',
+    // Quem escolhe um plano novo quer continuar: desfaz cancelamento agendado.
+    cancel_at_period_end: false,
     metadata: { plan, saas_account_id: account.id as string },
   })
 
@@ -85,7 +87,7 @@ Deno.serve(async (req) => {
   // a conta e o cliente inadimplente nunca é rebaixado (assinatura órfã).
   await supabase
     .from('saas_accounts')
-    .update({ plan, plan_status: 'active', stripe_subscription_id: subscription.id })
+    .update({ plan, plan_status: 'active', cancel_at: null, stripe_subscription_id: subscription.id })
     .eq('id', account.id)
 
   return json({ success: true })

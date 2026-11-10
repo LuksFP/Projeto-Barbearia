@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PLAN_NAME } from '@/types/saas'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2, ShoppingBag } from 'lucide-react'
@@ -296,7 +297,7 @@ const DashboardConfiguracoes = () => {
         <Field label="Nome"       value={barbershop.name} />
         <Field label="Slug / URL" value={`/b/${barbershop.slug}`} hint="imutável" />
         <Field label="Tagline"    value={barbershop.tagline} />
-        <Field label="Plano"      value={(account?.plan ?? 'trial').toUpperCase()} hint={barbershop.active ? 'Ativo' : 'Inativo'} />
+        <Field label="Plano"      value={account?.plan ? PLAN_NAME[account.plan] : 'Sem plano'} hint={barbershop.active ? 'Ativo' : 'Inativo'} />
       </Section>
 
       <Section title="Contato e Localização" icon={MapPin}>

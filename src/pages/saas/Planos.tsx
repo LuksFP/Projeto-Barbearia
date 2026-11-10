@@ -30,14 +30,15 @@ const Planos = () => {
 
   const handleSelect = (plan: SaasPlan) => {
     if (account) {
-      const trialExpiredNow = account.planStatus === 'trial'
-        && !!account.trialEndsAt
-        && new Date(account.trialEndsAt) <= new Date()
-      // Conta existente sem acesso ativo → vai direto pro pagamento
-      if (trialExpiredNow || !['active', 'trial'].includes(account.planStatus ?? '')) {
-        navigate(`/pagamento?plano=${plan}`)
+      // Já paga (ou está cancelando / com cobrança pendente): troca de plano é na Assinatura,
+      // sem checkout novo. Teste grátis, pendente ou cancelado → checkout do plano escolhido.
+      // Antes, quem estava no teste caía em /registrar e voltava pro painel sem pagar.
+      if (['active', 'past_due', 'cancelling'].includes(account.planStatus ?? '')) {
+        navigate('/dashboard/assinatura')
         return
       }
+      navigate(`/pagamento?plano=${plan}`)
+      return
     }
     navigate(`/registrar?plano=${plan}`)
   }
