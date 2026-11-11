@@ -1,4 +1,5 @@
 import { errorText } from '@/lib/errors'
+import { formatPhoneBR } from '@/lib/phone'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
@@ -726,7 +727,7 @@ const DashboardAgenda = () => {
                                 {c.name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                               </span>
                               <span className="text-sm font-body text-white/80 group-hover:text-white flex-1 min-w-0 truncate">{c.name}</span>
-                              <span className="text-xs font-body text-white/60 shrink-0">{c.phone}</span>
+                              <span className="text-xs font-body text-white/60 shrink-0">{formatPhoneBR(c.phone)}</span>
                             </button>
                           ))}
                         </div>
@@ -755,7 +756,7 @@ const DashboardAgenda = () => {
                               className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors"
                             >
                               <span className="text-white text-sm font-body truncate">{c.name}</span>
-                              <span className="text-white/65 text-xs font-body shrink-0">{c.phone}</span>
+                              <span className="text-white/65 text-xs font-body shrink-0">{formatPhoneBR(c.phone)}</span>
                             </button>
                           </li>
                         ))}
@@ -784,7 +785,7 @@ const DashboardAgenda = () => {
                               className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors"
                             >
                               <span className="text-white text-sm font-body truncate">{c.name}</span>
-                              <span className="text-white/65 text-xs font-body shrink-0">{c.phone}</span>
+                              <span className="text-white/65 text-xs font-body shrink-0">{formatPhoneBR(c.phone)}</span>
                             </button>
                           </li>
                         ))}

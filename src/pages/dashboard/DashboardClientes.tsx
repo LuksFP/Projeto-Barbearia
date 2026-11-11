@@ -4,6 +4,7 @@ import { useTenant } from '@/contexts/TenantContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { isDemoMode } from '@/lib/demo'
+import { formatPhoneBR } from '@/lib/phone'
 import type { BarbershopAppointment, BarbershopClient } from '@/types/tenant'
 import type { AppointmentRow } from '@/repositories/appointmentRepository'
 import { toast } from '@/hooks/use-toast'
@@ -316,7 +317,7 @@ const ClientDrawer = ({
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-body">
               <Phone className="w-3.5 h-3.5 text-white/55 shrink-0" />
-              <span className="text-white/65">{client.phone}</span>
+              <span className="text-white/65">{formatPhoneBR(client.phone)}</span>
             </div>
             {client.email && (
               <div className="flex items-center gap-2 text-sm font-body">
@@ -680,7 +681,7 @@ const DashboardClientes = () => {
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Phone className="w-3 h-3 text-white/45" />
-                <p className="text-white/65 text-xs font-body">{client.phone}</p>
+                <p className="text-white/65 text-xs font-body">{formatPhoneBR(client.phone)}</p>
               </div>
               <p className="sm:hidden mt-0.5 text-white/55 text-xs font-body">
                 {client.totalVisits} visitas · {client.lastVisit ? `última ${fmtDate(client.lastVisit)}` : 'sem visitas'}

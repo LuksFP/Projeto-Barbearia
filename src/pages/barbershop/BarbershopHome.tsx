@@ -87,7 +87,8 @@ const BookingSection = ({
   const [busy, setBusy] = useState<BusyRange[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  // Data local (toISOString é UTC: depois das 21h o "hoje" virava amanhã e o cliente não conseguia marcar pro mesmo dia)
+  const todayStr = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}` })()
 
   // Barbeiro é obrigatório quando a barbearia tem equipe (garante a checagem
   // de conflito por barbeiro). Sem ninguém cadastrado, a etapa some e a
@@ -424,7 +425,7 @@ const BookingSection = ({
               {selectedServices.length > 0 ? (
                 <span className="text-white/60">
                   {selectedServices.length} {selectedServices.length === 1 ? 'serviço' : 'serviços'} ·{' '}
-                  <span className="text-white/90 font-semibold">R$ {totalPrice.toFixed(0)}</span>
+                  <span className="text-white/90 font-semibold">R$ {totalPrice.toFixed(2).replace('.', ',')}</span>
                 </span>
               ) : (
                 <span className="text-white/30">Escolha um serviço</span>
@@ -607,7 +608,7 @@ const BookingSection = ({
             <div className="flex items-center gap-2 text-sm">
               <Scissors className="w-3.5 h-3.5 shrink-0" style={{ color: primary }} />
               <span className="text-white/80">{servicesLabel}</span>
-              <span className="ml-auto font-heading" style={{ color: primary }}>R$ {totalPrice.toFixed(0)}</span>
+              <span className="ml-auto font-heading" style={{ color: primary }}>R$ {totalPrice.toFixed(2).replace('.', ',')}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-white/40 pl-6">
               <Clock className="w-3 h-3 shrink-0" />
