@@ -201,9 +201,14 @@ REVOKE ALL ON FUNCTION public.product_sale_status_change() FROM PUBLIC, anon, au
 -- retirar mesmo sem o corte (ou a barbearia estorna pelo painel).
 -- "Faltou" (no_show, novo): igual ao cancelado pros produtos não pagos (voltam
 -- pro estoque); o horário pago fica pago — a barbearia fica com o valor.
--- Não existe CHECK no status de appointments, então no_show já é aceito. Ele
--- continua ocupando o horário na trava de sobreposição, mas o painel só deixa
--- marcar depois que o horário começou (aí o espaço já passou).
+-- A produção tem appointments_status_check (criado fora dos arquivos de
+-- migração) só com pending/confirmed/done/cancelled: recria incluindo no_show.
+-- no_show continua ocupando o horário na trava de sobreposição, mas o painel só
+-- deixa marcar depois que o horário começou (aí o espaço já passou).
+ALTER TABLE public.appointments DROP CONSTRAINT IF EXISTS appointments_status_check;
+ALTER TABLE public.appointments ADD CONSTRAINT appointments_status_check
+  CHECK (status IN ('pending', 'confirmed', 'done', 'cancelled', 'no_show'));
+
 CREATE OR REPLACE FUNCTION public.sync_order_with_appointment()
 RETURNS trigger
 LANGUAGE plpgsql
