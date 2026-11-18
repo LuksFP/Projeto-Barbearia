@@ -144,11 +144,6 @@ export const appointmentRepository = {
     const { data: base, error: readErr } = await supabase.from('appointments').select('*').eq('id', baseId).single()
     if (readErr) throw readErr
     const recurrenceId = crypto.randomUUID()
-    const { error: baseErr } = await supabase
-      .from('appointments')
-      .update({ recurrence_id: recurrenceId, recurrence_every_days: everyDays } as TablesUpdate<'appointments'>)
-      .eq('id', base.id)
-    if (baseErr) throw baseErr
     const created: AppointmentRow[] = []
     const skipped: { date: string; reason: string }[] = []
     for (const date of dates) {
@@ -176,6 +171,14 @@ export const appointmentRepository = {
         const msg = `${error.code ?? ''} ${error.message ?? ''}`
         skipped.push({ date, reason: /23P01|no_overlap/.test(msg) ? 'horário ocupado' : /expediente|fechamento/i.test(msg) ? 'fora do expediente' : 'não deu pra marcar' })
       } else if (data) created.push(data)
+    }
+    // O horário base só vira "fixo" se alguma repetição entrou de fato
+    if (created.length > 0) {
+      const { error: baseErr } = await supabase
+        .from('appointments')
+        .update({ recurrence_id: recurrenceId, recurrence_every_days: everyDays } as TablesUpdate<'appointments'>)
+        .eq('id', base.id)
+      if (baseErr) throw baseErr
     }
     return { created, skipped }
   },

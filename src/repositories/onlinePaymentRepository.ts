@@ -20,6 +20,8 @@ export interface OnlinePayment {
   method: string | null
   paidAt: string | null
   createdAt: string
+  /** Última tentativa de checkout (reabrir o pagamento atualiza) */
+  updatedAt: string
 }
 
 export interface PaymentCheck {
@@ -105,7 +107,7 @@ export const onlinePaymentRepository = {
         id, barbershopId: input.barbershopId,
         orderId: input.orderId ?? null, appointmentId: input.appointmentId ?? null,
         status: 'pago', amount: input.amount, platformFee: Math.round(input.amount * 1.5) / 100,
-        method: 'pix', paidAt: new Date().toISOString(), createdAt: new Date().toISOString(),
+        method: 'pix', paidAt: new Date().toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       }
       demoSave(s)
       await new Promise(r => setTimeout(r, 900))
@@ -172,7 +174,7 @@ export const onlinePaymentRepository = {
     }
     const { data, error } = await supabase
       .from('online_payments')
-      .select('id, order_id, appointment_id, status, amount, platform_fee, method, paid_at, created_at')
+      .select('id, order_id, appointment_id, status, amount, platform_fee, method, paid_at, created_at, updated_at')
       .eq('barbershop_id', barbershopId)
       .order('created_at', { ascending: false })
       .limit(500)
@@ -189,6 +191,7 @@ export const onlinePaymentRepository = {
         method: r.method,
         paidAt: r.paid_at,
         createdAt: r.created_at,
+        updatedAt: r.updated_at,
       }] : []
     })
   },
@@ -217,7 +220,7 @@ export function payWay(p: OnlinePayment | undefined): PayWay {
   if (!p) return 'local'
   if (p.status === 'pago') return 'online'
   if (p.status === 'estornado') return 'estornado'
-  if (p.status === 'pendente' && Date.now() - new Date(p.createdAt).getTime() < CHECKOUT_TTL_MS) return 'pagando'
+  if (p.status === 'pendente' && Date.now() - new Date(p.updatedAt ?? p.createdAt).getTime() < CHECKOUT_TTL_MS) return 'pagando'
   return 'local'
 }
 

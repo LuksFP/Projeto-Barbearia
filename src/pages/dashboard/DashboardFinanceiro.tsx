@@ -191,11 +191,12 @@ const DashboardFinanceiro = () => {
     if (showCommission) {
       if (byMonthBarber) {
         for (const [m, per] of Object.entries(byMonthBarber)) {
-          commissionByMonth[m] = Object.entries(per).reduce((t, [id, v]) => t + v * pctOf(id) / 100, 0)
+          // Horário sem barbeiro ('unknown', barbearia de uma cadeira) não gera comissão
+          commissionByMonth[m] = Object.entries(per).reduce((t, [id, v]) => id === 'unknown' ? t : t + v * pctOf(id) / 100, 0)
         }
       } else {
         const rev = byBarber.reduce((t, b) => t + b.total, 0)
-        const comm = byBarber.reduce((t, b) => t + b.total * pctOf(b.barberId) / 100, 0)
+        const comm = byBarber.reduce((t, b) => (b.barberId === 'unknown' ? t : t + b.total * pctOf(b.barberId) / 100), 0)
         const ratio = rev > 0 ? comm / rev : 0
         for (const m of byMonth) commissionByMonth[m.month] = m.total * ratio
       }

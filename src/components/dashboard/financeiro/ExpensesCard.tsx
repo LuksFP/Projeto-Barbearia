@@ -11,6 +11,11 @@ import type { ExpenseInput } from '@/repositories/expenseRepository'
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 const monthName = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]}/${ym.slice(2, 4)}`
+// ends_on é exclusivo (1º dia do mês em que para): o último mês que conta é o anterior
+const prevMonth = (ym: string) => {
+  const y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7))
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`
+}
 
 interface Props {
   expenses: Expense[]
@@ -134,12 +139,13 @@ const ExpensesCard = ({ expenses, months, onCreate, onRemove, onEndRecurring }: 
                   <p className="text-white/45 text-xs font-body">
                     {categoryLabel(e.category)}
                     {e.recurring
-                      ? <> · <Repeat className="inline w-3 h-3 -mt-0.5" /> todo mês desde {monthName(e.date.slice(0, 7))}{e.endsOn ? ` até ${monthName(e.endsOn.slice(0, 7))} (exclusive)` : ''}</>
+                      ? <> · <Repeat className="inline w-3 h-3 -mt-0.5" /> todo mês desde {monthName(e.date.slice(0, 7))}{e.endsOn ? ` até ${monthName(prevMonth(e.endsOn.slice(0, 7)))}` : ''}</>
                       : <> · {new Date(e.date + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</>}
                   </p>
                 </div>
                 <span className="text-white text-sm font-semibold font-body tabular-nums">{brl(e.amount)}</span>
-                {e.recurring && !e.endsOn && (
+                {/* Fixa que só começa num mês futuro não tem o que encerrar: apaga */}
+                {e.recurring && !e.endsOn && e.date.slice(0, 7) <= today.slice(0, 7) && (
                   <button type="button" onClick={() => void act(e, 'end')} onBlur={() => setArmed(null)}
                     className={`px-2 py-1 rounded-md text-xs font-body border ${armed === `end-${e.id}` ? 'border-amber-500/50 text-amber-300 bg-amber-500/10' : 'border-[#2a2a2a] text-white/50 hover:text-white'}`}>
                     {armed === `end-${e.id}` ? 'Toque de novo: para no mês que vem' : 'Encerrar'}

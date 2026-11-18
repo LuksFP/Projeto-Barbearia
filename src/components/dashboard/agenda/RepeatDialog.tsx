@@ -18,7 +18,8 @@ const RepeatDialog = ({ apt, onClose, onConfirm }: Props) => {
   const [every, setEvery] = useState(15)
   const [count, setCount] = useState(4)
   const [saving, setSaving] = useState(false)
-  const dates = useMemo(() => (apt ? seriesDates(apt.date, every, count) : []), [apt, every, count])
+  // A partir de amanhã: hoje o horário pode já ter passado
+  const dates = useMemo(() => (apt ? seriesDates(apt.date, every, count, new Date(Date.now() + 86_400_000).toLocaleDateString('sv-SE')) : []), [apt, every, count])
 
   const confirm = async () => {
     if (!apt) return

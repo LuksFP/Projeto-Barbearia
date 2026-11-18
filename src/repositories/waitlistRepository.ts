@@ -109,6 +109,6 @@ export const waitlistRepository = {
 /** Mensagens do banco que fazem sentido pro cliente; o resto vira genérica. */
 export function waitlistErrorMessage(err: unknown): string {
   const msg = errorText(err)
-  if (/Telefone inválido|Informe seu nome|Escolha um dia|já está na lista|Período inválido/.test(msg)) return msg
+  if (/Telefone inválido|Informe seu nome|Escolha um dia|já está na lista|Período inválido|Muitos pedidos seguidos/.test(msg)) return msg
   return 'Não deu pra entrar na lista agora. Tente de novo em instantes.'
 }

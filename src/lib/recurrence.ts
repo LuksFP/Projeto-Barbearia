@@ -12,14 +12,20 @@ export const RECURRENCE_OPTIONS: { days: number; label: string }[] = [
 export const recurrenceLabel = (days?: number) =>
   RECURRENCE_OPTIONS.find(o => o.days === days)?.label.toLowerCase() ?? (days ? `a cada ${days} dias` : '')
 
-/** Próximas `count` datas ('YYYY-MM-DD') depois de `baseDate`, de `everyDays` em `everyDays`. */
-export function seriesDates(baseDate: string, everyDays: number, count: number): string[] {
+/**
+ * Próximas `count` datas ('YYYY-MM-DD') depois de `baseDate`, de `everyDays`
+ * em `everyDays`, pulando as que ficam antes de `minDate` (hoje). Repetir um
+ * corte de semanas atrás não cria horário no passado: segue o mesmo ritmo e
+ * começa da próxima data que ainda vem.
+ */
+export function seriesDates(baseDate: string, everyDays: number, count: number, minDate?: string): string[] {
   const out: string[] = []
   const d = new Date(`${baseDate}T12:00:00`)
-  for (let i = 1; i <= count; i++) {
+  for (let i = 1; out.length < count && i < count + 400; i++) {
     const n = new Date(d)
     n.setDate(d.getDate() + everyDays * i)
-    out.push(n.toLocaleDateString('sv-SE'))
+    const iso = n.toLocaleDateString('sv-SE')
+    if (!minDate || iso >= minDate) out.push(iso)
   }
   return out
 }
