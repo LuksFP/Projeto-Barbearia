@@ -6,7 +6,10 @@ import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
 import { isDemoMode, getDemoPlan, getDemoAppointments } from '@/lib/demo'
-import { addDemoBooking, updateDemoBooking, removeDemoBookings, onDemoBookingsChange } from '@/lib/demoBookings'
+import { addDemoBooking, updateDemoBooking, removeDemoBookings, onDemoBookingsChange, listDemoBookings, upsertDemoBooking } from '@/lib/demoBookings'
+import AppointmentExtras from '@/components/dashboard/agenda/AppointmentExtras'
+import RepeatDialog from '@/components/dashboard/agenda/RepeatDialog'
+import WaitlistPanel from '@/components/dashboard/agenda/WaitlistPanel'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
@@ -100,6 +103,61 @@ const DashboardAgenda = () => {
   const [payments, setPayments] = useState<Map<string, OnlinePayment>>(new Map())
   const [armedRefund, setArmedRefund] = useState<string | null>(null)
   const shopOnline = useShopPaysOnline(barbershop?.id)
+  // Cliente fixo: horário escolhido pra repetir (abre o diálogo)
+  const [repeatApt, setRepeatApt] = useState<BarbershopAppointment | null>(null)
+
+  const reloadDay = async () => {
+    if (!barbershop || isDemoMode()) return
+    const rows = await appointmentRepository.listByBarbershop(barbershop.id, selectedDate)
+    setAppointments(rows.map(mapAppointment))
+  }
+
+  const handleReviewRequested = async (apt: BarbershopAppointment) => {
+    const at = new Date().toISOString()
+    setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, reviewRequestedAt: at } : a))
+    if (isDemoMode()) { upsertDemoBooking({ ...apt, reviewRequestedAt: at }); return }
+    try { await appointmentRepository.setReviewRequested(apt.id) } catch { /* a marca é só lembrete; o WhatsApp já abriu */ }
+  }
+
+  const handleRepeat = async (apt: BarbershopAppointment, everyDays: number, dates: string[]) => {
+    if (isDemoMode()) {
+      const rid = `demo-rec-${Date.now()}`
+      upsertDemoBooking({ ...apt, recurrenceId: rid, recurrenceEveryDays: everyDays })
+      dates.forEach((date, i) => addDemoBooking({ ...apt, id: `${rid}-${i}`, date, status: 'confirmed', recurrenceId: rid, recurrenceEveryDays: everyDays, reviewRequestedAt: undefined, remindedAt: undefined }))
+      toast({ title: `${dates.length} horários marcados`, description: `${apt.clientName} virou cliente fixo.` })
+      setRepeatApt(null)
+      return
+    }
+    try {
+      const { created, skipped } = await appointmentRepository.createSeries(apt.id, dates, everyDays)
+      const fmt = (d: string) => new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      toast({
+        title: `${created.length} ${created.length === 1 ? 'horário marcado' : 'horários marcados'}`,
+        description: skipped.length ? `Pulados: ${skipped.map(x => `${fmt(x.date)} (${x.reason})`).join(', ')}` : `${apt.clientName} virou cliente fixo.`,
+      })
+      setRepeatApt(null)
+      await reloadDay()
+    } catch {
+      toast({ title: 'Não deu pra repetir esse horário', variant: 'destructive' })
+    }
+  }
+
+  const handleStopSeries = async (apt: BarbershopAppointment) => {
+    if (!apt.recurrenceId) return
+    if (isDemoMode()) {
+      const future = listDemoBookings(apt.barbershopId).filter(a => a.recurrenceId === apt.recurrenceId && a.date > apt.date && (a.status === 'pending' || a.status === 'confirmed'))
+      future.forEach(a => updateDemoBooking(apt.barbershopId, a.id, { status: 'cancelled' }))
+      toast({ title: future.length ? `${future.length} próximos horários cancelados` : 'Não tinha horários pra frente' })
+      return
+    }
+    try {
+      const n = await appointmentRepository.stopSeries(apt.recurrenceId, apt.date)
+      toast({ title: n ? `${n} próximos horários cancelados` : 'Não tinha horários pra frente', description: n ? 'O deste dia continua marcado.' : undefined })
+      await reloadDay()
+    } catch {
+      toast({ title: 'Não deu pra parar a repetição', description: 'Algum horário pra frente pode estar pago online: cancele esse pelo "Estornar".', variant: 'destructive' })
+    }
+  }
 
   useEffect(() => {
     if (!armedDelete) return
@@ -277,7 +335,7 @@ const DashboardAgenda = () => {
       await onlinePaymentRepository.refund(pay.id)
       if (isDemoMode()) {
         setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, status: 'cancelled' } : a))
-        updateDemoBooking(apt.barbershopId, apt.id, { status: 'cancelled' })
+        upsertDemoBooking({ ...apt, status: 'cancelled' })
       } else if (barbershop) {
         const rows = await appointmentRepository.listByBarbershop(barbershop.id, selectedDate)
         setAppointments(rows.map(mapAppointment))
@@ -294,7 +352,7 @@ const DashboardAgenda = () => {
     if (isDemoMode()) {
       const status = nextStatus as BarbershopAppointment['status']
       setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, status } : a))
-      updateDemoBooking(apt.barbershopId, apt.id, { status })
+      upsertDemoBooking({ ...apt, status })
       return
     }
     setUpdatingId(apt.id)
@@ -499,7 +557,7 @@ const DashboardAgenda = () => {
 
       {/* Navegação dias */}
       <div className="flex items-center gap-2">
-        <button onClick={prevWeek} className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
+        <button onClick={prevWeek} aria-label="Semana anterior" className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
           <ChevronLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 flex gap-2 overflow-x-auto pb-1">
@@ -522,7 +580,7 @@ const DashboardAgenda = () => {
             )
           })}
         </div>
-        <button onClick={nextWeek} className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
+        <button onClick={nextWeek} aria-label="Próxima semana" className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -604,6 +662,18 @@ const DashboardAgenda = () => {
           </div>
         )
       })()}
+
+      {/* Lista de espera do dia (só aparece se tem alguém) */}
+      {barbershop && selectedDate && (
+        <WaitlistPanel
+          barbershopId={barbershop.id}
+          shopName={barbershop.name}
+          date={selectedDate}
+          openedTimes={appointments.filter(a => a.date === selectedDate && a.status === 'cancelled').map(a => a.time.slice(0, 5)).sort()}
+          barberName={id => barbers.find(b => b.id === id)?.name ?? null}
+          refreshKey={appointments.map(a => a.id + a.status).join('|')}
+        />
+      )}
 
       {/* Lista agrupada por barbeiro */}
       {!loading && Object.entries(grouped).map(([barberName, apts]) => (
@@ -696,6 +766,17 @@ const DashboardAgenda = () => {
                       </button>
                     )}
                   </div>
+                )}
+
+                {barbershop && (
+                  <AppointmentExtras
+                    apt={apt}
+                    shopName={barbershop.name}
+                    reviewUrl={barbershop.googleReviewUrl}
+                    onReviewRequested={handleReviewRequested}
+                    onRepeat={setRepeatApt}
+                    onStopSeries={handleStopSeries}
+                  />
                 )}
 
                 {/* Cancelado: pode apagar (dono/admin) */}
@@ -1118,6 +1199,8 @@ const DashboardAgenda = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <RepeatDialog apt={repeatApt} onClose={() => setRepeatApt(null)} onConfirm={handleRepeat} />
     </div>
   )
 }

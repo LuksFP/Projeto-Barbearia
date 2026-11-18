@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PLAN_NAME } from '@/types/saas'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2, ShoppingBag } from 'lucide-react'
+import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2, ShoppingBag, Star } from 'lucide-react'
 import StoreSettings from '@/components/dashboard/products/StoreSettings'
+import GoogleReviewSettings from '@/components/dashboard/settings/GoogleReviewSettings'
 import { getDefaultCancellationPolicy, isDemoMode } from '@/lib/demo'
 import type { CancellationPolicy } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
@@ -226,6 +227,13 @@ const CancellationForm = ({ policy, onChange, onSave, saved, saving }: Cancellat
 
 const DashboardConfiguracoes = () => {
   const { barbershop, userRole, updateBarbershop } = useTenant()
+  // Chegou por link com âncora (#vendas, #avaliacoes): rola até a seção
+  useEffect(() => {
+    const id = window.location.hash.slice(1)
+    if (!id) return
+    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)
+    return () => clearTimeout(t)
+  }, [])
   // barbershop.plan no painel é fixo 'pro'; o plano de verdade é o da conta SaaS.
   const { account } = useSaasAccount()
   const [policy, setPolicy] = useState<CancellationPolicy>(() =>
@@ -333,6 +341,13 @@ const DashboardConfiguracoes = () => {
       <div id="vendas">
         <Section title="Vendas no Site" icon={ShoppingBag}>
           <StoreSettings canEdit={canEdit} />
+        </Section>
+      </div>
+
+      {/* Avaliações no Google: link do "Pedir avaliação" da Agenda */}
+      <div id="avaliacoes">
+        <Section title="Avaliações no Google" icon={Star}>
+          <GoogleReviewSettings canEdit={canEdit} />
         </Section>
       </div>
 

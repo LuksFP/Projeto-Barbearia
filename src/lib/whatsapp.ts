@@ -44,3 +44,16 @@ export function buildBookingConfirmation(b: BookingMessage): string {
   ]
   return linhas.filter((l): l is string => l !== null).join('\n')
 }
+
+/** Pedido de avaliação no Google depois do atendimento. */
+export function buildReviewRequest(clientName: string, shopName: string, url: string): string {
+  const first = clientName.trim().split(/\s+/)[0] || ''
+  return `Oi${first ? ` ${first}` : ''}! Valeu por vir na ${shopName} hoje. Se curtiu o corte, deixa uma avaliação pra gente no Google? Leva um minutinho e ajuda demais a barbearia: ${url}`
+}
+
+/** Aviso pra quem está na lista de espera. */
+export function buildWaitlistNotice(clientName: string, shopName: string, dayLabel: string, times: string[]): string {
+  const first = clientName.trim().split(/\s+/)[0] || ''
+  const when = times.length ? ` às ${times.join(', ')}` : ''
+  return `Oi${first ? ` ${first}` : ''}! Aqui é da ${shopName}. Abriu horário ${dayLabel}${when}. Quer? Me responde aqui que eu já deixo marcado pra você.`
+}

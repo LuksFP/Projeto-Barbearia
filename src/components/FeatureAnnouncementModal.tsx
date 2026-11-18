@@ -27,6 +27,34 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'agenda-avaliacao-fixo-espera-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Mais clientes voltando, sem esforço',
+    description:
+      'Três coisas novas na Agenda: pedir avaliação no Google depois do corte, transformar cliente em fixo (repete o horário sozinho) e lista de espera pra quando o dia lota.',
+    steps: [
+      'Cadastre o link de avaliação em Configurações › Avaliações no Google. Corte concluído? Toque em “Pedir avaliação”',
+      'Cliente que vem sempre no mesmo esquema: toque em “Repetir” no horário dele e escolha de quanto em quanto tempo',
+      'Dia lotado: o cliente entra na lista de espera pelo site. Desmarcou alguém? A lista aparece na Agenda com o botão “Avisar”',
+    ],
+    ctaLabel: 'Cadastrar link do Google',
+    ctaTo: '/dashboard/configuracoes#avaliacoes',
+  },
+  {
+    key: 'meta-comissao-semana-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Meta do mês e comissão da semana',
+    description:
+      'No Financeiro agora dá pra definir quanto você quer faturar no mês e acompanhar numa barra, com a projeção no ritmo atual. E fechar a comissão da semana de cada barbeiro, marcando quem já recebeu.',
+    steps: [
+      'Abra o Financeiro e toque em “Definir meta”',
+      'Em “Comissão da semana”, confira quanto cada barbeiro tem pra receber',
+      'Pagou? Toque em “Marcar como pago”. Dá pra copiar o resumo e mandar no grupo da equipe',
+    ],
+    ctaLabel: 'Abrir Financeiro',
+    ctaTo: '/dashboard/financeiro',
+  },
+  {
     key: 'despesas-lucro-2026-11',
     badge: 'Novidade no ar',
     title: 'Veja quanto sobrou de verdade no mês',

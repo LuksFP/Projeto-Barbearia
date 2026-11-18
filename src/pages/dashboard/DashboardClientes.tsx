@@ -66,6 +66,9 @@ function demoApptToRow(a: BarbershopAppointment, client: BarbershopClient): Appo
     duration_min: a.durationMin ?? 30,
     notes: null,
     reminded_at: a.remindedAt ?? null,
+    review_requested_at: a.reviewRequestedAt ?? null,
+    recurrence_id: a.recurrenceId ?? null,
+    recurrence_every_days: a.recurrenceEveryDays ?? null,
   }
 }
 

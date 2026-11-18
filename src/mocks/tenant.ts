@@ -39,6 +39,8 @@ export const MOCK_BARBERSHOPS: Barbershop[] = [
     closeTime: '20:00',
     storeEnabled: true,
     bumpEnabled: true,
+    googleReviewUrl: '',
+    monthlyGoal: null,
   },
   {
     id: 'bs-002',
@@ -65,6 +67,8 @@ export const MOCK_BARBERSHOPS: Barbershop[] = [
     closeTime: '21:00',
     storeEnabled: true,
     bumpEnabled: true,
+    googleReviewUrl: '',
+    monthlyGoal: null,
   },
 ]
 

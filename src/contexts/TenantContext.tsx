@@ -128,6 +128,9 @@ export function mapAppointment(row: AppointmentRow): BarbershopAppointment {
     membershipType: row.membership_type as BarbershopAppointment['membershipType'],
     price: row.price ?? undefined,
     remindedAt: row.reminded_at ?? undefined,
+    reviewRequestedAt: row.review_requested_at ?? undefined,
+    recurrenceId: row.recurrence_id ?? undefined,
+    recurrenceEveryDays: row.recurrence_every_days ?? undefined,
   }
 }
 
@@ -255,6 +258,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     if (updates.closeTime !== undefined) payload.close_time = updates.closeTime
     if (updates.storeEnabled !== undefined) payload.store_enabled = updates.storeEnabled
     if (updates.bumpEnabled !== undefined) payload.bump_enabled = updates.bumpEnabled
+    if (updates.googleReviewUrl !== undefined) payload.google_review_url = updates.googleReviewUrl.trim() || null
+    if (updates.monthlyGoal !== undefined) payload.monthly_goal = updates.monthlyGoal
     const row = await barbershopRepository.update(barbershop.id, payload as BarbershopUpdate)
     // Mantém o plano injetado da conta SaaS (o mapper traz 'pro' fixo e o
     // efeito que injeta o plano não roda de novo depois de salvar).

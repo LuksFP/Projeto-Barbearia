@@ -43,6 +43,8 @@ export function mapBarbershopRow(row: BarbershopRow, plan: Barbershop['plan']): 
     closeTime: row.close_time ?? DEFAULT_CLOSE,
     storeEnabled: row.store_enabled ?? true,
     bumpEnabled: row.bump_enabled ?? true,
+    googleReviewUrl: row.google_review_url ?? '',
+    monthlyGoal: row.monthly_goal != null ? Number(row.monthly_goal) : null,
   }
 }
 

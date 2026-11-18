@@ -11,6 +11,7 @@ import { supabasePublic } from '@/lib/supabase-public'
 import { buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 import BookingBump from '@/components/barbershop/BookingBump'
 import PayOnline from '@/components/barbershop/store/PayOnline'
+import WaitlistJoin from '@/components/barbershop/WaitlistJoin'
 import StoreSection from '@/components/barbershop/StoreSection'
 import { placeOrder } from '@/lib/placeOrder'
 import { addDemoBooking, listDemoBookings } from '@/lib/demoBookings'
@@ -591,6 +592,19 @@ const BookingSection = ({
                 <p className="text-white/35 text-xs font-body py-3">
                   {loadingSlots ? 'Carregando horários…' : 'Nenhum horário nesse dia. Tente outra data.'}
                 </p>
+              )}
+              {!loadingSlots && (
+                <WaitlistJoin
+                  key={selectedDate}
+                  barbershopId={barbershop.id}
+                  date={selectedDate}
+                  barberId={selectedBarber?.id ?? null}
+                  barberName={selectedBarber?.name ?? null}
+                  primary={primary}
+                  full={slots.length === 0}
+                  initialName={clientName}
+                  initialPhone={clientPhone}
+                />
               )}
             </div>
           )}

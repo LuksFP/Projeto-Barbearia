@@ -122,6 +122,8 @@ const DEMO_BARBERSHOPS: Record<DemoPlan, Barbershop> = {
     siteType: 'generic',
     customDomain: '',
     embedKey: '',
+    googleReviewUrl: 'https://g.page/r/demo-avaliacao/review',
+    monthlyGoal: 2500,
   },
   pro: {
     id: 'bs-001',
@@ -147,6 +149,8 @@ const DEMO_BARBERSHOPS: Record<DemoPlan, Barbershop> = {
     siteType: 'generic',
     customDomain: '',
     embedKey: 'bos_corvo_demo0000000000000000',
+    googleReviewUrl: 'https://g.page/r/demo-avaliacao/review',
+    monthlyGoal: 9000,
   },
   premium: {
     id: 'bs-002',
@@ -172,6 +176,8 @@ const DEMO_BARBERSHOPS: Record<DemoPlan, Barbershop> = {
     siteType: 'generic',
     customDomain: '',
     embedKey: 'bos_atlas_demo0000000000000000',
+    googleReviewUrl: 'https://g.page/r/demo-avaliacao/review',
+    monthlyGoal: 18000,
   },
 }
 
@@ -225,9 +231,12 @@ export function getDemoAppointments(plan: DemoPlan): BarbershopAppointment[] {
   const samples = plan === 'basic'
     ? MOCK_APPOINTMENTS.filter(a => a.barbershopId === 'bs-001').slice(0, 3)
     : MOCK_APPOINTMENTS.filter(a => a.barbershopId === id)
+  // Exemplo alterado na demo (concluído, fixo…) fica guardado e vale por cima do original
+  const stored = listDemoBookings(id)
+  const storedIds = new Set(stored.map(a => a.id))
   return [
-    ...samples.map(a => ({ ...a, barbershopId: id, date: today })),
-    ...listDemoBookings(id),
+    ...samples.filter(a => !storedIds.has(a.id)).map(a => ({ ...a, barbershopId: id, date: today })),
+    ...stored,
   ]
 }
 

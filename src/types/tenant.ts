@@ -33,6 +33,8 @@ export interface Barbershop {
   // Configurações › Vendas no site
   storeEnabled: boolean     // loja completa no site (só vale no Premium)
   bumpEnabled: boolean      // "Leve junto no dia" no fim do agendamento
+  googleReviewUrl: string   // link "avaliar no Google" ('' = não configurado)
+  monthlyGoal: number | null // meta de faturamento do mês (Financeiro)
 }
 
 export interface BarbershopMember {
@@ -93,6 +95,11 @@ export interface BarbershopAppointment {
   price?: number
   /** Quando alguém da equipe mandou o lembrete de WhatsApp (null = ainda não). */
   remindedAt?: string
+  /** Quando alguém pediu avaliação no Google pra esse atendimento. */
+  reviewRequestedAt?: string
+  /** Cliente fixo: horários da mesma série dividem o id; repete a cada N dias. */
+  recurrenceId?: string
+  recurrenceEveryDays?: number
 }
 
 export interface BarbershopClient {

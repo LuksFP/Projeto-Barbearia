@@ -21,6 +21,8 @@ import { demoStoreMonths } from '@/hooks/useProducts'
 import StoreAndServicesCharts from '@/components/dashboard/financeiro/StoreAndServicesCharts'
 import ProfitSection from '@/components/dashboard/financeiro/ProfitSection'
 import ExpensesCard from '@/components/dashboard/financeiro/ExpensesCard'
+import MonthlyGoal from '@/components/dashboard/financeiro/MonthlyGoal'
+import CommissionWeek from '@/components/dashboard/financeiro/CommissionWeek'
 import { expenseRepository, type ExpenseInput } from '@/repositories/expenseRepository'
 import { buildProfitMonths, type Expense } from '@/lib/profit'
 
@@ -97,7 +99,7 @@ function periodStart(period: number): string {
 // ─── Página ───────────────────────────────────────────────────────────────────
 
 const DashboardFinanceiro = () => {
-  const { barbershop, barbers, isAdmin } = useTenant()
+  const { barbershop, barbers, isAdmin, updateBarbershop } = useTenant()
   const { csv, commission: showCommission } = usePlanGates()
   const [period, setPeriod] = useState<Period>(6)
   // fetching = true apenas na primeira carga; refreshing = true nas subsequentes (mantém dados visíveis)
@@ -113,6 +115,13 @@ const DashboardFinanceiro = () => {
   // Faturamento x lucro (só dono/admin): despesas lançadas + comissão mês a mês
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [byMonthBarber, setByMonthBarber] = useState<Record<string, Record<string, number>> | null>(null)
+  // Meta do mês (demo guarda só na tela)
+  const [goal, setGoal] = useState<number | null>(barbershop?.monthlyGoal ?? null)
+  useEffect(() => { setGoal(barbershop?.monthlyGoal ?? null) }, [barbershop?.monthlyGoal])
+  const saveGoal = async (v: number | null) => {
+    if (!isDemoMode()) await updateBarbershop({ monthlyGoal: v })
+    setGoal(v)
+  }
 
   useEffect(() => {
     if (isDemoMode()) {
@@ -373,6 +382,13 @@ const DashboardFinanceiro = () => {
             ))}
           </motion.div>
 
+          {/* Meta do mês: todos veem se tiver; só dono/admin define */}
+          {(() => {
+            const cur = new Date().toLocaleDateString('sv-SE').slice(0, 7)
+            const revenueNow = (byMonth.find(m => m.month === cur)?.total ?? 0) + (storeByMonth.find(m => m.month === cur)?.revenue ?? 0)
+            return <MonthlyGoal goal={goal} revenue={revenueNow} avgTicket={avgTicket} canEdit={isAdmin} onSave={saveGoal} />
+          })()}
+
           {/* Faturamento x lucro + despesas (só dono/admin) */}
           {isAdmin && (
             <>
@@ -624,6 +640,16 @@ const DashboardFinanceiro = () => {
               })}
             </motion.div>
           </div>
+
+          {/* Fechamento da semana (só dono/admin, plano com comissão) */}
+          {isAdmin && showCommission && barbershop && (
+            <CommissionWeek
+              barbershopId={barbershop.id}
+              barbers={barbers}
+              demoByBarber={byBarber}
+              demoWeeks={Math.max(1, Math.round(period * 4.33))}
+            />
+          )}
 
           {/* Comissões por barbeiro */}
           {byBarber.length > 0 && !showCommission && <ProUpsell message={PRO_MSG.commission} />}

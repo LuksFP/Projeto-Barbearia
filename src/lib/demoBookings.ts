@@ -46,6 +46,14 @@ export function updateDemoBooking(barbershopId: string, id: string, patch: Parti
   save(barbershopId, list.map(a => (a.id === id ? { ...a, ...patch } : a)))
 }
 
+/** Grava o horário inteiro: atualiza se já está guardado, senão guarda.
+ *  Serve pra mudança em horário de exemplo da demo não sumir na recarga. */
+export function upsertDemoBooking(apt: BarbershopAppointment): void {
+  const list = listDemoBookings(apt.barbershopId)
+  const stored: Stored = { ...apt, savedAt: Date.now() }
+  save(apt.barbershopId, list.some(a => a.id === apt.id) ? list.map(a => (a.id === apt.id ? stored : a)) : [...list, stored])
+}
+
 export function removeDemoBookings(barbershopId: string, ids: string[]): void {
   const list = listDemoBookings(barbershopId)
   const next = list.filter(a => !ids.includes(a.id))

@@ -127,6 +127,9 @@ export type Database = {
           price: number | null
           rating: number | null
           reminded_at: string | null
+          review_requested_at: string | null
+          recurrence_id: string | null
+          recurrence_every_days: number | null
           review: string | null
           service_category: string | null
           service_id: string | null
@@ -157,6 +160,9 @@ export type Database = {
           price?: number | null
           rating?: number | null
           reminded_at?: string | null
+          review_requested_at?: string | null
+          recurrence_id?: string | null
+          recurrence_every_days?: number | null
           review?: string | null
           service_category?: string | null
           service_id?: string | null
@@ -187,6 +193,9 @@ export type Database = {
           price?: number | null
           rating?: number | null
           reminded_at?: string | null
+          review_requested_at?: string | null
+          recurrence_id?: string | null
+          recurrence_every_days?: number | null
           review?: string | null
           service_category?: string | null
           service_id?: string | null
@@ -369,6 +378,8 @@ export type Database = {
           name: string
           open_time: string
           store_enabled: boolean
+          google_review_url: string | null
+          monthly_goal: number | null
           bump_enabled: boolean
           phone: string
           primary_color: string
@@ -398,6 +409,8 @@ export type Database = {
           name: string
           open_time?: string
           store_enabled?: boolean
+          google_review_url?: string | null
+          monthly_goal?: number | null
           bump_enabled?: boolean
           phone?: string
           primary_color?: string
@@ -427,6 +440,8 @@ export type Database = {
           name?: string
           open_time?: string
           store_enabled?: boolean
+          google_review_url?: string | null
+          monthly_goal?: number | null
           bump_enabled?: boolean
           phone?: string
           primary_color?: string
@@ -765,6 +780,39 @@ export type Database = {
           processed_at?: string
           type?: string | null
         }
+        Relationships: []
+      }
+      waitlist: {
+        Row: {
+          id: string
+          barbershop_id: string
+          barber_id: string | null
+          date: string
+          period: string
+          client_name: string
+          client_phone: string
+          status: string
+          notified_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Record<string, never>
+        Update: { status?: string; notified_at?: string | null }
+        Relationships: []
+      }
+      commission_payouts: {
+        Row: {
+          id: string
+          barbershop_id: string
+          barber_id: string
+          week_start: string
+          revenue: number
+          amount: number
+          paid_at: string
+          paid_by: string | null
+        }
+        Insert: { barbershop_id: string; barber_id: string; week_start: string; revenue: number; amount: number }
+        Update: Record<string, never>
         Relationships: []
       }
       expenses: {
@@ -1205,6 +1253,10 @@ export type Database = {
       }
       public_store_mode: { Args: { p_barbershop_id: string }; Returns: string }
       public_store_pays_online: { Args: { p_barbershop_id: string }; Returns: boolean }
+      public_join_waitlist: {
+        Args: { p_barbershop_id: string; p_date: string; p_client_name: string; p_client_phone: string; p_period?: string; p_barber_id?: string | null }
+        Returns: string
+      }
       public_payment_status: {
         Args: { p_payment_id: string }
         Returns: { status: string; has_appointment: boolean; has_order: boolean }[]
