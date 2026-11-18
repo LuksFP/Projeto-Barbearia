@@ -27,6 +27,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'despesas-lucro-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Veja quanto sobrou de verdade no mês',
+    description:
+      'Lance as despesas da barbearia (aluguel, luz, água, produtos…) e o Financeiro mostra faturamento x lucro mês a mês. Comissões e o custo dos produtos vendidos já entram na conta sozinhos.',
+    steps: [
+      'Abra o Financeiro e desça até “Despesas”',
+      'Lance cada gasto. Aluguel e internet? Marque “Repete todo mês” e lance uma vez só',
+      'Em “Faturamento x lucro”, toque num mês pra ver pra onde foi o dinheiro',
+    ],
+    ctaLabel: 'Abrir Financeiro',
+    ctaTo: '/dashboard/financeiro',
+  },
+  {
     key: 'faltou-2026-11',
     badge: 'Novidade no ar',
     title: 'Cliente não apareceu? Marque “Faltou”',
@@ -49,7 +63,7 @@ const ANNOUNCEMENTS: Announcement[] = [
     steps: [
       'Em Configurações › Vendas no site, toque em “Conectar minha conta Mercado Pago”',
       'Autorize no Mercado Pago e pronto: o botão “Pagar agora” aparece no seu site',
-      'Na Agenda e na Loja aparece o selo “Pago online”. Precisa devolver? Toque em “Estornar”',
+      'Na Agenda e na Loja você vê quem pagou online e quem paga no local, com o total de cada um. Precisa devolver? Toque em “Estornar”',
     ],
     ctaLabel: 'Conectar agora',
     ctaTo: '/dashboard/configuracoes#vendas',

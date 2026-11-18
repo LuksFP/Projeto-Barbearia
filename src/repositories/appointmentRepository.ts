@@ -153,6 +153,8 @@ export const appointmentRepository = {
   async getFinancials(barbershopId: string, months = 6): Promise<{
     byMonth: MonthRevenue[]
     byBarber: { barberId: string; barberName: string; total: number; count: number }[]
+    /** Receita por mês e por barbeiro ('YYYY-MM' → barberId → R$), pra comissão mês a mês */
+    byMonthBarber: Record<string, Record<string, number>>
     totalRevenue: number
     totalCount: number
     avgTicket: number
@@ -170,6 +172,7 @@ export const appointmentRepository = {
 
     const byMonthMap = new Map<string, { total: number; count: number; byCategory: Record<string, number> }>()
     const byBarberMap = new Map<string, { barberName: string; total: number; count: number }>()
+    const byMonthBarber: Record<string, Record<string, number>> = {}
 
     for (const row of rows) {
       const price = Number(row.price) || 0
@@ -189,6 +192,8 @@ export const appointmentRepository = {
       const b = byBarberMap.get(bid)!
       b.total += price
       b.count += 1
+      byMonthBarber[month] ??= {}
+      byMonthBarber[month][bid] = (byMonthBarber[month][bid] ?? 0) + price
     }
 
     const byMonth = Array.from(byMonthMap.entries())
@@ -213,7 +218,7 @@ export const appointmentRepository = {
     const totalCount = rows.length
     const avgTicket = totalCount > 0 ? Math.round((totalRevenue / totalCount) * 100) / 100 : 0
 
-    return { byMonth, byBarber, totalRevenue, totalCount, avgTicket }
+    return { byMonth, byBarber, byMonthBarber, totalRevenue, totalCount, avgTicket }
   },
 
   async getMonthlyRevenue(barbershopId: string): Promise<MonthRevenue[]> {

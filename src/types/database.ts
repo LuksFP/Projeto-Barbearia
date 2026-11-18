@@ -767,6 +767,39 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          id: string
+          barbershop_id: string
+          description: string
+          category: string
+          amount: number
+          date: string
+          recurring: boolean
+          ends_on: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          description: string
+          category: string
+          amount: number
+          date: string
+          recurring?: boolean
+          ends_on?: string | null
+        }
+        Update: {
+          description?: string
+          category?: string
+          amount?: number
+          date?: string
+          recurring?: boolean
+          ends_on?: string | null
+        }
+        Relationships: []
+      }
       online_payments: {
         Row: {
           id: string

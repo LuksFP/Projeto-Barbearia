@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { usePlanGates } from '@/hooks/usePlanGates'
 import { PRO_MSG } from '@/lib/planFeatures'
@@ -19,6 +19,10 @@ import type { MonthRevenue } from '@/types/tenant'
 import { productRepository, type StoreMonth } from '@/repositories/productRepository'
 import { demoStoreMonths } from '@/hooks/useProducts'
 import StoreAndServicesCharts from '@/components/dashboard/financeiro/StoreAndServicesCharts'
+import ProfitSection from '@/components/dashboard/financeiro/ProfitSection'
+import ExpensesCard from '@/components/dashboard/financeiro/ExpensesCard'
+import { expenseRepository, type ExpenseInput } from '@/repositories/expenseRepository'
+import { buildProfitMonths, type Expense } from '@/lib/profit'
 
 type Period = 3 | 6 | 12
 
@@ -84,10 +88,16 @@ function exportCSV(months: MonthRevenue[]) {
   URL.revokeObjectURL(url)
 }
 
+/** 1º dia de `period` meses atrás ('YYYY-MM-DD'), a mesma janela do getFinancials */
+function periodStart(period: number): string {
+  const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - period)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+}
+
 // ─── Página ───────────────────────────────────────────────────────────────────
 
 const DashboardFinanceiro = () => {
-  const { barbershop, barbers } = useTenant()
+  const { barbershop, barbers, isAdmin } = useTenant()
   const { csv, commission: showCommission } = usePlanGates()
   const [period, setPeriod] = useState<Period>(6)
   // fetching = true apenas na primeira carga; refreshing = true nas subsequentes (mantém dados visíveis)
@@ -100,6 +110,9 @@ const DashboardFinanceiro = () => {
   const [avgTicket, setAvgTicket] = useState(0)
   const hasData = byMonth.length > 0
   const [storeByMonth, setStoreByMonth] = useState<StoreMonth[]>([])
+  // Faturamento x lucro (só dono/admin): despesas lançadas + comissão mês a mês
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [byMonthBarber, setByMonthBarber] = useState<Record<string, Record<string, number>> | null>(null)
 
   useEffect(() => {
     if (isDemoMode()) {
@@ -108,8 +121,10 @@ const DashboardFinanceiro = () => {
       setByMonth(months)
       const total = months.reduce((s, m) => s + m.total, 0)
       setTotalRevenue(total)
-      setTotalCount(Math.round(months.reduce((s, m) => s + Object.values(m.byCategory).reduce((a, b) => a + b, 0) / 40, 0)))
-      setAvgTicket(total > 0 ? total / Math.max(1, months.length * 3) : 0)
+      // Demo: ~R$ 40 por atendimento; ticket = receita ÷ atendimentos (mesma conta do real)
+      const count = Math.round(months.reduce((s, m) => s + Object.values(m.byCategory).reduce((a, b) => a + b, 0) / 40, 0))
+      setTotalCount(count)
+      setAvgTicket(count > 0 ? Math.round((total / count) * 100) / 100 : 0)
       // Demo: distribui a receita entre os barbeiros (shares decrescentes)
       const active = barbers.filter(b => b.active)
       const weightSum = active.reduce((s, _, i) => s + (active.length - i), 0) || 1
@@ -119,6 +134,8 @@ const DashboardFinanceiro = () => {
         return { barberId: b.id, barberName: b.name, total: bt, count: Math.max(1, Math.round(bt / 45)) }
       }))
       setStoreByMonth(barbershop ? demoStoreMonths(barbershop.id, months) : [])
+      setByMonthBarber(null) // demo: comissão do mês sai da proporção do período
+      if (barbershop) void expenseRepository.list(barbershop.id, periodStart(period)).then(setExpenses).catch(() => setExpenses([]))
       setFetching(false)
       return
     }
@@ -133,6 +150,11 @@ const DashboardFinanceiro = () => {
       .salesByMonth(barbershop.id, fromStr)
       .then(setStoreByMonth)
       .catch(() => setStoreByMonth([])) // loja sem vendas/tabela: os gráficos de serviço seguem
+    if (isAdmin) {
+      expenseRepository.list(barbershop.id, fromStr)
+        .then(setExpenses)
+        .catch(() => setExpenses([])) // tabela ainda não existe / sem permissão: lucro sem despesas
+    }
 
     // Se já tem dados, faz refresh discreto (sem apagar o conteúdo)
     if (hasData) setRefreshing(true)
@@ -143,13 +165,52 @@ const DashboardFinanceiro = () => {
       .then(d => {
         setByMonth(d.byMonth)
         setByBarber(d.byBarber)
+        setByMonthBarber(d.byMonthBarber)
         setTotalRevenue(d.totalRevenue)
         setTotalCount(d.totalCount)
         setAvgTicket(d.avgTicket)
       })
       .catch(() => toast({ title: 'Erro ao carregar financeiro', variant: 'destructive' }))
       .finally(() => { setFetching(false); setRefreshing(false) })
-  }, [barbershop?.id, period]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [barbershop?.id, period, isAdmin]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Comissão por mês: receita de cada barbeiro no mês × % dele. Sem a trava de
+  // comissão do plano (Básico) não desconta. Demo: proporção do período.
+  const profitMonths = useMemo(() => {
+    const pctOf = (id: string) => barbers.find(b => b.id === id)?.commissionPercent ?? 50
+    const commissionByMonth: Record<string, number> = {}
+    if (showCommission) {
+      if (byMonthBarber) {
+        for (const [m, per] of Object.entries(byMonthBarber)) {
+          commissionByMonth[m] = Object.entries(per).reduce((t, [id, v]) => t + v * pctOf(id) / 100, 0)
+        }
+      } else {
+        const rev = byBarber.reduce((t, b) => t + b.total, 0)
+        const comm = byBarber.reduce((t, b) => t + b.total * pctOf(b.barberId) / 100, 0)
+        const ratio = rev > 0 ? comm / rev : 0
+        for (const m of byMonth) commissionByMonth[m.month] = m.total * ratio
+      }
+    }
+    return buildProfitMonths({ months: byMonth, store: storeByMonth, expenses, commissionByMonth })
+  }, [byMonth, storeByMonth, expenses, byMonthBarber, byBarber, barbers, showCommission])
+
+  const createExpense = async (input: ExpenseInput) => {
+    if (!barbershop) return
+    const e = await expenseRepository.create(barbershop.id, input)
+    setExpenses(prev => [e, ...prev])
+    toast({ title: 'Despesa lançada', description: input.recurring ? 'Conta todo mês a partir de agora.' : undefined })
+  }
+  const removeExpense = async (id: string) => {
+    if (!barbershop) return
+    await expenseRepository.remove(barbershop.id, id)
+    setExpenses(prev => prev.filter(e => e.id !== id))
+  }
+  const endExpense = async (id: string) => {
+    if (!barbershop) return
+    const endsOn = await expenseRepository.endRecurring(barbershop.id, id)
+    setExpenses(prev => prev.map(e => (e.id === id ? { ...e, endsOn } : e)))
+    toast({ title: 'Despesa encerrada', description: 'Para de contar a partir do mês que vem.' })
+  }
 
   const loading = fetching
 
@@ -240,6 +301,12 @@ const DashboardFinanceiro = () => {
           <p className="text-white/45 font-body text-xs mt-1">
             Conclua agendamentos na Agenda para ver os dados aqui.
           </p>
+          {/* Já dá pra ir lançando as despesas desde o primeiro dia */}
+          {isAdmin && (
+            <div className="w-full mt-10 text-left">
+              <ExpensesCard expenses={expenses} months={[]} onCreate={createExpense} onRemove={removeExpense} onEndRecurring={endExpense} />
+            </div>
+          )}
         </div>
       ) : (
         <>
@@ -305,6 +372,14 @@ const DashboardFinanceiro = () => {
               </motion.div>
             ))}
           </motion.div>
+
+          {/* Faturamento x lucro + despesas (só dono/admin) */}
+          {isAdmin && (
+            <>
+              <ProfitSection months={profitMonths} period={period} showCommission={showCommission} />
+              <ExpensesCard expenses={expenses} months={byMonth} onCreate={createExpense} onRemove={removeExpense} onEndRecurring={endExpense} />
+            </>
+          )}
 
           {/* Gráfico de barras mensais */}
           <motion.div

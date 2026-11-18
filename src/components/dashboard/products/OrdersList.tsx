@@ -4,10 +4,13 @@
 // Pago online (Mercado Pago): selo "Pago online"; cancelar/devolver vira
 // "Estornar", que devolve o dinheiro antes (só dono/admin).
 import { useState } from 'react'
-import { MessageCircle, CalendarCheck, BadgeCheck } from 'lucide-react'
+import { MessageCircle, CalendarCheck } from 'lucide-react'
 import { waUrl } from '@/lib/whatsapp'
 import type { OrderStatus, ProductSale } from '@/repositories/productRepository'
-import { PAYMENT_METHOD, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
+import { payWay, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
+import PayWayBadge from '@/components/dashboard/PayWayBadge'
+
+const brlSum = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -58,12 +61,14 @@ export function groupOrders(sales: ProductSale[]): Order[] {
 interface Props {
   orders: Order[]
   payments: Map<string, OnlinePayment>
+  /** Barbearia recebe online: mostra em todo pedido como ele paga */
+  shopOnline: boolean
   canRefund: boolean
   onStatus: (orderId: string, status: 'retirado' | 'cancelado') => Promise<void>
   onRefund: (orderId: string) => Promise<void>
 }
 
-const OrdersList = ({ orders, payments, canRefund, onStatus, onRefund }: Props) => {
+const OrdersList = ({ orders, payments, shopOnline, canRefund, onStatus, onRefund }: Props) => {
   const [confirming, setConfirming] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -77,7 +82,20 @@ const OrdersList = ({ orders, payments, canRefund, onStatus, onRefund }: Props) 
     } finally { setBusy(null); setConfirming(null) }
   }
 
+  // Pedidos ainda pra retirar: quanto já entrou online e quanto falta receber na retirada
+  const open = orders.filter(o => o.status === 'reservado')
+  const openOnline = open.filter(o => payWay(payments.get(o.orderId)) === 'online')
+  const openLocal = open.filter(o => payWay(payments.get(o.orderId)) !== 'online')
+  const total = (l: Order[]) => l.reduce((t, o) => t + o.total, 0)
+
   return (
+    <>
+    {(shopOnline || payments.size > 0) && open.length > 0 && (
+      <div className="flex flex-wrap gap-x-6 gap-y-1 pb-3 text-sm font-body">
+        <p><span className="text-sky-300 font-semibold tabular-nums">{brlSum(total(openOnline))}</span> <span className="text-white/55">já pago online · {openOnline.length}</span></p>
+        <p><span className="text-white font-semibold tabular-nums">{brlSum(total(openLocal))}</span> <span className="text-white/55">a receber na retirada · {openLocal.length}</span></p>
+      </div>
+    )}
     <ol className="divide-y divide-[#1c1c1c] border-y border-[#1c1c1c]">
       {orders.map(o => {
         const st = STATUS[o.status]
@@ -89,14 +107,10 @@ const OrdersList = ({ orders, payments, canRefund, onStatus, onRefund }: Props) 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-white text-sm font-body font-medium">{o.clientName}</p>
               <span className={`text-[11px] px-1.5 py-0.5 rounded border font-body ${st.cls}`}>{st.label}</span>
-              {paid && (
-                <span className="flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-body text-sky-300 border-sky-500/40 bg-sky-500/10">
-                  <BadgeCheck className="w-3.5 h-3.5" />Pago online{pay.method && PAYMENT_METHOD[pay.method] ? ` · ${PAYMENT_METHOD[pay.method]}` : ''}{pay.appointmentId ? ' · com o corte' : ''}
-                </span>
+              {(shopOnline || pay) && (o.status !== 'cancelado' || pay?.status === 'estornado') && (
+                <PayWayBadge payment={pay} localLabel={o.status === 'retirado' ? 'Pagou na retirada' : 'Paga na retirada'} />
               )}
-              {pay?.status === 'estornado' && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded border font-body text-white/45 border-white/15">Estornado</span>
-              )}
+              {paid && pay?.appointmentId && <span className="text-[11px] text-white/45 font-body">junto com o corte</span>}
               {o.withBooking && (
                 <span className="flex items-center gap-1 text-[11px] text-white/45 font-body">
                   <CalendarCheck className="w-3.5 h-3.5" />junto com horário
@@ -139,6 +153,7 @@ const OrdersList = ({ orders, payments, canRefund, onStatus, onRefund }: Props) 
         )
       })}
     </ol>
+    </>
   )
 }
 

@@ -6,6 +6,7 @@
 import { supabase } from '@/lib/supabase'
 import { supabasePublic } from '@/lib/supabase-public'
 import { isRealBarbershopId } from '@/lib/placeOrder'
+import { ONLINE_PAYMENT_ON } from '@/lib/onlinePayment'
 
 export type PaymentStatus = 'pendente' | 'pago' | 'recusado' | 'estornado'
 
@@ -18,6 +19,7 @@ export interface OnlinePayment {
   platformFee: number
   method: string | null
   paidAt: string | null
+  createdAt: string
 }
 
 export interface PaymentCheck {
@@ -85,6 +87,8 @@ async function sessionToken(): Promise<string> {
 export const onlinePaymentRepository = {
   // ── Site do cliente ──────────────────────────────────────────────────────
   async paysOnline(barbershopId: string): Promise<boolean> {
+    // Chave desligada: ninguém vê pagamento online (nem a demo publicada)
+    if (!ONLINE_PAYMENT_ON) return false
     if (!isRealBarbershopId(barbershopId)) return !demoLoad().off.includes(barbershopId)
     const { data, error } = await supabasePublic.rpc('public_store_pays_online', { p_barbershop_id: barbershopId })
     if (error) return false // na dúvida, paga na barbearia
@@ -101,7 +105,7 @@ export const onlinePaymentRepository = {
         id, barbershopId: input.barbershopId,
         orderId: input.orderId ?? null, appointmentId: input.appointmentId ?? null,
         status: 'pago', amount: input.amount, platformFee: Math.round(input.amount * 1.5) / 100,
-        method: 'pix', paidAt: new Date().toISOString(),
+        method: 'pix', paidAt: new Date().toISOString(), createdAt: new Date().toISOString(),
       }
       demoSave(s)
       await new Promise(r => setTimeout(r, 900))
@@ -168,7 +172,7 @@ export const onlinePaymentRepository = {
     }
     const { data, error } = await supabase
       .from('online_payments')
-      .select('id, order_id, appointment_id, status, amount, platform_fee, method, paid_at')
+      .select('id, order_id, appointment_id, status, amount, platform_fee, method, paid_at, created_at')
       .eq('barbershop_id', barbershopId)
       .order('created_at', { ascending: false })
       .limit(500)
@@ -184,6 +188,7 @@ export const onlinePaymentRepository = {
         platformFee: Number(r.platform_fee),
         method: r.method,
         paidAt: r.paid_at,
+        createdAt: r.created_at,
       }] : []
     })
   },
@@ -197,6 +202,23 @@ export const onlinePaymentRepository = {
     }
     await callFn('payment-refund', { paymentId }, await sessionToken())
   },
+}
+
+/**
+ * Como o cliente vai pagar, pro painel:
+ *   online   — pago pelo Mercado Pago
+ *   pagando  — abriu o checkout há menos de 30 min (pode confirmar a qualquer momento)
+ *   local    — não pagou online (escolheu pagar no local, desistiu ou foi recusado)
+ *   estornado
+ */
+export type PayWay = 'online' | 'pagando' | 'local' | 'estornado'
+const CHECKOUT_TTL_MS = 30 * 60_000
+export function payWay(p: OnlinePayment | undefined): PayWay {
+  if (!p) return 'local'
+  if (p.status === 'pago') return 'online'
+  if (p.status === 'estornado') return 'estornado'
+  if (p.status === 'pendente' && Date.now() - new Date(p.createdAt).getTime() < CHECKOUT_TTL_MS) return 'pagando'
+  return 'local'
 }
 
 /** Rótulo do meio de pagamento pro painel. */

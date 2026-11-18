@@ -1,7 +1,7 @@
 import { errorText } from '@/lib/errors'
 import { formatPhoneBR } from '@/lib/phone'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle, BadgeCheck, UserX } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle, UserX } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -13,7 +13,9 @@ import { toast } from '@/hooks/use-toast'
 import { buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { buildBookingConfirmation, waUrl } from '@/lib/whatsapp'
-import { onlinePaymentRepository, PAYMENT_METHOD, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
+import { onlinePaymentRepository, payWay, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
+import PayWayBadge from '@/components/dashboard/PayWayBadge'
+import { useShopPaysOnline } from '@/hooks/useShopPaysOnline'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
@@ -97,6 +99,7 @@ const DashboardAgenda = () => {
   // Pagamento online por horário (Mercado Pago). Pago → "Cancelar" vira "Estornar"
   const [payments, setPayments] = useState<Map<string, OnlinePayment>>(new Map())
   const [armedRefund, setArmedRefund] = useState<string | null>(null)
+  const shopOnline = useShopPaysOnline(barbershop?.id)
 
   useEffect(() => {
     if (!armedDelete) return
@@ -583,6 +586,25 @@ const DashboardAgenda = () => {
         </div>
       )}
 
+      {/* Como o dia vai ser pago: online x no local (só com pagamento online ligado) */}
+      {!loading && (shopOnline || payments.size > 0) && filtered.length > 0 && (() => {
+        const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        const live = filtered.filter(a => a.status !== 'cancelled')
+        const online = live.filter(a => payWay(payments.get(a.id)) === 'online')
+        const toReceive = live.filter(a => (a.status === 'pending' || a.status === 'confirmed') && payWay(payments.get(a.id)) !== 'online')
+        const receivedLocal = live.filter(a => a.status === 'done' && payWay(payments.get(a.id)) !== 'online')
+        const sum = (l: BarbershopAppointment[]) => l.reduce((t, a) => t + (a.price ?? 0), 0)
+        return (
+          <div className="flex flex-wrap gap-x-6 gap-y-2 px-1 py-3 border-y border-white/5 text-sm font-body">
+            <p><span className="text-sky-300 font-semibold tabular-nums">{brl(sum(online))}</span> <span className="text-white/55">pago online · {online.length}</span></p>
+            <p><span className="text-white font-semibold tabular-nums">{brl(sum(toReceive))}</span> <span className="text-white/55">a receber no local · {toReceive.length}</span></p>
+            {receivedLocal.length > 0 && (
+              <p><span className="text-emerald-300 font-semibold tabular-nums">{brl(sum(receivedLocal))}</span> <span className="text-white/55">recebido no local · {receivedLocal.length}</span></p>
+            )}
+          </div>
+        )
+      })()}
+
       {/* Lista agrupada por barbeiro */}
       {!loading && Object.entries(grouped).map(([barberName, apts]) => (
         <motion.div key={barberName} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
@@ -623,14 +645,9 @@ const DashboardAgenda = () => {
                   </div>
                   {/* No celular as etiquetas descem pra uma linha própria; senão comem o nome */}
                   <div className="flex items-center gap-2 max-sm:w-full max-sm:pl-[74px]">
-                    {paid && (
-                      <span className="flex items-center gap-1 text-sky-300 text-xs px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/30">
-                        <BadgeCheck className="w-3 h-3" />
-                        Pago online{pay?.method && PAYMENT_METHOD[pay.method] ? ` · ${PAYMENT_METHOD[pay.method]}` : ''}
-                      </span>
-                    )}
-                    {pay?.status === 'estornado' && (
-                      <span className="text-white/45 text-xs px-2 py-0.5 rounded-full border border-white/15">Estornado</span>
+                    {/* Como paga: online / pagando / no local. Cancelado sem pagamento não precisa */}
+                    {(shopOnline || pay) && (apt.status !== 'cancelled' || pay?.status === 'estornado') && (
+                      <PayWayBadge payment={pay} localLabel={apt.status === 'done' ? 'Pagou no local' : 'Paga no local'} size="sm" />
                     )}
                     {apt.membershipType === 'vip' && (
                       <span className="flex items-center gap-1 text-amber-400 text-xs px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">

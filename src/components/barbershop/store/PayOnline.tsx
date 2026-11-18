@@ -1,9 +1,10 @@
-// "Pagar agora" no site da barbearia: depois de agendar (corte + "Leve junto"
-// num checkout só) ou de reservar pela sacola. Só aparece se a barbearia
-// conectou o Mercado Pago e deixou ligado; senão não renderiza nada e tudo
-// segue "paga na barbearia".
+// Como pagar, no site da barbearia, depois de agendar (corte + "Leve junto"
+// num checkout só) ou de reservar pela sacola: "Pagar agora" (Mercado Pago)
+// ou "Pagar no local". Só aparece se a barbearia conectou o Mercado Pago e
+// deixou ligado; senão não renderiza nada e tudo segue pago na barbearia.
+// O painel mostra a escolha: quem pagou online e quem paga no local.
 import { useEffect, useState } from 'react'
-import { Loader2, QrCode } from 'lucide-react'
+import { Loader2, QrCode, Store, Check } from 'lucide-react'
 import { onlinePaymentRepository } from '@/repositories/onlinePaymentRepository'
 import { isRealBarbershopId } from '@/lib/placeOrder'
 
@@ -18,7 +19,7 @@ interface Props {
   orderId?: string
   /** Total mostrado no botão (o cobrado sai do banco) */
   amount: number
-  /** Texto de quem não pagar agora: "na retirada" / "na barbearia" */
+  /** Onde paga quem não pagar agora: "na retirada" / "na barbearia" */
   laterHint: string
 }
 
@@ -26,6 +27,7 @@ const PayOnline = ({ barbershopId, slug, phone, primary, appointmentId, orderId,
   const [available, setAvailable] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [local, setLocal] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -47,16 +49,38 @@ const PayOnline = ({ barbershopId, slug, phone, primary, appointmentId, orderId,
     }
   }
 
+  const demo = !isRealBarbershopId(barbershopId)
+
+  if (local) {
+    return (
+      <div className="mt-5 border-t border-white/10 pt-5 text-center">
+        <p className="flex items-center justify-center gap-2 text-white/80 text-sm font-body">
+          <Check className="w-4 h-4" style={{ color: primary }} />Combinado: você paga {laterHint}.
+        </p>
+        <button type="button" onClick={() => setLocal(false)} className="mt-2 text-white/45 text-xs font-body underline underline-offset-4 hover:text-white/70">
+          Mudei de ideia, quero pagar agora
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="mt-5 text-left border-t border-white/10 pt-5">
-      <button type="button" onClick={() => void pay()} disabled={busy}
-        className="w-full py-3.5 rounded-md font-body font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-        style={{ backgroundColor: primary, color: '#0a0a0a' }}>
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
-        Pagar agora {brl(amount)} com Pix ou cartão
-      </button>
-      <p className="text-white/50 text-xs font-body mt-2 text-center">
-        {isRealBarbershopId(barbershopId) ? `Pelo Mercado Pago. Se preferir, paga ${laterHint} mesmo.` : 'Demonstração: o pagamento é simulado.'}
+      <p className="text-white/60 text-xs font-body text-center mb-3">Como você prefere pagar?</p>
+      <div className="grid gap-2">
+        <button type="button" onClick={() => void pay()} disabled={busy}
+          className="w-full py-3.5 rounded-md font-body font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          style={{ backgroundColor: primary, color: '#0a0a0a' }}>
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+          Pagar agora {brl(amount)} · Pix ou cartão
+        </button>
+        <button type="button" onClick={() => setLocal(true)} disabled={busy}
+          className="w-full py-3 rounded-md font-body font-semibold text-sm flex items-center justify-center gap-2 border border-white/15 text-white/85 hover:border-white/30 disabled:opacity-50">
+          <Store className="w-4 h-4" />Pagar {laterHint}
+        </button>
+      </div>
+      <p className="text-white/45 text-xs font-body mt-2 text-center">
+        {demo ? 'Demonstração: o pagamento é simulado.' : 'Pagamento online pelo Mercado Pago.'}
       </p>
       {error && <p role="alert" className="text-red-300 text-sm font-body mt-2 text-center">{error}</p>}
     </div>

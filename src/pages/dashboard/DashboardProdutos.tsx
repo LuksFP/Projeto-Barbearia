@@ -18,6 +18,7 @@ import ProductFormDialog from '@/components/dashboard/products/ProductFormDialog
 import OrdersList, { groupOrders } from '@/components/dashboard/products/OrdersList'
 import type { Product } from '@/repositories/productRepository'
 import { onlinePaymentRepository, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
+import { useShopPaysOnline } from '@/hooks/useShopPaysOnline'
 import { PLAN_NAME } from '@/types/saas'
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -36,6 +37,7 @@ const DashboardProdutos = () => {
   const { products, sales, loading, demo, save, remove, setOrderStatus, reload } = useProducts(barbershop?.id)
   // Pagamento online (Mercado Pago) por pedido; demo não tem
   const [payments, setPayments] = useState<Map<string, OnlinePayment>>(new Map())
+  const shopOnline = useShopPaysOnline(barbershop?.id)
   const loadPayments = useCallback(async () => {
     if (!barbershop?.id) return
     try {
@@ -259,7 +261,7 @@ const DashboardProdutos = () => {
               : 'Nenhum pedido ainda. Quando um cliente separar o produto ao agendar, o pedido aparece aqui.'}
           </p>
         ) : (
-          <OrdersList orders={orders} payments={payments} canRefund={isAdmin} onStatus={changeStatus} onRefund={refund} />
+          <OrdersList orders={orders} payments={payments} shopOnline={shopOnline} canRefund={isAdmin} onStatus={changeStatus} onRefund={refund} />
         )}
       </section>
 
