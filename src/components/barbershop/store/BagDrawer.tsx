@@ -1,5 +1,6 @@
 // Gaveta da sacola: itens, quantidade, subtotal e "finalizar" (reserva pra
-// retirar — nome + WhatsApp). Não tem pagamento online: paga na barbearia.
+// retirar — nome + WhatsApp). Depois de reservar, se a barbearia conectou o
+// Mercado Pago, aparece "Pagar agora"; senão paga na retirada.
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Minus, Plus, ShoppingBag, Trash2, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
@@ -8,6 +9,7 @@ import { placeOrder } from '@/lib/placeOrder'
 import { orderErrorMessage } from '@/repositories/publicStoreRepository'
 import { brl, rememberContact, savedContact, useBag } from './bag'
 import ProductImage from './ProductImage'
+import PayOnline from './PayOnline'
 
 interface Props {
   barbershopId: string
@@ -27,7 +29,7 @@ const BagDrawer = ({ barbershopId, barbershopName, address, slug, primary, onOrd
   const [phone, setPhone] = useState(() => savedContact().phone)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
-  const [receipt, setReceipt] = useState<{ items: string; total: number } | null>(null)
+  const [receipt, setReceipt] = useState<{ items: string; total: number; orderId: string; phone: string } | null>(null)
 
   const phoneOk = phone.replace(/\D/g, '').length >= 10
   const canSend = name.trim().length > 0 && phoneOk && bag.lines.length > 0 && !sending
@@ -48,13 +50,13 @@ const BagDrawer = ({ barbershopId, barbershopName, address, slug, primary, onOrd
     setSending(true)
     setError('')
     try {
-      await placeOrder(barbershopId, {
+      const orderId = await placeOrder(barbershopId, {
         items: bag.lines.map(l => ({ productId: l.product.id, quantity: l.qty })),
         clientName: name.trim(),
         clientPhone: phone,
       })
       rememberContact(name.trim(), phone.trim())
-      setReceipt({ items: bag.lines.map(l => `${l.qty}× ${l.product.name}`).join(', '), total: bag.subtotal })
+      setReceipt({ items: bag.lines.map(l => `${l.qty}× ${l.product.name}`).join(', '), total: bag.subtotal, orderId, phone })
       bag.clear()
       setStage('done')
       onOrdered()
@@ -80,7 +82,7 @@ const BagDrawer = ({ barbershopId, barbershopName, address, slug, primary, onOrd
             {stage === 'done' ? 'Reserva feita' : stage === 'checkout' ? 'Finalizar reserva' : `Sacola${bag.count ? ` (${bag.count})` : ''}`}
           </SheetTitle>
           <SheetDescription className="text-white/55 text-xs font-body mt-0.5">
-            Retire na {barbershopName} e pague lá. Nada é cobrado agora.
+            {stage === 'done' ? `Retire na ${barbershopName}.` : `Retire na ${barbershopName}. Nada é cobrado pra reservar.`}
           </SheetDescription>
         </div>
 
@@ -93,6 +95,7 @@ const BagDrawer = ({ barbershopId, barbershopName, address, slug, primary, onOrd
             <p className="text-white/55 text-sm font-body mt-4 leading-relaxed">
               É só passar na barbearia{address ? <> ({address})</> : null} e pagar na retirada. Se mudar de ideia, avisa pelo WhatsApp.
             </p>
+            <PayOnline barbershopId={barbershopId} slug={slug} orderId={receipt.orderId} phone={receipt.phone} primary={primary} amount={receipt.total} laterHint="na retirada" />
             <Link to={`/b/${slug}#agendar`} onClick={() => onOpenChange(false)}
               className="inline-block mt-6 text-sm font-body underline underline-offset-4" style={{ color: primary }}>
               Aproveitar e marcar um horário
@@ -165,7 +168,7 @@ const BagDrawer = ({ barbershopId, barbershopName, address, slug, primary, onOrd
         {stage !== 'done' && bag.lines.length > 0 && (
           <div className="border-t border-[#1e1e1e] px-5 py-4 space-y-3 bg-[#0d0d0d]">
             <div className="flex items-baseline justify-between font-body">
-              <span className="text-white/60 text-sm">Total a pagar na retirada</span>
+              <span className="text-white/60 text-sm">Total</span>
               <span className="text-white text-xl font-semibold tabular-nums">{brl(bag.subtotal)}</span>
             </div>
             {stage === 'bag' ? (

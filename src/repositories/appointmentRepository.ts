@@ -6,6 +6,44 @@ import type { MonthRevenue } from '@/types/tenant'
 export type AppointmentRow = Tables<'appointments'>
 export type AppointmentInsert = TablesInsert<'appointments'>
 
+interface RevenueRow {
+  date: string
+  price: number | null
+  service_category: string | null
+  barber_id: string | null
+  barber_name: string | null
+}
+
+/**
+ * Horários que viram receita: concluídos + "faltou" que o cliente já tinha
+ * pagado online (a barbearia ficou com o valor). Falta sem pagamento não entra.
+ */
+async function revenueRows(barbershopId: string, fromDate: string): Promise<RevenueRow[]> {
+  const cols = 'id, date, price, service_category, barber_id, barber_name'
+  const [done, noShow] = await Promise.all([
+    supabase.from('appointments').select(cols)
+      .eq('barbershop_id', barbershopId).eq('status', 'done')
+      .gte('date', fromDate).not('price', 'is', null),
+    supabase.from('appointments').select(cols)
+      .eq('barbershop_id', barbershopId).eq('status', 'no_show')
+      .gte('date', fromDate).not('price', 'is', null),
+  ])
+  if (done.error) throw done.error
+  if (noShow.error) throw noShow.error
+
+  let paidNoShow: RevenueRow[] = []
+  const ids = (noShow.data ?? []).map(r => r.id)
+  if (ids.length) {
+    const { data: paid, error } = await supabase
+      .from('online_payments').select('appointment_id')
+      .eq('status', 'pago').in('appointment_id', ids)
+    if (error) throw error
+    const paidIds = new Set((paid ?? []).map(p => p.appointment_id))
+    paidNoShow = (noShow.data ?? []).filter(r => paidIds.has(r.id))
+  }
+  return [...(done.data ?? []), ...paidNoShow]
+}
+
 export const appointmentRepository = {
   async listByBarbershop(barbershopId: string, date?: string): Promise<AppointmentRow[]> {
     let query = supabase
@@ -123,16 +161,7 @@ export const appointmentRepository = {
     from.setMonth(from.getMonth() - months)
     from.setDate(1)
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .select('date, price, service_category, barber_id, barber_name')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', 'done')
-      .gte('date', from.toISOString().split('T')[0])
-      .not('price', 'is', null)
-
-    if (error) throw error
-    const rows = data ?? []
+    const rows = await revenueRows(barbershopId, from.toISOString().split('T')[0])
 
     const PT_MONTHS = [
       'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -193,15 +222,7 @@ export const appointmentRepository = {
     from.setMonth(from.getMonth() - 3)
     from.setDate(1)
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .select('date, price, service_category')
-      .eq('barbershop_id', barbershopId)
-      .eq('status', 'done')
-      .gte('date', from.toISOString().split('T')[0])
-      .not('price', 'is', null)
-
-    if (error) throw error
+    const data = await revenueRows(barbershopId, from.toISOString().split('T')[0])
 
     const PT_MONTHS = [
       'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -211,7 +232,7 @@ export const appointmentRepository = {
     // Agrega por mês em TypeScript (evita RPC)
     const byMonth = new Map<string, { total: number; byCategory: Record<string, number> }>()
 
-    for (const row of data ?? []) {
+    for (const row of data) {
       const month = row.date.slice(0, 7) // 'YYYY-MM'
       if (!byMonth.has(month)) byMonth.set(month, { total: 0, byCategory: {} })
       const entry = byMonth.get(month)!

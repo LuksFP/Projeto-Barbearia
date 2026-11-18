@@ -1,10 +1,13 @@
 // Pedidos da loja que vieram do site do cliente, agrupados por pedido.
 // Reservado → "Retirou" (pagou na barbearia) ou "Cancelar" (estoque volta).
 // Retirado ainda pode ser cancelado (devolução).
+// Pago online (Mercado Pago): selo "Pago online"; cancelar/devolver vira
+// "Estornar", que devolve o dinheiro antes (só dono/admin).
 import { useState } from 'react'
-import { MessageCircle, CalendarCheck } from 'lucide-react'
+import { MessageCircle, CalendarCheck, BadgeCheck } from 'lucide-react'
 import { waUrl } from '@/lib/whatsapp'
 import type { OrderStatus, ProductSale } from '@/repositories/productRepository'
+import { PAYMENT_METHOD, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -54,29 +57,46 @@ export function groupOrders(sales: ProductSale[]): Order[] {
 
 interface Props {
   orders: Order[]
+  payments: Map<string, OnlinePayment>
+  canRefund: boolean
   onStatus: (orderId: string, status: 'retirado' | 'cancelado') => Promise<void>
+  onRefund: (orderId: string) => Promise<void>
 }
 
-const OrdersList = ({ orders, onStatus }: Props) => {
+const OrdersList = ({ orders, payments, canRefund, onStatus, onRefund }: Props) => {
   const [confirming, setConfirming] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
   const act = async (o: Order, status: 'retirado' | 'cancelado') => {
     if (status === 'cancelado' && confirming !== o.orderId) { setConfirming(o.orderId); return }
     setBusy(o.orderId)
-    try { await onStatus(o.orderId, status) } finally { setBusy(null); setConfirming(null) }
+    const paid = payments.get(o.orderId)?.status === 'pago'
+    try {
+      if (status === 'cancelado' && paid) await onRefund(o.orderId)
+      else await onStatus(o.orderId, status)
+    } finally { setBusy(null); setConfirming(null) }
   }
 
   return (
     <ol className="divide-y divide-[#1c1c1c] border-y border-[#1c1c1c]">
       {orders.map(o => {
         const st = STATUS[o.status]
+        const pay = payments.get(o.orderId)
+        const paid = pay?.status === 'pago'
         const wa = waUrl(o.clientPhone, `Oi ${o.clientName.split(' ')[0]}! Sua reserva de ${o.lines.map(l => l.productName).join(', ')} está separada aqui na barbearia.`)
         return (
           <li key={o.orderId} className={`py-4 ${o.status === 'cancelado' ? 'opacity-60' : ''}`}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-white text-sm font-body font-medium">{o.clientName}</p>
               <span className={`text-[11px] px-1.5 py-0.5 rounded border font-body ${st.cls}`}>{st.label}</span>
+              {paid && (
+                <span className="flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-body text-sky-300 border-sky-500/40 bg-sky-500/10">
+                  <BadgeCheck className="w-3.5 h-3.5" />Pago online{pay.method && PAYMENT_METHOD[pay.method] ? ` · ${PAYMENT_METHOD[pay.method]}` : ''}{pay.appointmentId ? ' · com o corte' : ''}
+                </span>
+              )}
+              {pay?.status === 'estornado' && (
+                <span className="text-[11px] px-1.5 py-0.5 rounded border font-body text-white/45 border-white/15">Estornado</span>
+              )}
               {o.withBooking && (
                 <span className="flex items-center gap-1 text-[11px] text-white/45 font-body">
                   <CalendarCheck className="w-3.5 h-3.5" />junto com horário
@@ -100,10 +120,12 @@ const OrdersList = ({ orders, onStatus }: Props) => {
                   <MessageCircle className="w-3.5 h-3.5" />WhatsApp
                 </a>
               )}
-              {o.status !== 'cancelado' && (
+              {o.status !== 'cancelado' && (!paid || canRefund) && (
                 <button type="button" disabled={busy === o.orderId} onClick={() => void act(o, 'cancelado')} onBlur={() => setConfirming(c => (c === o.orderId ? null : c))}
                   className={`px-2.5 py-1.5 rounded-md text-xs font-body border transition-colors ${confirming === o.orderId ? 'border-red-500/50 bg-red-500/10 text-red-300' : 'border-[#2a2a2a] text-white/50 hover:text-red-300'}`}>
-                  {confirming === o.orderId ? 'Toque de novo: volta pro estoque' : o.status === 'retirado' ? 'Devolução' : 'Cancelar'}
+                  {confirming === o.orderId
+                    ? (paid ? 'Toque de novo: devolve o dinheiro' : 'Toque de novo: volta pro estoque')
+                    : paid ? 'Estornar' : o.status === 'retirado' ? 'Devolução' : 'Cancelar'}
                 </button>
               )}
               {o.status === 'reservado' && (

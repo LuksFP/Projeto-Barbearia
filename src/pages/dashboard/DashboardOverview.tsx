@@ -28,6 +28,7 @@ const STATUS_CONFIG = {
   confirmed: { label: 'Confirmado', color: 'text-amber-400',  bg: 'bg-amber-400/10',  icon: Clock },
   pending:   { label: 'Pendente',   color: 'text-white/65',   bg: 'bg-white/5',        icon: AlertCircle },
   cancelled: { label: 'Cancelado',  color: 'text-red-400',    bg: 'bg-red-400/10',     icon: AlertCircle },
+  no_show:   { label: 'Faltou',     color: 'text-orange-300', bg: 'bg-orange-400/10',  icon: AlertCircle },
 }
 
 const CATEGORY_COLORS: Record<string, string> = {

@@ -13,6 +13,8 @@ import { demoStoreSettings, productErrorMessage, saveDemoStoreSettings, useProdu
 import { bumpLimit, hasFullStore } from '@/lib/storePlan'
 import { toast } from '@/hooks/use-toast'
 import { PLAN_NAME } from '@/types/saas'
+import OnlinePaymentSettings from './OnlinePaymentSettings'
+import { ONLINE_PAYMENT_ON } from '@/lib/onlinePayment'
 
 
 const StoreSettings = ({ canEdit }: { canEdit: boolean }) => {
@@ -71,7 +73,7 @@ const StoreSettings = ({ canEdit }: { canEdit: boolean }) => {
           <div className="flex-1">
             <p className="text-white text-sm font-semibold font-body">“Leve junto no dia” no agendamento</p>
             <p className="text-white/60 text-xs font-body mt-0.5">
-              Na última etapa do agendamento o cliente separa um produto e paga tudo aqui, junto com o corte.
+              Na última etapa do agendamento o cliente separa um produto e paga junto com o corte{ONLINE_PAYMENT_ON ? ' (ou online, se você ligar abaixo)' : ''}.
               {' '}No {PLAN_NAME[plan]}: {limit === null ? 'quantos produtos quiser' : limit === 1 ? '1 produto' : `até ${limit} produtos`}.
             </p>
           </div>
@@ -151,6 +153,9 @@ const StoreSettings = ({ canEdit }: { canEdit: boolean }) => {
           aria-label="Mostrar a loja no site"
         />
       </div>
+
+      {/* ── Receber online ─────────────────────────────────────────────── */}
+      {ONLINE_PAYMENT_ON && <OnlinePaymentSettings barbershopId={barbershop.id} canEdit={canEdit} demo={demo} />}
     </div>
   )
 }

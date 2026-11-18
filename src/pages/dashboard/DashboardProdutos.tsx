@@ -5,7 +5,7 @@
 // junto"; o banco trava o resto). Premium: loja completa no site. As chaves
 // e a escolha do "Leve junto" ficam em Configurações › Vendas no site.
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Pencil, Search, Package } from 'lucide-react'
 import ProUpsell from '@/components/dashboard/ProUpsell'
@@ -17,6 +17,7 @@ import { toast } from '@/hooks/use-toast'
 import ProductFormDialog from '@/components/dashboard/products/ProductFormDialog'
 import OrdersList, { groupOrders } from '@/components/dashboard/products/OrdersList'
 import type { Product } from '@/repositories/productRepository'
+import { onlinePaymentRepository, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
 import { PLAN_NAME } from '@/types/saas'
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -32,7 +33,17 @@ const DashboardProdutos = () => {
   const fullStore = hasFullStore(account?.plan)
   const limit = bumpLimit(account?.plan)
   const planName = PLAN_NAME[account?.plan ?? 'basic']
-  const { products, sales, loading, demo, save, remove, setOrderStatus } = useProducts(barbershop?.id)
+  const { products, sales, loading, demo, save, remove, setOrderStatus, reload } = useProducts(barbershop?.id)
+  // Pagamento online (Mercado Pago) por pedido; demo não tem
+  const [payments, setPayments] = useState<Map<string, OnlinePayment>>(new Map())
+  const loadPayments = useCallback(async () => {
+    if (!barbershop?.id) return
+    try {
+      const list = await onlinePaymentRepository.listForShop(barbershop.id)
+      setPayments(new Map(list.flatMap(p => (p.orderId ? [[p.orderId, p] as const] : []))))
+    } catch { /* sem pagamentos: lista mostra só a reserva */ }
+  }, [barbershop?.id])
+  useEffect(() => { void loadPayments() }, [loadPayments, sales])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string | null>(null)
   const [stockFilter, setStockFilter] = useState<StockFilter>('todos')
@@ -78,6 +89,25 @@ const DashboardProdutos = () => {
         : { title: 'Pedido cancelado', description: 'Os produtos voltaram pro estoque.' })
     } catch (err: unknown) {
       toast({ title: 'Não deu certo', description: productErrorMessage(err), variant: 'destructive' })
+    }
+  }
+
+  const refund = async (orderId: string) => {
+    try {
+      const pay = payments.get(orderId)
+      if (!pay) return
+      await onlinePaymentRepository.refund(pay.id)
+      if (demo) await setOrderStatus(orderId, 'cancelado') // no real quem cancela é a EF
+      toast({
+        title: 'Estornado',
+        description: pay.appointmentId
+          ? 'O cliente recebe o valor de volta pelo Mercado Pago. Os produtos voltaram pro estoque e o horário pago junto foi cancelado.'
+          : 'O cliente recebe o valor de volta pelo Mercado Pago e os produtos voltaram pro estoque.',
+      })
+      await reload()
+      await loadPayments()
+    } catch (err: unknown) {
+      toast({ title: 'Não deu pra estornar', description: err instanceof Error ? err.message : undefined, variant: 'destructive' })
     }
   }
 
@@ -220,7 +250,7 @@ const DashboardProdutos = () => {
       <section id="pedidos" className="scroll-mt-20">
         <h2 className="text-white text-sm font-semibold font-body">Pedidos do site</h2>
         <p className="text-white/55 text-xs font-body mt-0.5 mb-3">
-          Os deste mês e qualquer reserva que ainda não foi retirada. Agendamento cancelado cancela os produtos dele sozinho.
+          Os deste mês e qualquer reserva que ainda não foi retirada. Agendamento cancelado cancela os produtos dele sozinho, menos os já pagos online.
         </p>
         {orders.length === 0 ? (
           <p className="text-white/55 text-sm font-body py-4">
@@ -229,7 +259,7 @@ const DashboardProdutos = () => {
               : 'Nenhum pedido ainda. Quando um cliente separar o produto ao agendar, o pedido aparece aqui.'}
           </p>
         ) : (
-          <OrdersList orders={orders} onStatus={changeStatus} />
+          <OrdersList orders={orders} payments={payments} canRefund={isAdmin} onStatus={changeStatus} onRefund={refund} />
         )}
       </section>
 

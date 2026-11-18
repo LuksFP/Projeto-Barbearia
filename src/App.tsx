@@ -71,6 +71,7 @@ const OLD_PATHS = [
 // Site público da barbearia (/b/:slug)
 const BarbershopHome = lazy(() => import("./pages/barbershop/BarbershopHome"));
 const StorePage = lazy(() => import("./pages/barbershop/StorePage"));
+const PaymentReturnPage = lazy(() => import("./pages/barbershop/PaymentReturnPage"));
 const ProductPage = lazy(() => import("./pages/barbershop/ProductPage"));
 const Demo = lazy(() => import("./pages/Demo"));
 
@@ -156,6 +157,7 @@ const App = () => (
                           <Route index element={<BarbershopHome />} />
                           <Route path="loja" element={<StorePage />} />
                           <Route path="loja/:productId" element={<ProductPage />} />
+                          <Route path="pagamento/:paymentId" element={<PaymentReturnPage />} />
                         </Route>
 
                         {/* ── Dashboard da barbearia ── protegido pelo SaasGuard */}

@@ -1,7 +1,7 @@
 import { errorText } from '@/lib/errors'
 import { formatPhoneBR } from '@/lib/phone'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle, BadgeCheck, UserX } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -13,20 +13,28 @@ import { toast } from '@/hooks/use-toast'
 import { buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { buildBookingConfirmation, waUrl } from '@/lib/whatsapp'
+import { onlinePaymentRepository, PAYMENT_METHOD, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
 
 const STATUS_CONFIG = {
   done:      { label: 'Concluído', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle2 },
   confirmed: { label: 'Confirmado', color: 'text-amber-400',  bg: 'bg-amber-400/10 border-amber-400/20',  icon: Clock },
   pending:   { label: 'Pendente',   color: 'text-white/70',   bg: 'bg-white/5 border-white/10',            icon: AlertCircle },
   cancelled: { label: 'Cancelado',  color: 'text-red-400',    bg: 'bg-red-400/10 border-red-400/20',       icon: XCircle },
+  no_show:   { label: 'Faltou',     color: 'text-orange-300', bg: 'bg-orange-400/10 border-orange-400/25', icon: UserX },
 }
 
 const STATUS_TRANSITIONS: Record<string, { label: string; next: string }[]> = {
-  pending:   [{ label: 'Confirmar', next: 'confirmed' }, { label: 'Cancelar', next: 'cancelled' }],
-  confirmed: [{ label: 'Concluir',  next: 'done' },      { label: 'Cancelar', next: 'cancelled' }],
+  pending:   [{ label: 'Confirmar', next: 'confirmed' }, { label: 'Faltou', next: 'no_show' }, { label: 'Cancelar', next: 'cancelled' }],
+  confirmed: [{ label: 'Concluir',  next: 'done' },      { label: 'Faltou', next: 'no_show' }, { label: 'Cancelar', next: 'cancelled' }],
   done:      [],
   cancelled: [],
+  // Marcou falta sem querer: volta pra confirmado
+  no_show:   [{ label: 'Desfazer falta', next: 'confirmed' }],
 }
+
+// "Faltou" só depois que o horário começou (antes disso é cancelamento)
+const hasStarted = (date: string, time: string) =>
+  new Date(`${date}T${time.slice(0, 5)}:00`).getTime() <= Date.now()
 
 const DAY_NAMES = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
@@ -86,6 +94,9 @@ const DashboardAgenda = () => {
   const [armedDelete, setArmedDelete]   = useState<string | null>(null)
   const [deleting, setDeleting]         = useState(false)
   const canDelete = isAdmin || isDemoMode()
+  // Pagamento online por horário (Mercado Pago). Pago → "Cancelar" vira "Estornar"
+  const [payments, setPayments] = useState<Map<string, OnlinePayment>>(new Map())
+  const [armedRefund, setArmedRefund] = useState<string | null>(null)
 
   useEffect(() => {
     if (!armedDelete) return
@@ -244,6 +255,37 @@ const DashboardAgenda = () => {
       .then(rows => setAppointments(rows.map(mapAppointment)))
       .catch(() => { /* próximo evento/foco tenta de novo */ })
   })
+
+  useEffect(() => {
+    if (!barbershop) return
+    let alive = true
+    onlinePaymentRepository.listForShop(barbershop.id)
+      .then(list => { if (alive) setPayments(new Map(list.flatMap(p => (p.appointmentId ? [[p.appointmentId, p] as const] : [])))) })
+      .catch(() => { /* sem pagamentos: agenda segue normal */ })
+    return () => { alive = false }
+  }, [barbershop, appointments])
+
+  // Devolve o dinheiro no Mercado Pago e cancela o horário (e os produtos pagos junto)
+  const handleRefund = async (apt: BarbershopAppointment, pay: OnlinePayment) => {
+    if (armedRefund !== apt.id) { setArmedRefund(apt.id); return }
+    setArmedRefund(null)
+    setUpdatingId(apt.id)
+    try {
+      await onlinePaymentRepository.refund(pay.id)
+      if (isDemoMode()) {
+        setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, status: 'cancelled' } : a))
+        updateDemoBooking(apt.barbershopId, apt.id, { status: 'cancelled' })
+      } else if (barbershop) {
+        const rows = await appointmentRepository.listByBarbershop(barbershop.id, selectedDate)
+        setAppointments(rows.map(mapAppointment))
+      }
+      toast({ title: 'Estornado', description: `O cliente recebe ${pay.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} de volta pelo Mercado Pago e o horário foi cancelado${pay.orderId ? ', junto com os produtos pagos com ele' : ''}.` })
+    } catch (err: unknown) {
+      toast({ title: 'Não deu pra estornar', description: err instanceof Error ? err.message : undefined, variant: 'destructive' })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   const handleStatusChange = async (apt: BarbershopAppointment, nextStatus: string) => {
     if (isDemoMode()) {
@@ -551,7 +593,13 @@ const DashboardAgenda = () => {
             const statusKey = apt.status in STATUS_CONFIG ? apt.status as keyof typeof STATUS_CONFIG : 'pending'
             const status = STATUS_CONFIG[statusKey]
             const StatusIcon = status.icon
-            const transitions = STATUS_TRANSITIONS[apt.status] ?? []
+            const pay = payments.get(apt.id)
+            const paid = pay?.status === 'pago'
+            // Horário pago não cancela: o botão vira "Estornar" (só dono/admin)
+            // Pago: "Cancelar" vira "Estornar"; falta com pagamento a barbearia fica com o valor
+            const transitions = (STATUS_TRANSITIONS[apt.status] ?? []).filter(t =>
+              !(paid && t.next === 'cancelled') && !(t.next === 'no_show' && !hasStarted(apt.date, apt.time)))
+            const canRefund = paid && !!pay && canDelete && ['pending', 'confirmed', 'no_show'].includes(apt.status)
             const isUpdating = updatingId === apt.id
 
             return (
@@ -575,6 +623,15 @@ const DashboardAgenda = () => {
                   </div>
                   {/* No celular as etiquetas descem pra uma linha própria; senão comem o nome */}
                   <div className="flex items-center gap-2 max-sm:w-full max-sm:pl-[74px]">
+                    {paid && (
+                      <span className="flex items-center gap-1 text-sky-300 text-xs px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/30">
+                        <BadgeCheck className="w-3 h-3" />
+                        Pago online{pay?.method && PAYMENT_METHOD[pay.method] ? ` · ${PAYMENT_METHOD[pay.method]}` : ''}
+                      </span>
+                    )}
+                    {pay?.status === 'estornado' && (
+                      <span className="text-white/45 text-xs px-2 py-0.5 rounded-full border border-white/15">Estornado</span>
+                    )}
                     {apt.membershipType === 'vip' && (
                       <span className="flex items-center gap-1 text-amber-400 text-xs px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
                         <Crown className="w-2.5 h-2.5" />
@@ -589,8 +646,8 @@ const DashboardAgenda = () => {
                 </div>
 
                 {/* Ações de status */}
-                {transitions.length > 0 && !isUpdating && (
-                  <div className="flex items-center gap-2 mt-3 pl-[74px]">
+                {(transitions.length > 0 || canRefund) && !isUpdating && (
+                  <div className="flex flex-wrap items-center gap-2 mt-3 pl-[74px]">
                     {transitions.map(({ label, next }) => (
                       <button
                         key={next}
@@ -598,6 +655,8 @@ const DashboardAgenda = () => {
                         className={`px-3 py-1 rounded-md text-xs font-body font-semibold transition-all ${
                           next === 'cancelled'
                             ? 'bg-red-400/10 text-red-400 border border-red-400/20 hover:bg-red-400/20'
+                            : next === 'no_show'
+                              ? 'bg-orange-400/10 text-orange-300 border border-orange-400/25 hover:bg-orange-400/20'
                             : next === 'done'
                               ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 hover:bg-emerald-400/20'
                               : 'bg-amber-400/10 text-amber-400 border border-amber-400/20 hover:bg-amber-400/20'
@@ -606,6 +665,19 @@ const DashboardAgenda = () => {
                         {label}
                       </button>
                     ))}
+                    {canRefund && pay && (
+                      <button
+                        onClick={() => void handleRefund(apt, pay)}
+                        onBlur={() => setArmedRefund(c => (c === apt.id ? null : c))}
+                        className={`px-3 py-1 rounded-md text-xs font-body font-semibold border transition-all ${
+                          armedRefund === apt.id
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'bg-red-400/10 text-red-400 border-red-400/20 hover:bg-red-400/20'
+                        }`}
+                      >
+                        {armedRefund === apt.id ? 'Toque de novo: devolve o dinheiro' : 'Estornar e cancelar'}
+                      </button>
+                    )}
                   </div>
                 )}
 

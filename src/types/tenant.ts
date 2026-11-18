@@ -88,7 +88,7 @@ export interface BarbershopAppointment {
   date: string
   time: string
   durationMin: number
-  status: 'pending' | 'confirmed' | 'done' | 'cancelled'
+  status: 'pending' | 'confirmed' | 'done' | 'cancelled' | 'no_show'
   membershipType?: 'vip' | 'standard'
   price?: number
   /** Quando alguém da equipe mandou o lembrete de WhatsApp (null = ainda não). */

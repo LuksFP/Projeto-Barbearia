@@ -767,6 +767,27 @@ export type Database = {
         }
         Relationships: []
       }
+      online_payments: {
+        Row: {
+          id: string
+          order_id: string | null
+          appointment_id: string | null
+          barbershop_id: string
+          status: string
+          amount: number
+          platform_fee: number
+          mp_preference_id: string | null
+          mp_payment_id: string | null
+          method: string | null
+          paid_at: string | null
+          refunded_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       product_sales: {
         Row: {
           appointment_id: string | null
@@ -1150,6 +1171,17 @@ export type Database = {
         }[]
       }
       public_store_mode: { Args: { p_barbershop_id: string }; Returns: string }
+      public_store_pays_online: { Args: { p_barbershop_id: string }; Returns: boolean }
+      public_payment_status: {
+        Args: { p_payment_id: string }
+        Returns: { status: string; has_appointment: boolean; has_order: boolean }[]
+      }
+      my_mp_connection: {
+        Args: { p_barbershop_id: string }
+        Returns: { connected: boolean; enabled: boolean; mp_user_id: number; connected_at: string }[]
+      }
+      set_mp_payment_enabled: { Args: { p_barbershop_id: string; p_enabled: boolean }; Returns: undefined }
+      disconnect_mp: { Args: { p_barbershop_id: string }; Returns: undefined }
       public_place_product_order: {
         Args: {
           p_barbershop_id: string

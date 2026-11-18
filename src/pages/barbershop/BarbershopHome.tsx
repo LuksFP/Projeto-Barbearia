@@ -10,6 +10,7 @@ import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 import { supabasePublic } from '@/lib/supabase-public'
 import { buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 import BookingBump from '@/components/barbershop/BookingBump'
+import PayOnline from '@/components/barbershop/store/PayOnline'
 import StoreSection from '@/components/barbershop/StoreSection'
 import { placeOrder } from '@/lib/placeOrder'
 import { addDemoBooking, listDemoBookings } from '@/lib/demoBookings'
@@ -74,7 +75,9 @@ const BookingSection = ({
     setBump(Object.fromEntries(bag.lines.map(l => [l.product.id, l.qty])))
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
   // Depois de agendar: o que foi separado da loja, ou por que não deu
-  const [orderResult, setOrderResult] = useState<{ ok: boolean; text: string } | null>(null)
+  const [orderResult, setOrderResult] = useState<{ ok: boolean; text: string; orderId?: string; amount?: number } | null>(null)
+  // Horário recém-criado: o "Pagar agora" cobra ele (e o Leve junto) num checkout só
+  const [bookedId, setBookedId] = useState<string | null>(null)
   const [selectedBarber, setSelectedBarber] = useState<BarbershopBarber | null>(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
@@ -193,6 +196,7 @@ const BookingSection = ({
     setBookError('')
     setBump({})
     setOrderResult(null)
+    setBookedId(null)
     setSlotNotice('')
   }
 
@@ -215,13 +219,13 @@ const BookingSection = ({
     const reserveBump = async () => {
       if (bumpLines.length === 0) { setOrderResult(null); return }
       try {
-        await placeOrder(barbershop.id, {
+        const orderId = await placeOrder(barbershop.id, {
           items: bumpLines.map(l => ({ productId: l.product.id, quantity: l.qty })),
           clientName: clientName.trim(),
           clientPhone,
           appointmentId,
         })
-        setOrderResult({ ok: true, text: bumpLines.map(l => `${l.qty}× ${l.product.name}`).join(', ') })
+        setOrderResult({ ok: true, text: bumpLines.map(l => `${l.qty}× ${l.product.name}`).join(', '), orderId, amount: bumpLines.reduce((a, l) => a + l.qty * l.product.price, 0) })
         bumpLines.forEach(l => bag.remove(l.product.id)) // já reservado junto do horário
         onOrdered()
       } catch (e: unknown) {
@@ -248,6 +252,7 @@ const BookingSection = ({
         price: totalPrice,
       })
       await reserveBump()
+      setBookedId(appointmentId)
       setTimeout(() => { setSubmitting(false); setStep('done') }, 500)
       return
     }
@@ -274,6 +279,7 @@ const BookingSection = ({
       })
       if (error) throw error
       await reserveBump() // horário já está garantido; produto é extra
+      setBookedId(appointmentId)
       setStep('done')
     } catch (e: unknown) {
       // Mostra a mensagem do limite anti-abuse (trigger) se vier; senão, genérica.
@@ -350,9 +356,23 @@ const BookingSection = ({
         {orderResult && (
           <p className={`text-sm font-body mb-4 ${orderResult.ok ? 'text-white/70' : 'text-red-300'}`}>
             {orderResult.ok
-              ? <>Separado pra você: {orderResult.text}. Paga tudo na barbearia.</>
+              ? <>Separado pra você: {orderResult.text}.</>
               : <>Seu horário está marcado, mas não deu pra separar os produtos: {orderResult.text}</>}
           </p>
+        )}
+        {bookedId && (
+          <div className="mb-6">
+            <PayOnline
+              barbershopId={barbershop.id}
+              slug={barbershop.slug}
+              phone={clientPhone}
+              primary={primary}
+              appointmentId={bookedId}
+              orderId={orderResult?.ok ? orderResult.orderId : undefined}
+              amount={totalPrice + (orderResult?.ok ? orderResult.amount ?? 0 : 0)}
+              laterHint="na barbearia"
+            />
+          </div>
         )}
         <p className="text-white/40 text-sm font-body mb-8">
           Em breve você receberá uma confirmação. Até lá!

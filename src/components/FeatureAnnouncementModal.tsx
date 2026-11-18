@@ -13,6 +13,7 @@ import { Sparkles, X, ArrowRight, Check } from 'lucide-react'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { supabase } from '@/lib/supabase'
 import { isDemoMode } from '@/lib/demo'
+import { ONLINE_PAYMENT_ON } from '@/lib/onlinePayment'
 
 interface Announcement {
   key: string
@@ -25,6 +26,34 @@ interface Announcement {
 }
 
 const ANNOUNCEMENTS: Announcement[] = [
+  {
+    key: 'faltou-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Cliente não apareceu? Marque “Faltou”',
+    description:
+      'Agora falta não precisa mais virar cancelamento. Passou do horário e o cliente não veio, toque em “Faltou” na Agenda: fica registrado na ficha dele e os produtos que ele separou voltam pro estoque.',
+    steps: [
+      'Abra a Agenda no dia do horário',
+      'Depois que o horário começou, aparece o botão “Faltou”',
+      'Marcou sem querer? Toque em “Desfazer falta”',
+    ],
+    ctaLabel: 'Abrir Agenda',
+    ctaTo: '/dashboard/agenda',
+  },
+  {
+    key: 'pagamento-online-loja-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Cliente já paga o corte e os produtos pelo site',
+    description:
+      'Conecte sua conta Mercado Pago e, logo depois de agendar, o cliente paga o corte (e o que separou no “Leve junto”) com Pix ou cartão. O dinheiro cai na sua conta. Taxa do BarberPro: 1,5% por pagamento online, mais a do Mercado Pago. Quem preferir continua pagando na barbearia.',
+    steps: [
+      'Em Configurações › Vendas no site, toque em “Conectar minha conta Mercado Pago”',
+      'Autorize no Mercado Pago e pronto: o botão “Pagar agora” aparece no seu site',
+      'Na Agenda e na Loja aparece o selo “Pago online”. Precisa devolver? Toque em “Estornar”',
+    ],
+    ctaLabel: 'Conectar agora',
+    ctaTo: '/dashboard/configuracoes#vendas',
+  },
   {
     key: 'vendas-no-site-2026-11',
     badge: 'Novidade no ar',
@@ -141,7 +170,7 @@ const FeatureAnnouncementModal = () => {
       }
 
       if (cancelled) return
-      const next = ANNOUNCEMENTS.find((a) => !seen.includes(a.key))
+      const next = ANNOUNCEMENTS.find((a) => !seen.includes(a.key) && (ONLINE_PAYMENT_ON || a.key !== 'pagamento-online-loja-2026-11'))
       if (next) setCurrent(next)
     }
 

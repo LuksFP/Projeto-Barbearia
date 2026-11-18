@@ -58,3 +58,13 @@ verify_jwt = false
 
 [functions.cliente-resumo]
 verify_jwt = true
+
+# Loja: pagamento online (Mercado Pago)
+[functions.mp-oauth-callback]
+verify_jwt = false
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.mp-webhook]
+verify_jwt = false

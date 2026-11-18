@@ -20,10 +20,10 @@ function fmtDate(d: string) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: 'Pendente', confirmed: 'Confirmado', done: 'Concluído', cancelled: 'Cancelado',
+  pending: 'Pendente', confirmed: 'Confirmado', done: 'Concluído', cancelled: 'Cancelado', no_show: 'Faltou',
 }
 const STATUS_COLOR: Record<string, string> = {
-  pending: 'text-amber-400', confirmed: 'text-blue-400', done: 'text-emerald-400', cancelled: 'text-red-400',
+  pending: 'text-amber-400', confirmed: 'text-blue-400', done: 'text-emerald-400', cancelled: 'text-red-400', no_show: 'text-orange-300',
 }
 
 // Monta link de WhatsApp a partir do telefone livre. Assume Brasil (+55) se sem DDI.
@@ -100,7 +100,8 @@ function computeInsights(history: AppointmentRow[]) {
     frequency = Math.round(gaps / (dates.length - 1) / 86_400_000)
   }
 
-  const noShows = history.filter(a => a.status === 'cancelled').length
+  // Antes do "Faltou" existir, falta era marcada como cancelado: conta os dois
+  const noShows = history.filter(a => a.status === 'no_show' || a.status === 'cancelled').length
 
   return { favoriteService, favoriteBarber, avgTicket, frequency, noShows }
 }
