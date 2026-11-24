@@ -23,6 +23,7 @@ import {
   UserPlus,
   Lightbulb,
   ShoppingBag,
+  Repeat,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
@@ -35,11 +36,14 @@ import { alertNewBooking, listenPushWhileOpen, notifyPermission, readAlertPrefs,
 import { enablePush } from '@/lib/push'
 import { usePlanGates } from '@/hooks/usePlanGates'
 import { ProBadge } from '@/components/dashboard/ProUpsell'
-import { clearDemoSession, getDemoPlan, isDemoMode } from '@/lib/demo'
+import { clearDemoSession, getDemoPlan, getDemoAppointments, isDemoMode } from '@/lib/demo'
+import { appointmentRepository } from '@/repositories/appointmentRepository'
+import { topUpDemoFixed } from '@/lib/fixedClients'
 
 const navItems = [
   { to: '/dashboard', label: 'Visão Geral', icon: LayoutDashboard, end: true },
   { to: '/dashboard/agenda', label: 'Agenda', icon: CalendarDays },
+  { to: '/dashboard/fixos', label: 'Clientes fixos', icon: Repeat },
   { to: '/dashboard/lembretes', label: 'Lembretes', icon: BellRing },
   { to: '/dashboard/equipe', label: 'Equipe', icon: UserCheck },
   { to: '/dashboard/clientes', label: 'Clientes', icon: Users },
@@ -189,6 +193,21 @@ const DashboardLayout = () => {
       stopPush()
     }
   }, [])
+
+  // Clientes fixos: ao abrir o painel, cria os horários que faltam nas próximas
+  // semanas, pra o fixo aparecer no dia (Agenda/Lembretes) com o botão de WhatsApp.
+  // Os horários novos chegam na Agenda pelo tempo real (useAppointmentsLive).
+  useEffect(() => {
+    if (!barbershop?.id) return
+    if (demo) {
+      const plan = getDemoPlan()
+      if (plan) topUpDemoFixed(getDemoAppointments(plan), new Date().toLocaleDateString('sv-SE'))
+      return
+    }
+    appointmentRepository.ensureFixed(barbershop.id)
+      .then(n => { if (n > 0) void refreshAppointments() })
+      .catch(() => { /* sem a migração ou sem rede: os fixos seguem como estão */ })
+  }, [barbershop?.id, demo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Aparelho que já ligou os avisos: mantém a inscrição de push salva pra esta
   // barbearia (troca de conta, inscrição renovada pelo navegador etc.).

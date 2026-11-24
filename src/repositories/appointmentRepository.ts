@@ -44,6 +44,45 @@ async function revenueRows(barbershopId: string, fromDate: string, toDate?: stri
   return [...(done.data ?? []), ...paidNoShow]
 }
 
+export interface SeriesResult { created: AppointmentRow[]; skipped: { date: string; reason: string }[] }
+
+/** O que se copia de um horário pra outro dentro da série (tudo menos data e status). */
+export type SeriesTemplate = Pick<AppointmentInsert,
+  'barbershop_id' | 'client_name' | 'client_phone' | 'client_email' | 'service_id' | 'service_ids' |
+  'service_name' | 'service_category' | 'barber_id' | 'barber_name' | 'time' | 'duration_min' | 'price' | 'notes'>
+
+const templateOf = (r: AppointmentRow): SeriesTemplate => ({
+  barbershop_id: r.barbershop_id, client_name: r.client_name, client_phone: r.client_phone,
+  client_email: r.client_email, service_id: r.service_id, service_ids: r.service_ids,
+  service_name: r.service_name, service_category: r.service_category, barber_id: r.barber_id,
+  barber_name: r.barber_name, time: r.time, duration_min: r.duration_min, price: r.price, notes: r.notes,
+})
+
+/** Insere uma data por vez: a que bater com outro horário ou cair fora do expediente é pulada. */
+async function insertSeries(t: SeriesTemplate, dates: string[], recurrenceId: string, everyDays: number, anchorDate: string): Promise<SeriesResult> {
+  const created: AppointmentRow[] = []
+  const skipped: { date: string; reason: string }[] = []
+  for (const date of dates) {
+    const { data, error } = await supabase.from('appointments').insert({
+      ...t, date, status: 'confirmed', recurrence_id: recurrenceId, recurrence_every_days: everyDays,
+    }).select().single()
+    if (error) {
+      const msg = `${error.code ?? ''} ${error.message ?? ''}`
+      skipped.push({ date, reason: /23P01|no_overlap/.test(msg) ? 'horário ocupado' : /expediente|fechamento/i.test(msg) ? 'fora do expediente' : 'não deu pra marcar' })
+    } else if (data) created.push(data)
+  }
+  // Reserva: o site trata esse horário como ocupado em toda data do ritmo, até "Parar"
+  if (created.length > 0) {
+    const { error } = await supabase.from('fixed_slots').upsert({
+      id: recurrenceId, barbershop_id: t.barbershop_id, barber_id: t.barber_id ?? null,
+      anchor_date: anchorDate, every_days: everyDays, time: String(t.time).slice(0, 5),
+      duration_min: t.duration_min ?? 30, client_name: t.client_name, active: true, stopped_at: null,
+    })
+    if (error) throw error
+  }
+  return { created, skipped }
+}
+
 export const appointmentRepository = {
   async listByBarbershop(barbershopId: string, date?: string): Promise<AppointmentRow[]> {
     let query = supabase
@@ -140,51 +179,65 @@ export const appointmentRepository = {
    * entra sozinha — se uma bater com outro horário (ou cair fora do
    * expediente), pula e segue. O horário base entra na série também.
    */
-  async createSeries(baseId: string, dates: string[], everyDays: number): Promise<{ created: AppointmentRow[]; skipped: { date: string; reason: string }[] }> {
+  async createSeries(baseId: string, dates: string[], everyDays: number): Promise<SeriesResult> {
     const { data: base, error: readErr } = await supabase.from('appointments').select('*').eq('id', baseId).single()
     if (readErr) throw readErr
     const recurrenceId = crypto.randomUUID()
-    const created: AppointmentRow[] = []
-    const skipped: { date: string; reason: string }[] = []
-    for (const date of dates) {
-      const { data, error } = await supabase.from('appointments').insert({
-        barbershop_id: base.barbershop_id,
-        client_name: base.client_name,
-        client_phone: base.client_phone,
-        client_email: base.client_email,
-        service_id: base.service_id,
-        service_ids: base.service_ids,
-        service_name: base.service_name,
-        service_category: base.service_category,
-        barber_id: base.barber_id,
-        barber_name: base.barber_name,
-        date,
-        time: base.time,
-        duration_min: base.duration_min,
-        price: base.price,
-        notes: base.notes,
-        status: 'confirmed',
-        recurrence_id: recurrenceId,
-        recurrence_every_days: everyDays,
-      }).select().single()
-      if (error) {
-        const msg = `${error.code ?? ''} ${error.message ?? ''}`
-        skipped.push({ date, reason: /23P01|no_overlap/.test(msg) ? 'horário ocupado' : /expediente|fechamento/i.test(msg) ? 'fora do expediente' : 'não deu pra marcar' })
-      } else if (data) created.push(data)
-    }
+    const result = await insertSeries(templateOf(base), dates, recurrenceId, everyDays, base.date)
     // O horário base só vira "fixo" se alguma repetição entrou de fato
-    if (created.length > 0) {
+    if (result.created.length > 0) {
       const { error: baseErr } = await supabase
         .from('appointments')
         .update({ recurrence_id: recurrenceId, recurrence_every_days: everyDays } as TablesUpdate<'appointments'>)
         .eq('id', base.id)
       if (baseErr) throw baseErr
     }
-    return { created, skipped }
+    return result
+  },
+
+  /** Cliente fixo cadastrado direto (tela Clientes fixos), sem horário de origem. */
+  async createFixed(template: SeriesTemplate, dates: string[], everyDays: number): Promise<SeriesResult> {
+    return insertSeries(template, dates, crypto.randomUUID(), everyDays, dates[0])
+  },
+
+  /** Mais datas numa série que já existe, copiando o último horário dela. */
+  async extendSeries(recurrenceId: string, dates: string[]): Promise<SeriesResult> {
+    const { data: last, error } = await supabase.from('appointments').select('*')
+      .eq('recurrence_id', recurrenceId).order('date', { ascending: false }).limit(1).single()
+    if (error) throw error
+    return insertSeries(templateOf(last), dates, recurrenceId, last.recurrence_every_days ?? 7, last.date)
+  },
+
+  /** Cria os horários dos fixos que faltam nas próximas semanas. Devolve quantos criou. */
+  async ensureFixed(barbershopId: string): Promise<number> {
+    const { data, error } = await supabase.rpc('ensure_fixed_appointments', { p_barbershop_id: barbershopId })
+    if (error) throw error
+    return data ?? 0
+  },
+
+  /** Ids das reservas de cliente fixo ainda ativas (tela Clientes fixos). */
+  async activeFixedSlotIds(barbershopId: string): Promise<Set<string>> {
+    const { data, error } = await supabase.from('fixed_slots').select('id').eq('barbershop_id', barbershopId).eq('active', true)
+    if (error) throw error
+    return new Set((data ?? []).map(r => r.id))
+  },
+
+  /** Horários de clientes fixos a partir de `fromDate` (tela Clientes fixos). */
+  async listRecurring(barbershopId: string, fromDate: string): Promise<AppointmentRow[]> {
+    const { data, error } = await supabase.from('appointments').select('*')
+      .eq('barbershop_id', barbershopId).not('recurrence_id', 'is', null)
+      .gte('date', fromDate).order('date').order('time')
+    if (error) throw error
+    return data ?? []
   },
 
   /** Para a série: cancela os horários futuros (depois de `afterDate`) ainda abertos. */
   async stopSeries(recurrenceId: string, afterDate: string): Promise<number> {
+    // Primeiro solta a reserva: mesmo se algum horário pago travar o cancelamento,
+    // o site já volta a oferecer as semanas sem horário criado
+    const { error: slotErr } = await supabase.from('fixed_slots')
+      .update({ active: false, stopped_at: new Date().toISOString() }).eq('id', recurrenceId)
+    if (slotErr) throw slotErr
     const { data, error } = await supabase
       .from('appointments')
       .update({ status: 'cancelled' } as TablesUpdate<'appointments'>)

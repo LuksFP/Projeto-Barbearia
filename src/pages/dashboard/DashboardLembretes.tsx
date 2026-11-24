@@ -2,7 +2,7 @@ import { CalendarDays, CalendarClock, Clock, MessageCircle, Check, X, CheckCircl
 import { motion } from 'framer-motion'
 import { useTenant } from '@/contexts/TenantContext'
 import { useReminders } from '@/hooks/useReminders'
-import { buildReminderMessage, buildWhatsappUrl } from '@/lib/reminders'
+import { buildReminderMessage, buildFixedReminder, buildWhatsappUrl } from '@/lib/reminders'
 import { toast } from '@/hooks/use-toast'
 import type { Barbershop, BarbershopAppointment } from '@/types/tenant'
 
@@ -28,7 +28,7 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
       toast({ title: 'Cliente sem telefone', description: 'Não dá pra lembrar sem um número.', variant: 'destructive' })
       return
     }
-    window.open(buildWhatsappUrl(apt.clientPhone, buildReminderMessage(apt, barbershop)), '_blank')
+    window.open(buildWhatsappUrl(apt.clientPhone, (apt.recurrenceId ? buildFixedReminder : buildReminderMessage)(apt, barbershop)), '_blank')
     onRemind()
   }
 

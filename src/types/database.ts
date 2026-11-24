@@ -800,6 +800,57 @@ export type Database = {
         Update: { status?: string; notified_at?: string | null }
         Relationships: []
       }
+      fixed_slots: {
+        Row: {
+          id: string
+          barbershop_id: string
+          barber_id: string | null
+          anchor_date: string
+          every_days: number
+          time: string
+          duration_min: number
+          client_name: string
+          active: boolean
+          created_at: string
+          stopped_at: string | null
+        }
+        Insert: {
+          id: string
+          barbershop_id: string
+          barber_id?: string | null
+          anchor_date: string
+          every_days: number
+          time: string
+          duration_min?: number
+          client_name?: string
+          active?: boolean
+          stopped_at?: string | null
+        }
+        Update: { active?: boolean; stopped_at?: string | null }
+        Relationships: []
+      }
+      plaque_claims: {
+        Row: {
+          id: string
+          barbershop_id: string
+          month: string
+          revenue: number
+          name_on_plaque: string
+          recipient: string
+          phone: string
+          cep: string
+          address: string
+          city: string
+          state: string
+          status: 'pedida' | 'enviada' | 'entregue'
+          requested_by: string | null
+          created_at: string
+          shipped_at: string | null
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       commission_payouts: {
         Row: {
           id: string
@@ -1256,6 +1307,14 @@ export type Database = {
       }
       public_store_mode: { Args: { p_barbershop_id: string }; Returns: string }
       public_store_pays_online: { Args: { p_barbershop_id: string }; Returns: boolean }
+      claim_plaque: {
+        Args: { p_barbershop_id: string; p_month: string; p_name_on_plaque: string; p_recipient: string; p_phone: string; p_cep: string; p_address: string; p_city: string; p_state: string }
+        Returns: Database['public']['Tables']['plaque_claims']['Row']
+      }
+      ensure_fixed_appointments: {
+        Args: { p_barbershop_id: string; p_days?: number }
+        Returns: number
+      }
       public_join_waitlist: {
         Args: { p_barbershop_id: string; p_date: string; p_client_name: string; p_client_phone: string; p_period?: string; p_barber_id?: string | null }
         Returns: string

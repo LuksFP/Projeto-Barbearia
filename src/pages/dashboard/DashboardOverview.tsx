@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { openOutsideApp } from '@/lib/pwaHead'
 import { toast } from '@/hooks/use-toast'
-import { useTenant } from '@/contexts/TenantContext'
+import { useTenant, mapAppointment } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -15,7 +15,13 @@ import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { useClubBilling } from '@/hooks/useClubBilling'
 import { formatBRL, formatDueDate } from '@/lib/clubBilling'
-import { AlertTriangle, CalendarClock, Wallet } from 'lucide-react'
+import { AlertTriangle, CalendarClock, Wallet, Repeat, MessageCircle } from 'lucide-react'
+import { upsertDemoBooking } from '@/lib/demoBookings'
+import { productRepository, type StoreMonth } from '@/repositories/productRepository'
+import PlaqueGoal from '@/components/dashboard/PlaqueGoal'
+import { buildFixedReminder } from '@/lib/reminders'
+import { waUrl } from '@/lib/whatsapp'
+import type { BarbershopAppointment } from '@/types/tenant'
 import type { MonthRevenue } from '@/types/tenant'
 
 const fadeUp = {
@@ -200,13 +206,45 @@ const FinancialComparison = ({ months }: { months: MonthRevenue[] }) => {
 // ─── Página ──────────────────────────────────────────────────────────────────
 
 const DashboardOverview = () => {
-  const { barbershop, memberships, appointments: todayApts, clients } = useTenant()
+  const { barbershop, memberships, appointments: loadedApts, clients, isAdmin } = useTenant()
+  // Só os de hoje (a demo carrega as próximas semanas junto, por causa dos fixos)
+  const localToday = new Date().toLocaleDateString('sv-SE')
+  const todayApts = loadedApts.filter(a => a.date === localToday).sort((a, b) => a.time.localeCompare(b.time))
+  const [remindedNow, setRemindedNow] = useState<Set<string>>(new Set())
+  const openFixed = (a: BarbershopAppointment) => !!a.recurrenceId && (a.status === 'pending' || a.status === 'confirmed')
+  // Fixo de manhã (antes do meio-dia) aparece já no dia anterior: dá tempo de confirmar
+  const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+  const localTomorrow = tomorrowDate.toLocaleDateString('sv-SE')
+  const [tomorrowLoaded, setTomorrowLoaded] = useState<BarbershopAppointment[]>([])
+  useEffect(() => {
+    if (isDemoMode() || !barbershop) return
+    appointmentRepository.listByBarbershop(barbershop.id, localTomorrow)
+      .then(rows => setTomorrowLoaded(rows.map(mapAppointment)))
+      .catch(() => setTomorrowLoaded([]))
+  }, [barbershop?.id, localTomorrow]) // eslint-disable-line react-hooks/exhaustive-deps
+  const tomorrowSource = isDemoMode() ? loadedApts : tomorrowLoaded
+  const fixedTomorrowMorning = tomorrowSource
+    .filter(a => a.date === localTomorrow && openFixed(a) && a.time.slice(0, 5) < '12:00')
+    .sort((a, b) => a.time.localeCompare(b.time))
+  const fixedToday = todayApts.filter(openFixed)
+  const fixedList = [...fixedToday, ...fixedTomorrowMorning]
+  const wasReminded = (a: BarbershopAppointment) => !!a.remindedAt || remindedNow.has(a.id)
+  const sendFixed = (apt: BarbershopAppointment) => {
+    const url = barbershop ? waUrl(apt.clientPhone, buildFixedReminder(apt, barbershop)) : null
+    if (!url) return
+    window.open(url, '_blank', 'noopener') // antes de qualquer await
+    setRemindedNow(prev => new Set(prev).add(apt.id))
+    const at = new Date().toISOString()
+    if (isDemoMode()) { upsertDemoBooking({ ...apt, remindedAt: at }); return }
+    appointmentRepository.setReminded(apt.id, true).catch(() => { /* o WhatsApp já abriu */ })
+  }
   const { account } = useSaasAccount()
   const { billings, summary } = useClubBilling()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [showSuccess, setShowSuccess] = useState(searchParams.get('checkout') === 'success')
   const [financialMonths, setFinancialMonths] = useState<MonthRevenue[]>([])
+  const [storeMonths, setStoreMonths] = useState<StoreMonth[]>([])
   const [copiedLink, setCopiedLink] = useState(false)
 
   // Todo plano tem site público com agendamento; sem plano, sem link
@@ -243,6 +281,11 @@ const DashboardOverview = () => {
       .getMonthlyRevenue(barbershop.id)
       .then(setFinancialMonths)
       .catch(() => toast({ title: 'Erro ao carregar dados financeiros', variant: 'destructive' }))
+    // Loja entra no faturamento da placa (igual ao Financeiro)
+    const from = new Date(); from.setMonth(from.getMonth() - 3); from.setDate(1)
+    productRepository.salesByMonth(barbershop.id, from.toLocaleDateString('sv-SE'))
+      .then(setStoreMonths)
+      .catch(() => setStoreMonths([]))
   }, [barbershop?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalSubs = memberships.reduce((acc, m) => acc + m.subscriberCount, 0)
@@ -417,6 +460,51 @@ const DashboardOverview = () => {
         </a>
       </div>
 
+      {/* Clientes fixos de hoje: lembrar de confirmar no WhatsApp */}
+      {fixedList.length > 0 && (
+        <div className="p-4 rounded-xl border border-violet-400/25 bg-violet-400/[0.06]">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="flex items-center gap-2 text-violet-200 text-sm font-semibold font-body">
+              <Repeat className="w-4 h-4" />
+              {fixedToday.length === 0
+                ? (fixedList.length === 1 ? 'Cliente fixo amanhã cedo' : `${fixedList.length} clientes fixos amanhã cedo`)
+                : fixedTomorrowMorning.length === 0
+                  ? (fixedList.length === 1 ? 'Cliente fixo hoje' : `${fixedList.length} clientes fixos hoje`)
+                  : `${fixedList.length} clientes fixos · hoje e amanhã cedo`}
+              <span className="text-white/50 font-normal">· manda uma mensagem confirmando</span>
+            </p>
+            <a href="/dashboard/fixos" className="text-violet-200/70 hover:text-violet-200 text-xs font-body shrink-0">Ver fixos →</a>
+          </div>
+          <div className="space-y-2">
+            {fixedList.map(apt => (
+              <div key={apt.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-[#141414] border border-[#262626] px-3 py-2">
+                <span className="w-14 shrink-0 leading-tight">
+                  <span className="block font-heading text-lg text-white tabular-nums">{apt.time.slice(0, 5)}</span>
+                  {apt.date !== localToday && <span className="block text-[11px] font-body font-semibold text-amber-300">amanhã</span>}
+                </span>
+                <div className="flex-1 min-w-[10rem]">
+                  <p className="text-white text-sm font-semibold font-body">{apt.clientName}</p>
+                  <p className="text-white/55 text-xs font-body">{apt.serviceName} · {apt.barberName}</p>
+                </div>
+                {wasReminded(apt) ? (
+                  <button type="button" onClick={() => sendFixed(apt)} title="Mandar de novo"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-body font-semibold border border-[#2a2a2a] text-white/55 hover:text-white">
+                    <Check className="w-3 h-3 text-emerald-400" />Mensagem enviada
+                  </button>
+                ) : apt.clientPhone ? (
+                  <button type="button" onClick={() => sendFixed(apt)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-body font-semibold border border-[#25D366]/40 bg-[#25D366]/10 text-[#5ee08f] hover:bg-[#25D366]/20">
+                    <MessageCircle className="w-3 h-3" />Confirmar no WhatsApp
+                  </button>
+                ) : (
+                  <span className="text-white/40 text-xs font-body">sem WhatsApp cadastrado</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
@@ -438,6 +526,18 @@ const DashboardOverview = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Placa dos R$ 10 mil */}
+      {barbershop && (
+        <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={5}>
+          <PlaqueGoal
+            barbershopId={barbershop.id}
+            shopName={barbershop.name}
+            canClaim={isAdmin}
+            months={financialMonths.map(m => ({ month: m.month, total: m.total + (storeMonths.find(s => s.month === m.month)?.revenue ?? 0) }))}
+          />
+        </motion.div>
+      )}
 
       {/* Comparativo financeiro */}
       {financialMonths.length >= 2 && (
@@ -480,6 +580,11 @@ const DashboardOverview = () => {
                   <p className="text-white text-sm font-semibold font-body truncate">{apt.clientName}</p>
                   <p className="text-white/65 text-xs font-body">{apt.serviceName} · {apt.barberName}</p>
                 </div>
+                {apt.recurrenceId && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-400/10 border border-violet-400/30 text-violet-200 text-xs">
+                    <Repeat className="w-2.5 h-2.5" />Fixo
+                  </div>
+                )}
                 {apt.membershipType === 'vip' && (
                   <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
                     <Crown className="w-2.5 h-2.5" />VIP

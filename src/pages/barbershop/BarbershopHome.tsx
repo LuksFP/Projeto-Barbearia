@@ -1,5 +1,7 @@
 // Site público de uma barbearia — template profissional configurável por slug
 
+import { groupSeries, reservedOn } from '@/lib/fixedClients'
+import { demoFixedSeed } from '@/lib/demo'
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useOutletContext } from 'react-router-dom'
 import { useBag } from '@/components/barbershop/store/bag'
@@ -125,15 +127,23 @@ const BookingSection = ({
 
     // Demo: injeta ocupados fixos pra dar pra ver o bloqueio na tela
     if (isDemoBarbershop) {
-      const marcados = listDemoBookings(barbershop.id)
+      const stored = listDemoBookings(barbershop.id)
+      const storedIds = new Set(stored.map(a => a.id))
+      const demoList = [...demoFixedSeed(barbershop.id).filter(a => !storedIds.has(a.id)), ...stored]
+      const marcados = demoList
         .filter(a => a.date === selectedDate && a.status !== 'cancelled' && (!pickedBarber || a.barberId === pickedBarber.id))
         .map(a => ({ start: toMin(a.time), end: toMin(a.time) + a.durationMin }))
+      // Cliente fixo: o horário fica reservado também nas semanas ainda sem horário criado
+      const today = new Date().toLocaleDateString('sv-SE')
+      const reservados = reservedOn(groupSeries(demoList, today), demoList, selectedDate, pickedBarber?.id)
+        .map(r => ({ start: toMin(r.start), end: toMin(r.start) + r.duration }))
       setBusy([
         { start: toMin('10:00'), end: toMin('10:00') + 45 },
         { start: toMin('11:30'), end: toMin('11:30') + 30 },
         { start: toMin('15:00'), end: toMin('15:00') + 60 },
         { start: toMin('18:30'), end: toMin('18:30') + 45 },
         ...marcados,
+        ...reservados,
       ])
       return
     }

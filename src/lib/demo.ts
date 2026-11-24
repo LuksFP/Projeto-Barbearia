@@ -224,6 +224,42 @@ function todayISO(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
+/**
+ * Cliente fixo de exemplo da demo: toda semana às 17:30 com o 1º barbeiro.
+ * Duas vindas passadas (concluídas), hoje e mais 4 semanas, sempre a partir de hoje.
+ */
+export function demoFixedSeed(barbershopId: string): BarbershopAppointment[] {
+  const plan = (Object.keys(BS_ID) as DemoPlan[]).find(p => BS_ID[p] === barbershopId)
+  if (!plan) return []
+  const barber = getDemoBarbers(plan)[0]
+  const service = getDemoServices(plan)[0]
+  if (!barber || !service) return []
+  const base = new Date(`${todayISO()}T12:00:00`)
+  return [-14, -7, 0, 7, 14, 21, 28].map(off => {
+    const d = new Date(base)
+    d.setDate(base.getDate() + off)
+    const date = d.toLocaleDateString('sv-SE')
+    return {
+      id: `demo-fixo-exemplo-${off}`,
+      barbershopId,
+      clientName: 'Carlos Andrade',
+      clientPhone: '(13) 99812-4455',
+      barberId: barber.id,
+      barberName: barber.name,
+      serviceId: service.id,
+      serviceName: service.name,
+      serviceCategory: service.category,
+      date,
+      time: '17:30',
+      durationMin: service.durationMin || 30,
+      price: service.price,
+      status: off < 0 ? 'done' : 'confirmed',
+      recurrenceId: 'demo-fixo-exemplo',
+      recurrenceEveryDays: 7,
+    }
+  })
+}
+
 /** Agenda da demo: exemplos fixos caem sempre no dia de hoje + o que foi marcado na demo. */
 export function getDemoAppointments(plan: DemoPlan): BarbershopAppointment[] {
   const id = BS_ID[plan]
@@ -236,6 +272,7 @@ export function getDemoAppointments(plan: DemoPlan): BarbershopAppointment[] {
   const storedIds = new Set(stored.map(a => a.id))
   return [
     ...samples.filter(a => !storedIds.has(a.id)).map(a => ({ ...a, barbershopId: id, date: today })),
+    ...demoFixedSeed(id).filter(a => !storedIds.has(a.id)),
     ...stored,
   ]
 }

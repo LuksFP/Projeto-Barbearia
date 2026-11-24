@@ -27,6 +27,34 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'placa-10k-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Bateu R$ 10 mil num mês? Ganha a placa BarberPro',
+    description:
+      'Toda barbearia que faturar R$ 10 mil num mês ganha uma placa física, mandada pela equipe BarberPro. A barra na Visão Geral mostra quanto falta, o seu recorde e se dá pra bater no ritmo de hoje.',
+    steps: [
+      'Na Visão Geral, acompanhe a barra da placa. Conta serviço concluído e venda da loja, igual ao Financeiro',
+      'Passou dos R$ 10 mil no mês? Aparece o botão “Receber minha placa”',
+      'O dono confere o nome que vai gravado, passa o endereço e acompanha o envio ali mesmo',
+    ],
+    ctaLabel: 'Ver minha barra',
+    ctaTo: '/dashboard',
+  },
+  {
+    key: 'clientes-fixos-tela-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Clientes fixos ganharam uma tela própria',
+    description:
+      'Quem vem sempre no mesmo dia e hora agora fica num lugar só, separado por dia da semana. E o horário dele fica reservado: pelo site, nenhum outro cliente consegue marcar em cima.',
+    steps: [
+      'No menu, abra “Clientes fixos” e toque em “Novo cliente fixo”',
+      'Escolha cliente, barbeiro, serviço, o primeiro dia e a hora. Os horários entram confirmados na Agenda',
+      'No dia, ele já aparece na Agenda com o botão “Confirmar no WhatsApp” e a mensagem pronta. O horário fica guardado até você tocar em “Parar”',
+    ],
+    ctaLabel: 'Abrir Clientes fixos',
+    ctaTo: '/dashboard/fixos',
+  },
+  {
     key: 'agenda-avaliacao-fixo-espera-2026-11',
     badge: 'Novidade no ar',
     title: 'Mais clientes voltando, sem esforço',

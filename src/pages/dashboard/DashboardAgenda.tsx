@@ -119,6 +119,14 @@ const DashboardAgenda = () => {
     try { await appointmentRepository.setReviewRequested(apt.id) } catch { /* a marca é só lembrete; o WhatsApp já abriu */ }
   }
 
+  // Fixo: mandou a mensagem de confirmação pelo WhatsApp (vale também na aba Lembretes)
+  const handleReminded = async (apt: BarbershopAppointment) => {
+    const at = new Date().toISOString()
+    setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, remindedAt: at } : a))
+    if (isDemoMode()) { upsertDemoBooking({ ...apt, remindedAt: at }); return }
+    try { await appointmentRepository.setReminded(apt.id, true) } catch { /* a marca é só lembrete; o WhatsApp já abriu */ }
+  }
+
   const handleRepeat = async (apt: BarbershopAppointment, everyDays: number, dates: string[]) => {
     if (isDemoMode()) {
       const rid = `demo-rec-${Date.now()}`
@@ -771,8 +779,9 @@ const DashboardAgenda = () => {
                 {barbershop && (
                   <AppointmentExtras
                     apt={apt}
-                    shopName={barbershop.name}
+                    shop={barbershop}
                     reviewUrl={barbershop.googleReviewUrl}
+                    onReminded={handleReminded}
                     onReviewRequested={handleReviewRequested}
                     onRepeat={setRepeatApt}
                     onStopSeries={handleStopSeries}

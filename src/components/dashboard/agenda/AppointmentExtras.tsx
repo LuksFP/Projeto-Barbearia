@@ -1,17 +1,20 @@
 // Ações extras do cartão do horário na Agenda:
 //   - Concluído → "Pedir avaliação" (WhatsApp com o link do Google da barbearia)
-//   - Cliente fixo → selo "Fixo · a cada N" e "Parar repetição"; sem série → "Repetir"
+//   - Cliente fixo → selo "Fixo · a cada N", "Confirmar no WhatsApp" (mensagem pronta) e
+//     "Parar repetição"; sem série → "Repetir"
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Star, Repeat, Check } from 'lucide-react'
+import { Star, Repeat, Check, MessageCircle } from 'lucide-react'
 import { buildReviewRequest, waUrl } from '@/lib/whatsapp'
 import { recurrenceLabel } from '@/lib/recurrence'
-import type { BarbershopAppointment } from '@/types/tenant'
+import { buildFixedReminder } from '@/lib/reminders'
+import type { Barbershop, BarbershopAppointment } from '@/types/tenant'
 
 interface Props {
   apt: BarbershopAppointment
-  shopName: string
+  shop: Barbershop
   reviewUrl: string
+  onReminded: (apt: BarbershopAppointment) => Promise<void>
   onReviewRequested: (apt: BarbershopAppointment) => Promise<void>
   onRepeat: (apt: BarbershopAppointment) => void
   onStopSeries: (apt: BarbershopAppointment) => Promise<void>
@@ -19,11 +22,20 @@ interface Props {
 
 const btn = 'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-body font-semibold border transition-all'
 
-const AppointmentExtras = ({ apt, shopName, reviewUrl, onReviewRequested, onRepeat, onStopSeries }: Props) => {
+const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested, onRepeat, onStopSeries }: Props) => {
+  const shopName = shop.name
   const [armedStop, setArmedStop] = useState(false)
   const open = apt.status === 'pending' || apt.status === 'confirmed'
   const done = apt.status === 'done'
   const wa = reviewUrl ? waUrl(apt.clientPhone, buildReviewRequest(apt.clientName, shopName, reviewUrl)) : null
+
+  // Fixo: mensagem pronta confirmando o horário de sempre
+  const waFixed = apt.recurrenceId && open ? waUrl(apt.clientPhone, buildFixedReminder(apt, shop)) : null
+  const sendFixed = () => {
+    if (!waFixed) return
+    window.open(waFixed, '_blank', 'noopener') // antes de qualquer await (bloqueio de pop-up)
+    void onReminded(apt)
+  }
 
   const askReview = () => {
     if (!wa) return
@@ -47,6 +59,16 @@ const AppointmentExtras = ({ apt, shopName, reviewUrl, onReviewRequested, onRepe
           <Repeat className="w-3 h-3" />Fixo · {recurrenceLabel(apt.recurrenceEveryDays)}
         </span>
       )}
+
+      {waFixed && (apt.remindedAt ? (
+        <button type="button" onClick={sendFixed} className={`${btn} border-[#2a2a2a] text-white/55 hover:text-white`} title="Mandar de novo">
+          <Check className="w-3 h-3 text-emerald-400" />Mensagem enviada
+        </button>
+      ) : (
+        <button type="button" onClick={sendFixed} className={`${btn} border-[#25D366]/40 bg-[#25D366]/10 text-[#5ee08f] hover:bg-[#25D366]/20`}>
+          <MessageCircle className="w-3 h-3" />Confirmar no WhatsApp
+        </button>
+      ))}
 
       {done && (wa ? (
         apt.reviewRequestedAt ? (

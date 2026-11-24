@@ -44,6 +44,20 @@ export function buildReminderMessage(apt: BarbershopAppointment, barbershop: Bar
   ].join('\n')
 }
 
+/** Cliente fixo: confirma se o horário de sempre está de pé (e deixa ele avisar se não vier). */
+export function buildFixedReminder(apt: BarbershopAppointment, barbershop: Barbershop): string {
+  const first = apt.clientName.trim().split(/\s+/)[0]
+  return [
+    `Oi, ${first}! Tudo certo? 💈`,
+    ``,
+    `Seu horário fixo na ${barbershop.name} tá guardado:`,
+    `🗓️ ${dayLabel(apt.date)} às ${apt.time.slice(0, 5)}`,
+    `✂️ ${apt.serviceName}${apt.barberName ? ` com ${apt.barberName}` : ''}`,
+    ``,
+    `Tá de pé? Se não der dessa vez, me avisa que eu libero o horário. 👍`,
+  ].join('\n')
+}
+
 // ─── "Já lembrei" (persistência local, ajuda visual) ──────────────────────────
 
 const KEY = (barbershopId: string) => `barberos:reminded:${barbershopId}`
