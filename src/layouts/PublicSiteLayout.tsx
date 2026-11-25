@@ -277,6 +277,7 @@ const PublicSiteLayout = () => {
         id: r.id, barbershopId: r.barbershop_id, userId: null, name: r.name,
         bio: r.bio, specialty: r.specialty, cutDurationMin: r.cut_duration_minutes,
         commissionPercent: 0,
+        workStart: r.work_start ?? undefined, workEnd: r.work_end ?? undefined,
         avatar: r.avatar ?? undefined, active: r.active,
       })))
       setMemberships((mems ?? []).map((r: MembershipRow) => ({
@@ -441,7 +442,7 @@ const PublicSiteLayout = () => {
           <span>
             Powered by{' '}
             <Link to="/" className="hover:text-white/60 transition-colors" style={{ color: primary + 'aa' }}>
-              BarberOS
+              BarberPro
             </Link>
           </span>
         </div>

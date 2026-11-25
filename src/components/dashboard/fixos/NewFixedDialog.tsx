@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { useTenant } from '@/contexts/TenantContext'
 import { RECURRENCE_OPTIONS, seriesDates } from '@/lib/recurrence'
 import { shortDate, weekdayOf } from '@/lib/fixedClients'
-import { buildDaySlots, busyRanges } from '@/lib/scheduling'
+import { barberHours, buildDaySlots, busyRanges } from '@/lib/scheduling'
 import { formatPhoneBR } from '@/lib/phone'
 import type { BarbershopAppointment } from '@/types/tenant'
 
@@ -75,11 +75,12 @@ const NewFixedDialog = ({ open, onClose, loadDay, onCreate }: Props) => {
 
   const slots = useMemo(() => {
     if (!barberId || !dayApts) return []
+    const hours = barberHours(barbershop?.openTime, barbershop?.closeTime, barber)
     return buildDaySlots({
       step: Math.min(30, duration), duration, busy: busyRanges(dayApts, barberId, first),
-      open: barbershop?.openTime, close: barbershop?.closeTime, now: new Date(), date: first,
+      open: hours.open, close: hours.close, now: new Date(), date: first,
     }).filter(s => s.available)
-  }, [barberId, dayApts, duration, first, barbershop?.openTime, barbershop?.closeTime])
+  }, [barberId, dayApts, duration, first, barbershop?.openTime, barbershop?.closeTime, barber])
 
   // Trocou barbeiro/serviço/dia e a hora escolhida não está mais livre: limpa
   useEffect(() => { if (time && dayApts && !slots.some(s => s.time === time)) setTime('') }, [slots]) // eslint-disable-line react-hooks/exhaustive-deps

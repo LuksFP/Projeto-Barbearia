@@ -10,7 +10,7 @@ import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 import { supabasePublic } from '@/lib/supabase-public'
-import { buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
+import { barberHours, buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 import BookingBump from '@/components/barbershop/BookingBump'
 import PayOnline from '@/components/barbershop/store/PayOnline'
 import WaitlistJoin from '@/components/barbershop/WaitlistJoin'
@@ -173,16 +173,17 @@ const BookingSection = ({
   // aquele horário não está disponível, em vez de sumirem.
   const allSlots = useMemo(() => {
     if (!selectedDate || !canPickTime) return []
+    const hours = barberHours(barbershop.openTime, barbershop.closeTime, pickedBarber)
     return buildDaySlots({
       step: Math.min(30, slotDuration),
       duration: slotDuration,
       busy,
       now: new Date(),
       date: selectedDate,
-      open: barbershop.openTime,
-      close: barbershop.closeTime,
+      open: hours.open,
+      close: hours.close,
     })
-  }, [selectedDate, canPickTime, slotDuration, busy, barbershop.openTime, barbershop.closeTime])
+  }, [selectedDate, canPickTime, slotDuration, busy, barbershop.openTime, barbershop.closeTime, pickedBarber])
   const slots = useMemo(() => allSlots.filter(s => s.available), [allSlots])
   // Aviso na tela de horários quando o escolhido foi pego por outra pessoa
   const [slotNotice, setSlotNotice] = useState('')

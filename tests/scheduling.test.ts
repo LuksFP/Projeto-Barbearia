@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDaySlots, busyRanges, isTimeAvailable, toHHMM, toMin } from '../src/lib/scheduling'
+import { barberHours, buildDaySlots, busyRanges, isTimeAvailable, toHHMM, toMin } from '../src/lib/scheduling'
 import type { BarbershopAppointment } from '../src/types/tenant'
 
 const apt = (o: Partial<BarbershopAppointment>) =>
@@ -70,4 +70,17 @@ test('slots: diz por que não dá — ocupado (já tem gente) ou não cabe (inva
   assert.equal(at('10:30')?.block, 'ocupado')       // ainda dentro do 10:00–10:50
   assert.equal(at('11:00')?.available, true)
   assert.equal(at('11:00')?.block, undefined)
+})
+
+test('barberHours: expediente do barbeiro limita o da barbearia', () => {
+  // Everton 09–19 na loja 08–20; Lucas só começa às 10
+  assert.deepEqual(barberHours('08:00', '20:00', { workStart: '10:00', workEnd: '19:00' }), { open: '10:00', close: '19:00' })
+  // sem horário próprio → o da barbearia
+  assert.deepEqual(barberHours('08:00', '20:00', {}), { open: '08:00', close: '20:00' })
+  // barbeiro não passa do horário da barbearia
+  assert.deepEqual(barberHours('09:00', '18:00', { workStart: '07:00', workEnd: '22:00' }), { open: '09:00', close: '18:00' })
+  // grade respeita o início das 10h
+  const slots = buildDaySlots({ step: 30, duration: 30, busy: [], ...barberHours('08:00', '20:00', { workStart: '10:00', workEnd: '19:00' }) })
+  assert.equal(slots[0].time, '10:00')
+  assert.equal(slots[slots.length - 1].end, '19:00')
 })

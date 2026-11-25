@@ -319,6 +319,8 @@ export type Database = {
           role: string
           specialty: string
           user_id: string | null
+          work_end: string | null
+          work_start: string | null
         }
         Insert: {
           active?: boolean
@@ -333,6 +335,8 @@ export type Database = {
           role?: string
           specialty?: string
           user_id?: string | null
+          work_end?: string | null
+          work_start?: string | null
         }
         Update: {
           active?: boolean
@@ -347,6 +351,8 @@ export type Database = {
           role?: string
           specialty?: string
           user_id?: string | null
+          work_end?: string | null
+          work_start?: string | null
         }
         Relationships: [
           {
@@ -1421,6 +1427,8 @@ export type Database = {
       }
       submit_public_appointment_review: {
         Args: {
+          work_end: string | null
+          work_start: string | null
           p_appointment_id: string
           p_email?: string
           p_phone?: string

@@ -62,6 +62,30 @@ export function busyRanges(
     })
 }
 
+/**
+ * Expediente efetivo de um barbeiro = interseção do horário da barbearia com o
+ * horário que o admin travou pra ele (ex.: loja 08–20, barbeiro 10–19 → 10–19).
+ * Sem horário próprio, vale o da barbearia.
+ */
+export function barberHours(
+  shopOpen: string | undefined,
+  shopClose: string | undefined,
+  barber?: { workStart?: string; workEnd?: string } | null,
+): { open: string | undefined; close: string | undefined } {
+  if (!barber?.workStart || !barber?.workEnd) return { open: shopOpen, close: shopClose }
+  const so = toMin(shopOpen || DEFAULT_OPEN)
+  let sc = toMin(shopClose || DEFAULT_CLOSE)
+  if (sc <= so) sc += 1440
+  const bo = toMin(barber.workStart)
+  let bc = toMin(barber.workEnd)
+  if (bc <= bo) bc += 1440
+  const open = Math.max(so, bo)
+  const close = Math.min(sc, bc)
+  // sem interseção: janela vazia (open == close vira 24h no buildDaySlots, então devolve 1 min)
+  if (close <= open) return { open: toHHMM(open), close: toHHMM(open + 1) }
+  return { open: toHHMM(open), close: toHHMM(close) }
+}
+
 export interface BuildSlotsOptions {
   step: number             // granularidade dos slots (min) = tempo de corte
   duration: number         // quanto o novo atendimento ocupa (min)

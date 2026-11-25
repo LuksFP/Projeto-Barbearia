@@ -31,12 +31,14 @@ interface EditForm {
   role: string
   cutDurationMin: string
   commissionPercent: string
+  workStart: string
+  workEnd: string
 }
 
 const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-white text-sm font-body placeholder:text-white/40 focus:outline-none focus:border-amber-500/50 transition-colors'
 
 const DashboardEquipe = () => {
-  const { barbershop, barbers, updateBarbers } = useTenant()
+  const { barbershop, barbers, updateBarbers, isAdmin } = useTenant()
   const { teamFull, commission: showCommission } = usePlanGates()
 
   // Modal de convite
@@ -47,7 +49,7 @@ const DashboardEquipe = () => {
 
   // Modal de edição
   const [editingBarber, setEditingBarber] = useState<BarbershopBarber | null>(null)
-  const [editForm, setEditForm] = useState<EditForm>({ name: '', specialty: '', bio: '', role: 'barber', cutDurationMin: '30', commissionPercent: '50' })
+  const [editForm, setEditForm] = useState<EditForm>({ name: '', specialty: '', bio: '', role: 'barber', cutDurationMin: '30', commissionPercent: '50', workStart: '', workEnd: '' })
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
 
@@ -128,6 +130,8 @@ const DashboardEquipe = () => {
       role: 'barber',
       cutDurationMin: String(barber.cutDurationMin),
       commissionPercent: String(barber.commissionPercent),
+      workStart: barber.workStart ?? '',
+      workEnd: barber.workEnd ?? '',
     })
     setEditError('')
     setAvatarError('')
@@ -135,6 +139,11 @@ const DashboardEquipe = () => {
 
   const handleEdit = async () => {
     if (!editingBarber || !editForm.name || !editForm.specialty) return
+    const hoursSet = !!(editForm.workStart && editForm.workEnd)
+    if (!!editForm.workStart !== !!editForm.workEnd) {
+      setEditError('Preencha o início e o fim do expediente, ou deixe os dois vazios.')
+      return
+    }
     setEditSaving(true)
     setEditError('')
     try {
@@ -148,6 +157,8 @@ const DashboardEquipe = () => {
                 bio: editForm.bio,
                 cutDurationMin: Number(editForm.cutDurationMin),
                 commissionPercent: Number(editForm.commissionPercent),
+                workStart: hoursSet ? editForm.workStart : undefined,
+                workEnd: hoursSet ? editForm.workEnd : undefined,
               }
             : b
         ))
@@ -161,6 +172,7 @@ const DashboardEquipe = () => {
         role: editForm.role,
         cut_duration_minutes: Number(editForm.cutDurationMin),
         ...(showCommission ? { commission_percent: Number(editForm.commissionPercent) } : {}),
+        ...(isAdmin ? { work_start: hoursSet ? editForm.workStart : null, work_end: hoursSet ? editForm.workEnd : null } : {}),
       })
       updateBarbers(barbers.map(b =>
         b.id === editingBarber.id
@@ -171,6 +183,8 @@ const DashboardEquipe = () => {
               bio: row.bio,
               cutDurationMin: row.cut_duration_minutes,
               commissionPercent: row.commission_percent ?? 50,
+              workStart: row.work_start ?? undefined,
+              workEnd: row.work_end ?? undefined,
               active: row.active,
             }
           : b
@@ -265,6 +279,10 @@ const DashboardEquipe = () => {
             <div className="flex items-center gap-1.5 text-white/60 text-xs font-body mb-1.5">
               <Clock className="w-3 h-3" />
               Bloqueia {barber.cutDurationMin} min por atendimento
+            </div>
+            <div className="flex items-center gap-1.5 text-white/60 text-xs font-body mb-1.5">
+              <Clock className="w-3 h-3" />
+              {barber.workStart && barber.workEnd ? `Atende das ${barber.workStart} às ${barber.workEnd}` : 'Atende no horário da barbearia'}
             </div>
             {showCommission ? (
               <div className="flex items-center gap-1.5 text-white/60 text-xs font-body mb-3">
@@ -511,6 +529,38 @@ const DashboardEquipe = () => {
                     Um agendamento às 15:00 com 15 min bloqueia de 15:00 a 15:15.
                   </p>
                 </div>
+                {isAdmin && <div>
+                  <label className="block text-white/65 text-xs font-body mb-1.5">Expediente deste barbeiro</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={editForm.workStart}
+                      onChange={e => setEditForm(f => ({ ...f, workStart: e.target.value }))}
+                      className={inputCls}
+                      aria-label="Começa às"
+                    />
+                    <span className="text-white/55 text-xs font-body">às</span>
+                    <input
+                      type="time"
+                      value={editForm.workEnd}
+                      onChange={e => setEditForm(f => ({ ...f, workEnd: e.target.value }))}
+                      className={inputCls}
+                      aria-label="Termina às"
+                    />
+                  </div>
+                  <p className="mt-1.5 text-white/55 text-[11px] font-body">
+                    Só você (admin) define. Fora desse horário o barbeiro não recebe agendamento, nem no site nem na agenda.
+                    {(editForm.workStart || editForm.workEnd) && (
+                      <button
+                        type="button"
+                        onClick={() => setEditForm(f => ({ ...f, workStart: '', workEnd: '' }))}
+                        className="ml-1 underline text-amber-400/80"
+                      >
+                        Usar o horário da barbearia
+                      </button>
+                    )}
+                  </p>
+                </div>}
                 {showCommission ? <div>
                   <label className="block text-white/65 text-xs font-body mb-1.5">Comissão (%)</label>
                   <input

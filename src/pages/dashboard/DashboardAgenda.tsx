@@ -13,7 +13,7 @@ import WaitlistPanel from '@/components/dashboard/agenda/WaitlistPanel'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
-import { buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
+import { barberHours, buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { buildBookingConfirmation, waUrl } from '@/lib/whatsapp'
 import { onlinePaymentRepository, payWay, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
@@ -263,16 +263,17 @@ const DashboardAgenda = () => {
   const daySlots = useMemo(() => {
     if (!form.date || !form.barberId || !formApts) return []
     const busy = busyRanges(formApts, form.barberId, form.date)
+    const hours = barberHours(barbershop?.openTime, barbershop?.closeTime, formBarber)
     return buildDaySlots({
       step: Math.min(30, slotDuration),
       duration: slotDuration,
       busy,
-      open: barbershop?.openTime,
-      close: barbershop?.closeTime,
+      open: hours.open,
+      close: hours.close,
       now: new Date(),
       date: form.date,
     })
-  }, [form.date, form.barberId, slotDuration, formApts, barbershop?.openTime, barbershop?.closeTime])
+  }, [form.date, form.barberId, slotDuration, formApts, barbershop?.openTime, barbershop?.closeTime, formBarber])
   const freeSlotCount = daySlots.filter(s => s.available).length
 
   // Término do horário escolhido (usado no resumo e na trava do botão)

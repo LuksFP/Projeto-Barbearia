@@ -73,6 +73,8 @@ export interface BarbershopBarber {
   specialty: string
   cutDurationMin: number
   commissionPercent: number
+  workStart?: string        // 'HH:MM' — expediente do barbeiro (admin define); vazio = horário da barbearia
+  workEnd?: string
   avatar?: string
   active: boolean
 }
