@@ -72,8 +72,8 @@ const Registrar = () => {
     setLoading(true)
     try {
       await signup({ ...form, plan: plano })
-      // Após signup o account tem planStatus='trial' e hasActivePlan=true → vai direto ao dashboard
-      window.location.replace('/dashboard')
+      // Após signup a conta está em teste (planStatus='trial'): passa pela tela de boas-vindas, que pede pra baixar o app
+      window.location.replace('/bem-vindo?teste=1')
     } catch (signupError) {
       setLoading(false)
       setError(
@@ -107,7 +107,7 @@ const Registrar = () => {
       <div className="shrink-0 border-b border-white/5">
         <div className="max-w-xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
-            {['Plano', 'Cadastro', 'Painel'].map((step, i) => (
+            {['Plano', 'Teste grátis', 'Baixar o app'].map((step, i) => (
               <div key={step} className="flex items-center gap-3 flex-1">
                 <div className="flex items-center gap-2">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-heading ${
@@ -143,8 +143,8 @@ const Registrar = () => {
                 <Scissors className="w-4 h-4 text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-amber-400 text-xs font-semibold font-body">Plano selecionado</p>
-                <p className="text-white font-semibold font-body">{planConfig.name} — R$ {planConfig.price.toFixed(2).replace('.', ',')}/mês</p>
+                <p className="text-amber-400 text-xs font-semibold font-body">Você vai testar o plano</p>
+                <p className="text-white font-semibold font-body">{planConfig.name} <span className="text-white/45 font-normal">· depois dos 2 dias, R$ {planConfig.price.toFixed(2).replace('.', ',')}/mês</span></p>
               </div>
               <button
                 onClick={() => navigate('/planos')}
@@ -154,10 +154,18 @@ const Registrar = () => {
               </button>
             </div>
 
-            <h1 className="font-heading text-3xl tracking-wide text-white mb-2">CRIAR CONTA</h1>
-            <p className="text-white/40 text-sm font-body mb-8">
-              Acesso imediato ao dashboard. 2 dias grátis, sem precisar de cartão agora.
+            <h1 className="font-heading text-3xl tracking-wide text-white mb-2">COMEÇAR O TESTE GRÁTIS</h1>
+            <p className="text-white/40 text-sm font-body mb-5">
+              2 dias com o painel liberado, sem cartão. Só cobra se você assinar.
             </p>
+
+            <div className="border-l-2 border-amber-500 pl-4 mb-8">
+              <p className="text-white text-sm font-semibold font-body mb-1">Depois de criar a conta, baixe o app</p>
+              <p className="text-white/50 text-sm font-body leading-relaxed">
+                É pelo app no celular que chega o aviso de cada horário marcado pelo seu site. A gente mostra como
+                instalar assim que a conta estiver pronta, leva dois toques.
+              </p>
+            </div>
 
           <button
             type="button"

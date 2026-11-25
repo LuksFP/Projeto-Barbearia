@@ -1,4 +1,5 @@
 import Chapters from '@/components/landing/Chapters'
+import ComoComecar from '@/components/landing/ComoComecar'
 import Closing from '@/components/landing/Closing'
 import { DiaProvider, LuzDoDia, Poste } from '@/components/landing/DayClock'
 import { DemoProvider } from '@/components/landing/DemoContext'
@@ -10,6 +11,7 @@ import '@/styles/landing.css'
 import '@/styles/landing-hero.css'
 import '@/styles/landing-sections.css'
 import '@/styles/landing-closing.css'
+import '@/styles/landing-comecar.css'
 import '@/styles/landing-sims.css'
 import '@/styles/landing-controles.css'
 import '@/styles/landing-barbearia.css'
@@ -29,6 +31,7 @@ const Index = () => (
           <Chapters />
         </DemoProvider>
         <PriceBoard />
+        <ComoComecar />
         <Closing />
       </main>
     </div>
