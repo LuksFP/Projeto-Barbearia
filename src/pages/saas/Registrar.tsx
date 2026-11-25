@@ -165,6 +165,13 @@ const Registrar = () => {
                 É pelo app no celular que chega o aviso de cada horário marcado pelo seu site. A gente mostra como
                 instalar assim que a conta estiver pronta, leva dois toques.
               </p>
+              <Link
+                to="/app"
+                target="_blank"
+                className="inline-block mt-2 text-amber-400 text-sm font-semibold font-body underline underline-offset-4 hover:text-amber-300 transition-colors"
+              >
+                Link do app: {window.location.host}/app →
+              </Link>
             </div>
 
           <button
