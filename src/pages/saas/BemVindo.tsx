@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
 import { SAAS_PLANS } from '@/types/saas'
 import { motion } from 'framer-motion'
@@ -47,7 +47,7 @@ const BemVindo = () => {
             {account?.ownerName?.split(' ')[0].toUpperCase() ?? 'BARBEIRO'}!
           </h1>
           <p className="text-white/40 font-body text-base mb-2">
-            <span className="text-white/70">{account?.barbershopName}</span> agora é BarberOS {planConfig.name}.
+            <span className="text-white/70">{account?.barbershopName}</span> agora é BarberPro {planConfig.name}.
           </p>
           <p className="text-white/30 font-body text-sm mb-12">
             Seu painel está pronto. Veja o que fazer primeiro:
@@ -85,6 +85,18 @@ const BemVindo = () => {
           Acessar meu painel
           <ArrowRight className="w-4 h-4" />
         </motion.button>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-6 text-white/40 text-sm font-body"
+        >
+          Quer a agenda na tela do celular?{' '}
+          <Link to="/app" className="text-amber-400 underline underline-offset-4 hover:text-amber-300">
+            Instale o app
+          </Link>
+        </motion.p>
       </motion.div>
     </div>
   )

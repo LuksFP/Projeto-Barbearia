@@ -68,6 +68,11 @@ export const PERGUNTAS: Pergunta[] = [
       'Dá. São 2 dias grátis com acesso ao painel, sem cadastrar cartão. E a demonstração abre agora mesmo, sem criar conta.',
   },
   {
+    pergunta: 'Tem app pra instalar no celular?',
+    resposta:
+      'Tem, e não passa por loja de app. Você assina por aqui, entra no painel e instala o BarberPro na tela inicial do celular, em dois toques. O aviso de novo agendamento no celular é dos planos Pro e Premium.',
+  },
+  {
     pergunta: 'O cliente paga pelo site?',
     resposta:
       'Não. O agendamento é uma reserva gratuita e o pagamento acontece na barbearia, como sempre. A única cobrança do BarberOS é a sua assinatura.',
