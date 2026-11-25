@@ -50,6 +50,7 @@ const Registrar = lazy(() => import("./pages/saas/Registrar"));
 const Pagamento = lazy(() => import("./pages/saas/Pagamento"));
 const BemVindo = lazy(() => import("./pages/saas/BemVindo"));
 const EntrarSaas = lazy(() => import("./pages/saas/EntrarSaas"));
+const InstalarApp = lazy(() => import("./pages/saas/InstalarApp"));
 const EsqueciSenha = lazy(() => import("./pages/saas/EsqueciSenha"));
 const NovaSenha = lazy(() => import("./pages/saas/NovaSenha"));
 const AuthCallback = lazy(() => import("./pages/saas/AuthCallback"));
@@ -146,6 +147,7 @@ const App = () => (
                         <Route path="/pagamento" element={<Pagamento />} />
                         <Route path="/bem-vindo" element={<BemVindo />} />
                         <Route path="/entrar" element={<EntrarSaas />} />
+                        <Route path="/app" element={<InstalarApp />} />
                         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
                         <Route path="/nova-senha" element={<NovaSenha />} />
                         <Route path="/auth/callback" element={<AuthCallback />} />

@@ -2,7 +2,7 @@
 // "app" do iPhone entram no <head> apenas nas telas do painel; no site da
 // barbearia (/b/:slug, lado cliente) eles saem, então o navegador não oferece
 // instalar o painel e o link do cliente nunca abre dentro do app.
-const PAINEL_PREFIXES = ['/dashboard', '/entrar']
+const PAINEL_PREFIXES = ['/dashboard', '/entrar', '/app']
 
 export function isPainelPath(pathname: string): boolean {
   return PAINEL_PREFIXES.some(p => pathname === p || pathname.startsWith(`${p}/`))

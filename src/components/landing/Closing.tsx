@@ -35,6 +35,9 @@ const Closing = () => {
             <Link to="/demo/pro" className="lp-link">
               Demonstração
             </Link>
+            <Link to="/app" className="lp-link">
+              App no celular
+            </Link>
             <Link to="/entrar" className="lp-link">
               Entrar
             </Link>

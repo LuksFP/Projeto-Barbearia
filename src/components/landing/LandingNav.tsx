@@ -26,6 +26,9 @@ const LandingNav = () => {
         <a href="#planos" className="lp-link lp-nav__planos">
           Planos
         </a>
+        <Link to="/app" className="lp-link lp-nav__planos">
+          App
+        </Link>
         {!isLoggedIn && (
           <Link to="/entrar" className="lp-link">
             Entrar
