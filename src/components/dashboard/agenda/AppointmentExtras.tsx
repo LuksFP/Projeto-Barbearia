@@ -20,7 +20,7 @@ interface Props {
   onStopSeries: (apt: BarbershopAppointment) => Promise<void>
 }
 
-const btn = 'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-body font-semibold border transition-all'
+const btn = 'flex items-center gap-1.5 px-3 py-1 max-sm:h-11 rounded-md text-xs font-body font-semibold border transition-all'
 
 const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested, onRepeat, onStopSeries }: Props) => {
   const shopName = shop.name
@@ -53,7 +53,8 @@ const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested
   if (!done && !apt.recurrenceId && !showRepeat) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mt-2 pl-[74px]">
+    // No celular "Repetir" e "Parar repetição" ficam no menu "⋯"
+    <div className={`flex flex-wrap items-center gap-2 mt-2 pl-[74px] max-sm:pl-0 ${!done && !apt.recurrenceId ? 'max-sm:hidden' : ''}`}>
       {apt.recurrenceId && (
         <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-violet-400/30 bg-violet-400/10 text-violet-200 font-body">
           <Repeat className="w-3 h-3" />Fixo · {recurrenceLabel(apt.recurrenceEveryDays)}
@@ -87,14 +88,14 @@ const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested
       ))}
 
       {showRepeat && (
-        <button type="button" onClick={() => onRepeat(apt)} className={`${btn} border-transparent text-white/55 hover:bg-white/[0.06] hover:text-white`}>
+        <button type="button" onClick={() => onRepeat(apt)} className={`${btn} max-sm:hidden border-transparent text-white/55 hover:bg-white/[0.06] hover:text-white`}>
           <Repeat className="w-3 h-3" />Repetir
         </button>
       )}
 
       {apt.recurrenceId && open && (
         <button type="button" onClick={() => void stop()} onBlur={() => setArmedStop(false)}
-          className={`${btn} ${armedStop ? 'border-red-500/50 bg-red-500/10 text-red-300' : 'border-transparent text-white/45 hover:bg-white/[0.06] hover:text-red-300'}`}>
+          className={`${btn} max-sm:hidden ${armedStop ? 'border-red-500/50 bg-red-500/10 text-red-300' : 'border-transparent text-white/45 hover:bg-white/[0.06] hover:text-red-300'}`}>
           {armedStop ? 'Toque de novo: cancela os próximos' : 'Parar repetição'}
         </button>
       )}

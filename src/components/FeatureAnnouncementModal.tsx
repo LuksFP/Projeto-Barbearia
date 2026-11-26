@@ -33,7 +33,7 @@ const ANNOUNCEMENTS: Announcement[] = [
     description:
       'O cliente pediu pra mudar? Não precisa mais cancelar e marcar de novo. Mude o horário dele direto na Agenda.',
     steps: [
-      'Na Agenda, toque em “Transferir” no horário do cliente',
+      'Na Agenda, toque em “Transferir” no horário do cliente. No celular, ele fica no botão “⋯”',
       'Escolha o novo dia, barbeiro e hora. Só aparecem os horários livres',
       'Toque em “Avisar no WhatsApp” pra mandar o horário novo pro cliente. Se ele for fixo, muda só aquele dia',
     ],

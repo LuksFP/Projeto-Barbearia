@@ -10,6 +10,7 @@ import { addDemoBooking, updateDemoBooking, removeDemoBookings, onDemoBookingsCh
 import AppointmentExtras from '@/components/dashboard/agenda/AppointmentExtras'
 import RepeatDialog from '@/components/dashboard/agenda/RepeatDialog'
 import WaitlistPanel from '@/components/dashboard/agenda/WaitlistPanel'
+import AppointmentMenu from '@/components/dashboard/agenda/AppointmentMenu'
 import MonthCalendar from '@/components/dashboard/agenda/MonthCalendar'
 import TransferDialog, { type TransferTarget } from '@/components/dashboard/agenda/TransferDialog'
 import { transferLabel } from '@/lib/transfer'
@@ -571,17 +572,18 @@ const DashboardAgenda = () => {
 
   return (
     <div className="space-y-6 max-w-[1440px] mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-white/55 text-sm font-body mb-1 first-letter:uppercase">{selectedLabel}</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">AGENDA</h1>
         </div>
         <button
           onClick={openNewModal}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
+          aria-label="Novo agendamento"
+          className="shrink-0 whitespace-nowrap max-sm:h-11 flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Novo agendamento
+          <span className="sm:hidden">Novo</span><span className="max-sm:hidden">Novo agendamento</span>
         </button>
       </div>
 
@@ -593,10 +595,10 @@ const DashboardAgenda = () => {
       <div className="min-w-0 space-y-5">
 
       {/* Filtro por barbeiro */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap max-sm:flex-nowrap max-sm:overflow-x-auto scrollbar-none">
         <button
           onClick={() => setFilterBarber('all')}
-          className={`px-4 py-1.5 rounded-lg text-sm font-body transition-colors ${
+          className={`shrink-0 max-sm:h-11 px-4 py-1.5 rounded-lg text-sm font-body transition-colors ${
             filterBarber === 'all'
               ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
               : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white'
@@ -608,7 +610,7 @@ const DashboardAgenda = () => {
           <button
             key={b.id}
             onClick={() => setFilterBarber(b.id)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-body transition-colors ${
+            className={`shrink-0 max-sm:h-11 px-4 py-1.5 rounded-lg text-sm font-body transition-colors ${
               filterBarber === b.id
                 ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
                 : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white'
@@ -701,6 +703,17 @@ const DashboardAgenda = () => {
               !(paid && t.next === 'cancelled') && !(t.next === 'no_show' && !hasStarted(apt.date, apt.time)))
             const canRefund = paid && !!pay && canDelete && ['pending', 'confirmed', 'no_show'].includes(apt.status)
             const isUpdating = updatingId === apt.id
+            const isOpen = apt.status === 'pending' || apt.status === 'confirmed'
+            // Celular: o que não é o próximo passo vai pro "⋯"
+            const menu = {
+              onTransfer: isOpen ? () => setTransferApt(apt) : undefined,
+              onRepeat: !apt.recurrenceId && (isOpen || apt.status === 'done') ? () => setRepeatApt(apt) : undefined,
+              onNoShow: transitions.some(t => t.next === 'no_show') ? () => void handleStatusChange(apt, 'no_show') : undefined,
+              onCancel: transitions.some(t => t.next === 'cancelled') ? () => void handleStatusChange(apt, 'cancelled') : undefined,
+              onStopSeries: apt.recurrenceId && isOpen ? () => void handleStopSeries(apt) : undefined,
+            }
+            const hasMenu = Object.values(menu).some(Boolean)
+            const hasButtons = transitions.length > 0 || canRefund
 
             return (
               <div
@@ -737,6 +750,8 @@ const DashboardAgenda = () => {
                       {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <StatusIcon className="w-3 h-3" />}
                       {apt.transferredTo ? 'Transferido' : status.label}
                     </div>
+                    {/* Sem botão principal (ex.: concluído), o "⋯" fica aqui pra não gastar uma linha */}
+                    {hasMenu && !hasButtons && !isUpdating && <AppointmentMenu clientName={apt.clientName} {...menu} />}
                   </div>
                 </div>
 
@@ -745,18 +760,18 @@ const DashboardAgenda = () => {
                 )}
 
                 {/* Ações de status */}
-                {(transitions.length > 0 || canRefund) && !isUpdating && (
-                  <div className="flex flex-wrap items-center gap-2 mt-3 pl-[74px]">
+                {hasButtons && !isUpdating && (
+                  <div className="flex flex-wrap items-center gap-2 mt-3 pl-[74px] max-sm:pl-0">
                     {transitions.map(({ label, next }) => (
                       <button
                         key={next}
                         onClick={() => handleStatusChange(apt, next)}
                         className={`py-1.5 rounded-lg text-xs font-body font-semibold transition-colors ${
                           next === 'cancelled'
-                            ? 'px-2 text-white/45 hover:text-red-400 hover:bg-red-400/10'
+                            ? 'max-sm:hidden px-2 text-white/45 hover:text-red-400 hover:bg-red-400/10'
                             : next === 'no_show'
-                              ? 'px-2 text-white/45 hover:text-orange-300 hover:bg-orange-400/10'
-                              : 'px-4 bg-amber-500/[0.12] border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                              ? 'max-sm:hidden px-2 text-white/45 hover:text-orange-300 hover:bg-orange-400/10'
+                              : 'max-sm:h-11 max-sm:flex-1 max-sm:text-sm px-4 bg-amber-500/[0.12] border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
                         }`}
                       >
                         {label}
@@ -766,7 +781,7 @@ const DashboardAgenda = () => {
                       <button
                         onClick={() => void handleRefund(apt, pay)}
                         onBlur={() => setArmedRefund(c => (c === apt.id ? null : c))}
-                        className={`px-3 py-1 rounded-md text-xs font-body font-semibold border transition-all ${
+                        className={`px-3 py-1 max-sm:h-11 rounded-md text-xs font-body font-semibold border transition-all ${
                           armedRefund === apt.id
                             ? 'bg-red-500 text-white border-red-500'
                             : 'bg-red-400/10 text-red-400 border-red-400/20 hover:bg-red-400/20'
@@ -775,11 +790,12 @@ const DashboardAgenda = () => {
                         {armedRefund === apt.id ? 'Toque de novo: devolve o dinheiro' : 'Estornar e cancelar'}
                       </button>
                     )}
+                    {hasMenu && <AppointmentMenu clientName={apt.clientName} {...menu} />}
                   </div>
                 )}
 
                 {(apt.status === 'pending' || apt.status === 'confirmed') && !isUpdating && (
-                  <div className="mt-1 pl-[74px]">
+                  <div className="mt-1 pl-[74px] max-sm:hidden">
                     <button type="button" onClick={() => setTransferApt(apt)}
                       className="flex items-center gap-1.5 px-2 py-1.5 -ml-2 rounded-lg text-xs font-body font-semibold text-white/70 hover:text-amber-400 hover:bg-white/[0.06] transition-colors">
                       <ArrowRightLeft className="w-3 h-3" />Transferir

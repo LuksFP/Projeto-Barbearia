@@ -13,21 +13,26 @@ interface Props {
 
 const MonthCalendar = ({ selected, today, counts, onSelect }: Props) => {
   const month = selected.slice(0, 7)
-  const name = new Date(`${month}-01T12:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const monthName = new Date(`${month}-01T12:00`).toLocaleDateString('pt-BR', { month: 'long' })
+  const year = month.slice(0, 4)
+  const thisYear = today.startsWith(year)
   const total = Object.entries(counts).reduce((t, [d, n]) => (d.startsWith(month) ? t + n : t), 0)
   // Mês de hoje abre em hoje; os outros, no dia 1
   const go = (delta: number) => {
     const next = shiftMonth(month, delta)
     onSelect(today.startsWith(next) ? today : `${next}-01`)
   }
-  const arrow = 'w-9 h-9 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors'
+  const arrow = 'w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors'
 
   return (
     <div className="rounded-2xl bg-[#141414] border border-[#262626] p-3 sm:p-4">
-      <div className="flex items-center gap-1 mb-4">
-        <p className="mr-auto pl-1 font-heading text-2xl tracking-wide text-white first-letter:uppercase">{name}</p>
+      <div className="flex items-center gap-1 mb-2 sm:mb-4">
+        <p className="mr-auto pl-1 font-heading text-xl sm:text-2xl tracking-wide text-white whitespace-nowrap first-letter:uppercase">
+          {monthName}{/* Tela estreita: o ano só aparece quando não é o atual */}
+          <span className={thisYear ? 'max-[379px]:hidden' : ''}> {thisYear ? 'de ' : ''}{year}</span>
+        </p>
         {selected !== today && (
-          <button onClick={() => onSelect(today)} className="mr-1 text-xs font-body font-semibold px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors">
+          <button onClick={() => onSelect(today)} className="mr-1 max-sm:h-11 text-xs font-body font-semibold px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors">
             Hoje
           </button>
         )}
@@ -57,7 +62,7 @@ const MonthCalendar = ({ selected, today, counts, onSelect }: Props) => {
               aria-pressed={isSelected}
               aria-current={isToday ? 'date' : undefined}
               aria-label={`${label}: ${n} ${n === 1 ? 'horário' : 'horários'}`}
-              className={`min-w-0 h-14 sm:h-16 flex flex-col items-center justify-center gap-1 rounded-xl font-body transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 ${
+              className={`min-w-0 h-11 sm:h-16 flex flex-col items-center justify-center sm:gap-1 rounded-xl font-body transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 ${
                 isSelected ? 'bg-amber-500' : isToday ? 'ring-1 ring-inset ring-amber-500/70 hover:bg-white/[0.06]' : 'hover:bg-white/[0.06]'
               }`}
             >
@@ -66,7 +71,7 @@ const MonthCalendar = ({ selected, today, counts, onSelect }: Props) => {
               }`}>
                 {Number(date.slice(8))}
               </span>
-              <span className={`h-4 text-[11px] leading-4 tabular-nums ${
+              <span className={`h-3.5 sm:h-4 text-[11px] leading-[14px] sm:leading-4 tabular-nums ${
                 isSelected ? 'text-[#0a0a0a] font-semibold' : past ? 'text-white/35' : 'text-amber-400'
               }`}>
                 {n > 0 && <>{n}<span className="hidden sm:inline"> {n === 1 ? 'horário' : 'horários'}</span></>}
