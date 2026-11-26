@@ -2,6 +2,7 @@
 // cobrança PIX (WhatsApp) e boleto visual (impressão). SEM gateway de pagamento:
 // tudo é controle manual + documentos gerados localmente. Persistência em localStorage.
 import type { DemoPlan } from '@/lib/demo'
+import { waNumber } from '@/lib/whatsapp'
 import type { Barbershop, BarbershopMembership } from '@/types/tenant'
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
@@ -186,7 +187,8 @@ export function buildPixMessage(b: SubscriberBilling, barbershop: Barbershop, pi
 }
 
 export function buildWhatsappUrl(phone: string, message: string): string {
-  const digits = phone.replace(/\D/g, '')
+  // Telefone fora do padrão brasileiro segue como foi digitado
+  const digits = waNumber(phone) ?? phone.replace(/\D/g, '')
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
 }
 

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { isDemoMode } from '@/lib/demo'
 import { formatPhoneBR } from '@/lib/phone'
+import { waUrl } from '@/lib/whatsapp'
 import type { BarbershopAppointment, BarbershopClient } from '@/types/tenant'
 import type { AppointmentRow } from '@/repositories/appointmentRepository'
 import { toast } from '@/hooks/use-toast'
@@ -24,14 +25,6 @@ const STATUS_LABEL: Record<string, string> = {
 }
 const STATUS_COLOR: Record<string, string> = {
   pending: 'text-amber-400', confirmed: 'text-blue-400', done: 'text-emerald-400', cancelled: 'text-red-400', no_show: 'text-orange-300',
-}
-
-// Monta link de WhatsApp a partir do telefone livre. Assume Brasil (+55) se sem DDI.
-function waLink(phone: string): string | null {
-  const digits = phone.replace(/\D/g, '')
-  if (digits.length < 10) return null
-  const withCountry = digits.startsWith('55') ? digits : `55${digits}`
-  return `https://wa.me/${withCountry}`
 }
 
 // Converte agendamento mock (modo demo) na shape de AppointmentRow do banco,
@@ -168,7 +161,7 @@ const ClientDrawer = ({
     .reduce((s, a) => s + Number(a.price), 0)
 
   const insights = useMemo(() => computeInsights(history), [history])
-  const waUrl = waLink(client.phone)
+  const whatsappLink = waUrl(client.phone)
   const initials = client.name.split(' ').map(n => n[0]).slice(0, 2).join('')
 
   const handleSave = async () => {
@@ -330,9 +323,9 @@ const ClientDrawer = ({
               </div>
             )}
           </div>
-          {waUrl && (
+          {whatsappLink && (
             <a
-              href={waUrl}
+              href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-sm font-body font-medium hover:bg-emerald-500/15 transition-all"
