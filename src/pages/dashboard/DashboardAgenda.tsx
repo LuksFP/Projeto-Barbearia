@@ -1,7 +1,7 @@
 import { errorText } from '@/lib/errors'
 import { formatPhoneBR } from '@/lib/phone'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, Check, MessageCircle, UserX } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronDown, Loader2, X, Check, MessageCircle, UserX } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -10,6 +10,8 @@ import { addDemoBooking, updateDemoBooking, removeDemoBookings, onDemoBookingsCh
 import AppointmentExtras from '@/components/dashboard/agenda/AppointmentExtras'
 import RepeatDialog from '@/components/dashboard/agenda/RepeatDialog'
 import WaitlistPanel from '@/components/dashboard/agenda/WaitlistPanel'
+import MonthCalendar from '@/components/dashboard/agenda/MonthCalendar'
+import { localISO } from '@/lib/month'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
@@ -41,33 +43,6 @@ const STATUS_TRANSITIONS: Record<string, { label: string; next: string }[]> = {
 const hasStarted = (date: string, time: string) =>
   new Date(`${date}T${time.slice(0, 5)}:00`).getTime() <= Date.now()
 
-const DAY_NAMES = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
-
-interface WeekDay {
-  date: string
-  label: string
-}
-
-function getWeekDays(weekOffset: number): WeekDay[] {
-  const today = new Date()
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7) + weekOffset * 7)
-
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    return {
-      date: d.toISOString().split('T')[0],
-      label: `${DAY_NAMES[i]} ${d.getDate()}`,
-    }
-  })
-}
-
-function todayIndex(): number {
-  const day = new Date().getDay()
-  return day === 0 ? 6 : day - 1
-}
-
 interface NewAptForm {
   clientName: string
   clientPhone: string
@@ -89,8 +64,7 @@ const DashboardAgenda = () => {
   const { barbershop, barbers, services, clients, addClient, refreshClients, isAdmin } = useTenant()
   const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
-  const [weekOffset, setWeekOffset]     = useState(0)
-  const [selectedIdx, setSelectedIdx]   = useState(todayIndex)
+  const [selectedDate, setSelectedDate] = useState(() => localISO(new Date()))
   const [filterBarber, setFilterBarber] = useState<string>('all')
   const [appointments, setAppointments] = useState<BarbershopAppointment[]>([])
   const [loading, setLoading]           = useState(false)
@@ -206,9 +180,8 @@ const DashboardAgenda = () => {
 
   const [servicesOpen, setServicesOpen] = useState(false)   // accordion da lista de serviços
 
-  const weekDays    = getWeekDays(weekOffset)
-  const selectedDate = weekDays[selectedIdx]?.date ?? ''
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = localISO(new Date())
+  const selectedMonth = selectedDate.slice(0, 7)
 
   const formBarber   = barbers.find(b => b.id === form.barberId)
   // Vários serviços somam preço E tempo (cada serviço tem sua duração)
@@ -316,9 +289,33 @@ const DashboardAgenda = () => {
       .finally(() => setLoading(false))
   }, [barbershop?.id, selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Quantos horários cada dia do mês tem. `appointments` nas dependências: o que
+  // muda no dia aberto (novo, cancelado, apagado) reflete no calendário.
+  const [monthMarks, setMonthMarks] = useState<{ date: string; barberId: string; status: string }[]>([])
+  const [monthNonce, setMonthNonce] = useState(0)
+  useEffect(() => {
+    if (!barbershop) return
+    if (isDemoMode()) {
+      const plan = getDemoPlan()
+      const load = () => setMonthMarks(plan ? getDemoAppointments(plan) : [])
+      load()
+      return onDemoBookingsChange(load)
+    }
+    let alive = true
+    appointmentRepository.listMonthMarks(barbershop.id, selectedMonth)
+      .then(rows => { if (alive) setMonthMarks(rows.map(r => ({ date: r.date, barberId: r.barber_id ?? '', status: r.status }))) })
+      .catch(() => { /* sem contagem: a lista do dia segue funcionando */ })
+    return () => { alive = false }
+  }, [barbershop?.id, selectedMonth, monthNonce, appointments]) // eslint-disable-line react-hooks/exhaustive-deps
+  const monthCounts = monthMarks.reduce<Record<string, number>>((acc, m) => {
+    if (m.status !== 'cancelled' && (filterBarber === 'all' || m.barberId === filterBarber)) acc[m.date] = (acc[m.date] ?? 0) + 1
+    return acc
+  }, {})
+
   // Agendamento feito em outro aparelho (site público, outro barbeiro): rebusca o dia aberto
   useAppointmentsLive(barbershop?.id, event => {
     if (!barbershop) return
+    setMonthNonce(n => n + 1)
     if (event.type !== 'RESYNC' && event.type !== 'DELETE' && event.row.date !== selectedDate) return
     appointmentRepository
       .listByBarbershop(barbershop.id, selectedDate)
@@ -531,9 +528,6 @@ const DashboardAgenda = () => {
     }
   }
 
-  const prevWeek = () => { setWeekOffset(w => w - 1); setSelectedIdx(0) }
-  const nextWeek = () => { setWeekOffset(w => w + 1); setSelectedIdx(0) }
-
   const filtered = appointments.filter(
     a => filterBarber === 'all' || a.barberId === filterBarber
   )
@@ -546,13 +540,14 @@ const DashboardAgenda = () => {
     return acc
   }, {})
 
+  const selectedLabel = new Date(`${selectedDate}T12:00`)
+    .toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-[1440px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-white/55 text-sm font-body mb-1">
-            Semana {weekOffset === 0 ? 'atual' : weekOffset > 0 ? `+${weekOffset}` : weekOffset}
-          </p>
+          <p className="text-white/55 text-sm font-body mb-1 first-letter:uppercase">{selectedLabel}</p>
           <h1 className="font-heading text-3xl tracking-wide text-white">AGENDA</h1>
         </div>
         <button
@@ -564,44 +559,21 @@ const DashboardAgenda = () => {
         </button>
       </div>
 
-      {/* Navegação dias */}
-      <div className="flex items-center gap-2">
-        <button onClick={prevWeek} aria-label="Semana anterior" className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div className="flex-1 flex gap-2 overflow-x-auto pb-1">
-          {weekDays.map((day, i) => {
-            const isToday = day.date === todayStr
-            return (
-              <button
-                key={day.date}
-                onClick={() => setSelectedIdx(i)}
-                className={`shrink-0 px-4 py-2 rounded-lg text-sm font-body transition-all ${
-                  selectedIdx === i
-                    ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
-                    : isToday
-                      ? 'border border-white/15 text-white/70 hover:border-[#333]'
-                      : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white/70'
-                }`}
-              >
-                {day.label}
-              </button>
-            )
-          })}
-        </div>
-        <button onClick={nextWeek} aria-label="Próxima semana" className="p-2 rounded-lg border border-[#262626] text-white/65 hover:text-white hover:border-[#333] transition-all">
-          <ChevronRight className="w-4 h-4" />
-        </button>
+      {/* Tela larga: mês à esquerda, o dia escolhido ao lado */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-start">
+      <div className="min-w-0 xl:sticky xl:top-4">
+        <MonthCalendar selected={selectedDate} today={todayStr} counts={monthCounts} onSelect={setSelectedDate} />
       </div>
+      <div className="min-w-0 space-y-5">
 
       {/* Filtro por barbeiro */}
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFilterBarber('all')}
-          className={`px-3 py-1.5 rounded-full text-xs font-body transition-all ${
+          className={`px-4 py-1.5 rounded-lg text-sm font-body transition-colors ${
             filterBarber === 'all'
               ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
-              : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white/70'
+              : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white'
           }`}
         >
           Todos
@@ -610,10 +582,10 @@ const DashboardAgenda = () => {
           <button
             key={b.id}
             onClick={() => setFilterBarber(b.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-body transition-all ${
+            className={`px-4 py-1.5 rounded-lg text-sm font-body transition-colors ${
               filterBarber === b.id
                 ? 'bg-amber-500/[0.12] border border-amber-500/30 text-amber-400'
-                : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white/70'
+                : 'border border-[#262626] text-white/65 hover:border-[#333] hover:text-white'
             }`}
           >
             {b.name.split(' ')[0]}
@@ -628,8 +600,8 @@ const DashboardAgenda = () => {
       )}
 
       {!loading && filtered.length === 0 && (
-        <p className="text-white/55 text-sm font-body text-center py-12">
-          Nenhum agendamento para {weekDays[selectedIdx]?.label ?? 'este dia'}.
+        <p className="text-white/55 text-sm font-body text-center py-12 rounded-2xl border border-dashed border-[#2a2a2a]">
+          Nenhum agendamento em {selectedLabel}.
         </p>
       )}
 
@@ -686,10 +658,11 @@ const DashboardAgenda = () => {
 
       {/* Lista agrupada por barbeiro */}
       {!loading && Object.entries(grouped).map(([barberName, apts]) => (
-        <motion.div key={barberName} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-          <p className="text-white/55 text-xs font-semibold tracking-widest uppercase font-body px-1 mb-3">
+        <motion.div key={barberName} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-[#141414] border border-[#262626] overflow-hidden">
+          <p className="px-4 py-3 border-b border-[#262626] text-sm font-semibold font-body text-white/70">
             {barberName}
           </p>
+          <div className="divide-y divide-[#222]">
           {apts.map(apt => {
             const statusKey = apt.status in STATUS_CONFIG ? apt.status as keyof typeof STATUS_CONFIG : 'pending'
             const status = STATUS_CONFIG[statusKey]
@@ -706,16 +679,16 @@ const DashboardAgenda = () => {
             return (
               <div
                 key={apt.id}
-                className="p-4 rounded-xl bg-[#161616] border border-[#262626] hover:bg-[#1c1c1c] hover:border-[#303030] transition-all"
+                className="px-4 py-3.5"
               >
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <span className="font-heading text-xl text-white/75 w-14 shrink-0 text-center">
+                  <span className="font-heading text-2xl text-white w-14 shrink-0 text-center">
                     {apt.time}
                   </span>
                   <div className="w-px h-10 bg-[#2a2a2a] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-semibold truncate">{apt.clientName}</p>
-                    <p className="text-white/65 text-xs">
+                    <p className="text-white text-base font-semibold truncate">{apt.clientName}</p>
+                    <p className="text-white/65 text-sm">
                       {apt.serviceName}
                       {apt.price != null && (
                         <span className="text-white/55"> · R$ {apt.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</span>
@@ -748,14 +721,12 @@ const DashboardAgenda = () => {
                       <button
                         key={next}
                         onClick={() => handleStatusChange(apt, next)}
-                        className={`px-3 py-1 rounded-md text-xs font-body font-semibold transition-all ${
+                        className={`py-1.5 rounded-lg text-xs font-body font-semibold transition-colors ${
                           next === 'cancelled'
-                            ? 'bg-red-400/10 text-red-400 border border-red-400/20 hover:bg-red-400/20'
+                            ? 'px-2 text-white/45 hover:text-red-400 hover:bg-red-400/10'
                             : next === 'no_show'
-                              ? 'bg-orange-400/10 text-orange-300 border border-orange-400/25 hover:bg-orange-400/20'
-                            : next === 'done'
-                              ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 hover:bg-emerald-400/20'
-                              : 'bg-amber-400/10 text-amber-400 border border-amber-400/20 hover:bg-amber-400/20'
+                              ? 'px-2 text-white/45 hover:text-orange-300 hover:bg-orange-400/10'
+                              : 'px-4 bg-amber-500/[0.12] border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
                         }`}
                       >
                         {label}
@@ -809,8 +780,11 @@ const DashboardAgenda = () => {
               </div>
             )
           })}
+          </div>
         </motion.div>
       ))}
+      </div>
+      </div>
 
       {/* Modal — Novo agendamento */}
       <AnimatePresence>

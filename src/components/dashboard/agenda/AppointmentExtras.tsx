@@ -61,7 +61,7 @@ const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested
       )}
 
       {waFixed && (apt.remindedAt ? (
-        <button type="button" onClick={sendFixed} className={`${btn} border-[#2a2a2a] text-white/55 hover:text-white`} title="Mandar de novo">
+        <button type="button" onClick={sendFixed} className={`${btn} border-transparent text-white/55 hover:bg-white/[0.06] hover:text-white`} title="Mandar de novo">
           <Check className="w-3 h-3 text-emerald-400" />Mensagem enviada
         </button>
       ) : (
@@ -72,7 +72,7 @@ const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested
 
       {done && (wa ? (
         apt.reviewRequestedAt ? (
-          <button type="button" onClick={askReview} className={`${btn} border-[#2a2a2a] text-white/55 hover:text-white`} title="Pedir de novo">
+          <button type="button" onClick={askReview} className={`${btn} border-transparent text-white/55 hover:bg-white/[0.06] hover:text-white`} title="Pedir de novo">
             <Check className="w-3 h-3 text-emerald-400" />Avaliação pedida
           </button>
         ) : (
@@ -87,14 +87,14 @@ const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested
       ))}
 
       {showRepeat && (
-        <button type="button" onClick={() => onRepeat(apt)} className={`${btn} border-[#2a2a2a] text-white/60 hover:text-white`}>
+        <button type="button" onClick={() => onRepeat(apt)} className={`${btn} border-transparent text-white/55 hover:bg-white/[0.06] hover:text-white`}>
           <Repeat className="w-3 h-3" />Repetir
         </button>
       )}
 
       {apt.recurrenceId && open && (
         <button type="button" onClick={() => void stop()} onBlur={() => setArmedStop(false)}
-          className={`${btn} ${armedStop ? 'border-red-500/50 bg-red-500/10 text-red-300' : 'border-[#2a2a2a] text-white/50 hover:text-red-300'}`}>
+          className={`${btn} ${armedStop ? 'border-red-500/50 bg-red-500/10 text-red-300' : 'border-transparent text-white/45 hover:bg-white/[0.06] hover:text-red-300'}`}>
           {armedStop ? 'Toque de novo: cancela os próximos' : 'Parar repetição'}
         </button>
       )}

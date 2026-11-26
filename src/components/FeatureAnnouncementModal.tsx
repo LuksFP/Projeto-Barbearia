@@ -27,6 +27,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'agenda-mes-2026-11',
+    badge: 'Novidade no ar',
+    title: 'A Agenda agora mostra o mês inteiro',
+    description:
+      'No lugar da semana, um calendário do mês com quantos horários cada dia tem. Dá pra ver de uma vez os dias cheios e os vazios.',
+    steps: [
+      'Abra a Agenda e toque num dia pra ver os horários dele logo abaixo',
+      'Use as setas pra trocar de mês e “Hoje” pra voltar',
+      'Escolhendo um barbeiro, o calendário conta só os horários dele',
+    ],
+    ctaLabel: 'Abrir Agenda',
+    ctaTo: '/dashboard/agenda',
+  },
+  {
     key: 'placa-10k-2026-11',
     badge: 'Novidade no ar',
     title: 'Bateu R$ 10 mil num mês? Ganha a placa BarberPro',

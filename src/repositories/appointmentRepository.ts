@@ -84,6 +84,25 @@ async function insertSeries(t: SeriesTemplate, dates: string[], recurrenceId: st
 }
 
 export const appointmentRepository = {
+  /** Só o que o calendário do mês precisa pra contar. Pagina: o Supabase corta em 1000 linhas. */
+  async listMonthMarks(barbershopId: string, month: string) {
+    const [y, m] = month.split('-').map(Number)
+    const last = `${month}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+    const rows: Pick<AppointmentRow, 'date' | 'barber_id' | 'status'>[] = []
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('date, barber_id, status')
+        .eq('barbershop_id', barbershopId)
+        .gte('date', `${month}-01`).lte('date', last)
+        .order('id')
+        .range(from, from + 999)
+      if (error) throw error
+      rows.push(...(data ?? []))
+      if ((data?.length ?? 0) < 1000) return rows
+    }
+  },
+
   async listByBarbershop(barbershopId: string, date?: string): Promise<AppointmentRow[]> {
     let query = supabase
       .from('appointments')
