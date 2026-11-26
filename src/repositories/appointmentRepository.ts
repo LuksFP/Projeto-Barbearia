@@ -168,6 +168,15 @@ export const appointmentRepository = {
     return data
   },
 
+  /** Muda dia, hora e/ou barbeiro. Cliente fixo: só aquele dia (ver a função no banco). */
+  async transfer(id: string, to: { date: string; time: string; barberId: string }): Promise<AppointmentRow> {
+    const { data, error } = await supabase.rpc('transfer_appointment', {
+      p_id: id, p_date: to.date, p_time: to.time, p_barber_id: to.barberId || null,
+    })
+    if (error) throw error
+    return data
+  },
+
   /** Apaga de vez. Devolve quantos saíram: RLS só deixa dono/admin, e pra
    *  quem não pode o Supabase não dá erro — só apaga 0. */
   async remove(ids: string[]): Promise<number> {

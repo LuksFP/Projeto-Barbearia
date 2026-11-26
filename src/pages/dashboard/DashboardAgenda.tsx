@@ -1,7 +1,7 @@
 import { errorText } from '@/lib/errors'
 import { formatPhoneBR } from '@/lib/phone'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ChevronDown, Loader2, X, Check, MessageCircle, UserX } from 'lucide-react'
+import { Crown, Clock, CheckCircle2, AlertCircle, XCircle, Trash2, Plus, ArrowRightLeft, ChevronDown, Loader2, X, Check, MessageCircle, UserX } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
@@ -11,6 +11,8 @@ import AppointmentExtras from '@/components/dashboard/agenda/AppointmentExtras'
 import RepeatDialog from '@/components/dashboard/agenda/RepeatDialog'
 import WaitlistPanel from '@/components/dashboard/agenda/WaitlistPanel'
 import MonthCalendar from '@/components/dashboard/agenda/MonthCalendar'
+import TransferDialog, { type TransferTarget } from '@/components/dashboard/agenda/TransferDialog'
+import { transferLabel } from '@/lib/transfer'
 import { localISO } from '@/lib/month'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
@@ -79,6 +81,7 @@ const DashboardAgenda = () => {
   const shopOnline = useShopPaysOnline(barbershop?.id)
   // Cliente fixo: horário escolhido pra repetir (abre o diálogo)
   const [repeatApt, setRepeatApt] = useState<BarbershopAppointment | null>(null)
+  const [transferApt, setTransferApt] = useState<BarbershopAppointment | null>(null)
 
   const reloadDay = async () => {
     if (!barbershop || isDemoMode()) return
@@ -122,6 +125,27 @@ const DashboardAgenda = () => {
     } catch {
       toast({ title: 'Não deu pra repetir esse horário', variant: 'destructive' })
     }
+  }
+
+  const handleTransfer = async (apt: BarbershopAppointment, to: TransferTarget) => {
+    if (isDemoMode()) {
+      upsertDemoBooking({ ...apt, ...to, remindedAt: undefined, recurrenceId: undefined, recurrenceEveryDays: undefined })
+      // Cliente fixo: o dia antigo fica registrado, igual no banco
+      if (apt.recurrenceId) addDemoBooking({ ...apt, id: `${apt.id}-transf-${Date.now()}`, status: 'cancelled', transferredTo: transferLabel(to.date, to.time, to.barberName) })
+      setSelectedDate(to.date)
+      return
+    }
+    try {
+      await appointmentRepository.transfer(apt.id, to)
+    } catch (err: unknown) {
+      const { code, message } = (err ?? {}) as { code?: string; message?: string }
+      if (code === '23P01') throw new Error('Esse horário acabou de ser ocupado. Escolha outro.')
+      throw new Error(code === '23514' && message ? message : 'Não deu pra transferir. Tente de novo.')
+    }
+    // Vai pro dia novo; se for o mesmo, rebusca a lista
+    if (to.date !== selectedDate) setSelectedDate(to.date)
+    else await reloadDay().catch(() => { /* a transferência já foi salva */ })
+    setMonthNonce(n => n + 1)
   }
 
   const handleStopSeries = async (apt: BarbershopAppointment) => {
@@ -532,7 +556,9 @@ const DashboardAgenda = () => {
     a => filterBarber === 'all' || a.barberId === filterBarber
   )
 
-  const cancelledIds = filtered.filter(a => a.status === 'cancelled').map(a => a.id)
+  // Registro de fixo transferido só sai depois que o dia passa: apagado antes, o painel recria o horário
+  const keepsSlotFree = (a: BarbershopAppointment) => !!a.transferredTo && a.date >= todayStr
+  const cancelledIds = filtered.filter(a => a.status === 'cancelled' && !keepsSlotFree(a)).map(a => a.id)
 
   const grouped = filtered.reduce<Record<string, BarbershopAppointment[]>>((acc, apt) => {
     if (!acc[apt.barberName]) acc[apt.barberName] = []
@@ -709,10 +735,14 @@ const DashboardAgenda = () => {
                     )}
                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${status.bg} ${status.color}`}>
                       {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <StatusIcon className="w-3 h-3" />}
-                      {status.label}
+                      {apt.transferredTo ? 'Transferido' : status.label}
                     </div>
                   </div>
                 </div>
+
+                {apt.transferredTo && (
+                  <p className="mt-2 pl-[74px] text-xs font-body text-white/55">Foi pra {apt.transferredTo}</p>
+                )}
 
                 {/* Ações de status */}
                 {(transitions.length > 0 || canRefund) && !isUpdating && (
@@ -748,6 +778,15 @@ const DashboardAgenda = () => {
                   </div>
                 )}
 
+                {(apt.status === 'pending' || apt.status === 'confirmed') && !isUpdating && (
+                  <div className="mt-1 pl-[74px]">
+                    <button type="button" onClick={() => setTransferApt(apt)}
+                      className="flex items-center gap-1.5 px-2 py-1.5 -ml-2 rounded-lg text-xs font-body font-semibold text-white/70 hover:text-amber-400 hover:bg-white/[0.06] transition-colors">
+                      <ArrowRightLeft className="w-3 h-3" />Transferir
+                    </button>
+                  </div>
+                )}
+
                 {barbershop && (
                   <AppointmentExtras
                     apt={apt}
@@ -761,7 +800,7 @@ const DashboardAgenda = () => {
                 )}
 
                 {/* Cancelado: pode apagar (dono/admin) */}
-                {apt.status === 'cancelled' && canDelete && (
+                {apt.status === 'cancelled' && canDelete && !keepsSlotFree(apt) && (
                   <div className="flex items-center gap-2 mt-3 pl-[74px]">
                     <button
                       onClick={() => void handleDelete([apt.id], apt.id)}
@@ -785,6 +824,10 @@ const DashboardAgenda = () => {
       ))}
       </div>
       </div>
+
+      {barbershop && (
+        <TransferDialog apt={transferApt} shop={barbershop} barbers={barbers} onClose={() => setTransferApt(null)} onConfirm={handleTransfer} />
+      )}
 
       {/* Modal — Novo agendamento */}
       <AnimatePresence>

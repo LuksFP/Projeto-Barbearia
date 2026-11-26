@@ -102,6 +102,8 @@ export interface BarbershopAppointment {
   /** Cliente fixo: horários da mesma série dividem o id; repete a cada N dias. */
   recurrenceId?: string
   recurrenceEveryDays?: number
+  /** Registro do dia antigo de um fixo transferido: pra onde foi ("12/03 às 15:00 com Lucas"). */
+  transferredTo?: string
 }
 
 export interface BarbershopClient {

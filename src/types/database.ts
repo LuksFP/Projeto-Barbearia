@@ -139,6 +139,7 @@ export type Database = {
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
           time: string
+          transferred_to: string | null
           user_id: string | null
         }
         Insert: {
@@ -172,6 +173,7 @@ export type Database = {
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
           time: string
+          transferred_to?: string | null
           user_id?: string | null
         }
         Update: {
@@ -205,6 +207,7 @@ export type Database = {
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
           time?: string
+          transferred_to?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -1316,6 +1319,10 @@ export type Database = {
       claim_plaque: {
         Args: { p_barbershop_id: string; p_month: string; p_name_on_plaque: string; p_recipient: string; p_phone: string; p_cep: string; p_address: string; p_city: string; p_state: string }
         Returns: Database['public']['Tables']['plaque_claims']['Row']
+      }
+      transfer_appointment: {
+        Args: { p_id: string; p_date: string; p_time: string; p_barber_id: string | null }
+        Returns: Database['public']['Tables']['appointments']['Row']
       }
       ensure_fixed_appointments: {
         Args: { p_barbershop_id: string; p_days?: number }

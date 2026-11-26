@@ -62,6 +62,7 @@ function demoApptToRow(a: BarbershopAppointment, client: BarbershopClient): Appo
     review_requested_at: a.reviewRequestedAt ?? null,
     recurrence_id: a.recurrenceId ?? null,
     recurrence_every_days: a.recurrenceEveryDays ?? null,
+    transferred_to: a.transferredTo ?? null,
   }
 }
 
@@ -133,14 +134,15 @@ const ClientDrawer = ({
       const rows = appointments
         .filter(a => a.clientPhone === client.phone || a.clientName === client.name)
         .map(a => demoApptToRow(a, client))
-      setHistory(rows)
+      setHistory(rows.filter(r => !r.transferred_to))
       setLoading(false)
       return
     }
     setLoading(true)
     appointmentRepository
       .listByContact(barbershopId, client.email, client.phone)
-      .then(rows => setHistory(rows))
+      // Registro de horário transferido não é falta nem visita
+      .then(rows => setHistory(rows.filter(r => !r.transferred_to)))
       .catch(() => toast({ title: 'Erro ao carregar histórico', variant: 'destructive' }))
       .finally(() => setLoading(false))
   }, [barbershopId, client.email, client.phone, client.name, appointments])

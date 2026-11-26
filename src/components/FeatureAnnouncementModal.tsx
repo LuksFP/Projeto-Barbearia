@@ -27,6 +27,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'transferir-horario-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Transfira o cliente de dia, horário ou barbeiro',
+    description:
+      'O cliente pediu pra mudar? Não precisa mais cancelar e marcar de novo. Mude o horário dele direto na Agenda.',
+    steps: [
+      'Na Agenda, toque em “Transferir” no horário do cliente',
+      'Escolha o novo dia, barbeiro e hora. Só aparecem os horários livres',
+      'Toque em “Avisar no WhatsApp” pra mandar o horário novo pro cliente. Se ele for fixo, muda só aquele dia',
+    ],
+    ctaLabel: 'Abrir Agenda',
+    ctaTo: '/dashboard/agenda',
+  },
+  {
     key: 'agenda-mes-2026-11',
     badge: 'Novidade no ar',
     title: 'A Agenda agora mostra o mês inteiro',

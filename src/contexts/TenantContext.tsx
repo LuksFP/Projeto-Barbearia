@@ -133,6 +133,7 @@ export function mapAppointment(row: AppointmentRow): BarbershopAppointment {
     reviewRequestedAt: row.review_requested_at ?? undefined,
     recurrenceId: row.recurrence_id ?? undefined,
     recurrenceEveryDays: row.recurrence_every_days ?? undefined,
+    transferredTo: row.transferred_to ?? undefined,
   }
 }
 
