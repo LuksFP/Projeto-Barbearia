@@ -3,7 +3,7 @@ import type { SaasAccount } from '@/types/saas'
 import type {
   Barbershop, BarbershopBarber, BarbershopAppointment,
   BarbershopClient, BarbershopMembership, BarbershopService,
-  CancellationPolicy, MonthRevenue,
+  MonthRevenue,
 } from '@/types/tenant'
 import {
   MOCK_BARBERS, MOCK_SERVICES, MOCK_APPOINTMENTS,
@@ -425,19 +425,6 @@ export function getDemoFinancials(plan: DemoPlan): MonthRevenue[] {
       label: MONTH_NAMES[d.getMonth()],
     }
   })
-}
-
-// ─── Política de cancelamento mock ───────────────────────────────────────────
-
-const DEFAULT_POLICY: CancellationPolicy = {
-  enabled: true,
-  freeWindowHours: 24,
-  fineType: 'percent',
-  fineValue: 50,
-}
-
-export function getDefaultCancellationPolicy(): CancellationPolicy {
-  return { ...DEFAULT_POLICY }
 }
 
 export function isDemoMode(): boolean {

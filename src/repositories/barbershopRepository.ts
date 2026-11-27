@@ -37,7 +37,6 @@ export function mapBarbershopRow(row: BarbershopRow, plan: Barbershop['plan']): 
     siteType: row.site_type as Barbershop['siteType'],
     customDomain: row.custom_domain ?? '',
     embedKey: row.embed_key,
-    cancellationPolicy: (row.cancellation_policy as unknown as Barbershop['cancellationPolicy']) ?? null,
     clubPixKey: row.club_pix_key ?? '',
     openTime: row.open_time ?? DEFAULT_OPEN,
     closeTime: row.close_time ?? DEFAULT_CLOSE,

@@ -49,13 +49,6 @@ function saveContact(name: string, phone: string, email: string) {
 
 // ─── Booking Section ──────────────────────────────────────────────────────────
 
-function formatCancellationPolicy(policy: NonNullable<PublicSiteOutletCtx['barbershop']['cancellationPolicy']>) {
-  const fineStr = policy.fineType === 'fixed'
-    ? `R$ ${policy.fineValue.toFixed(0)}`
-    : `${policy.fineValue}% do valor do serviço`
-  return `Cancelamentos com menos de ${policy.freeWindowHours}h de antecedência estão sujeitos a multa de ${fineStr}.`
-}
-
 const BookingSection = ({
   barbershop,
   services,
@@ -714,15 +707,6 @@ const BookingSection = ({
           </div>
 
           <BookingBump products={products} picked={bump} onChange={setBump} primary={primary} />
-
-          {barbershop.cancellationPolicy?.enabled && (
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/8 border border-amber-500/20 mb-6">
-              <AlertCircle className="w-4 h-4 text-amber-400/70 shrink-0 mt-0.5" />
-              <p className="text-amber-400/80 text-xs font-body leading-relaxed">
-                {formatCancellationPolicy(barbershop.cancellationPolicy)}
-              </p>
-            </div>
-          )}
 
           <div className="space-y-4 mb-6">
             <div>

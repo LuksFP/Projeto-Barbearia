@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react'
 import { PLAN_NAME } from '@/types/saas'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { Building2, MapPin, Instagram, Palette, ShieldCheck, Ban, AlertTriangle, Check, Info, Clock, Loader2, ShoppingBag, Star } from 'lucide-react'
+import { Building2, MapPin, Instagram, Palette, ShieldCheck, Check, Clock, Loader2, ShoppingBag, Star } from 'lucide-react'
 import StoreSettings from '@/components/dashboard/products/StoreSettings'
 import GoogleReviewSettings from '@/components/dashboard/settings/GoogleReviewSettings'
-import { getDefaultCancellationPolicy, isDemoMode } from '@/lib/demo'
-import type { CancellationPolicy } from '@/types/tenant'
+import { isDemoMode } from '@/lib/demo'
 import { toast } from '@/hooks/use-toast'
 
 // ─── Componentes de layout ────────────────────────────────────────────────────
@@ -50,179 +49,6 @@ const Section = ({
 
 // ─── Política de cancelamento ─────────────────────────────────────────────────
 
-const WINDOW_OPTIONS = [
-  { value: 1,   label: '1 hora antes' },
-  { value: 2,   label: '2 horas antes' },
-  { value: 4,   label: '4 horas antes' },
-  { value: 6,   label: '6 horas antes' },
-  { value: 12,  label: '12 horas antes' },
-  { value: 24,  label: '24 horas antes' },
-  { value: 48,  label: '48 horas antes' },
-  { value: 72,  label: '3 dias antes' },
-]
-
-interface CancellationFormProps {
-  policy: CancellationPolicy
-  onChange: (p: CancellationPolicy) => void
-  onSave: () => void
-  saved: boolean
-  saving?: boolean
-}
-
-const CancellationForm = ({ policy, onChange, onSave, saved, saving }: CancellationFormProps) => {
-  const set = <K extends keyof CancellationPolicy>(key: K, val: CancellationPolicy[K]) =>
-    onChange({ ...policy, [key]: val })
-
-  const fineLabel = policy.fineType === 'fixed'
-    ? `R$ ${policy.fineValue} fixo`
-    : `${policy.fineValue}% do valor do serviço`
-
-  return (
-    <div className="space-y-5">
-
-      {/* Toggle habilitado */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-white/70 text-sm font-body font-semibold">Multa por cancelamento</p>
-          <p className="text-white/60 text-xs font-body mt-0.5">
-            Clientes que cancelam fora da janela gratuita pagam uma taxa
-          </p>
-        </div>
-        <button
-          onClick={() => set('enabled', !policy.enabled)}
-          className={`w-11 h-6 rounded-full border transition-all relative shrink-0 ${
-            policy.enabled ? 'bg-red-500 border-red-500' : 'bg-transparent border-white/10'
-          }`}
-        >
-          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${
-            policy.enabled ? 'left-5' : 'left-0.5'
-          }`} />
-        </button>
-      </div>
-
-      {policy.enabled && (
-        <>
-          <div className="h-px bg-white/5" />
-
-          {/* Janela gratuita */}
-          <div>
-            <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
-              Cancelamento gratuito até
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {WINDOW_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => set('freeWindowHours', opt.value)}
-                  className={`px-3 py-2 rounded-lg text-xs font-body border transition-all ${
-                    policy.freeWindowHours === opt.value
-                      ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                      : 'border-[#2a2a2a] text-white/65 hover:text-white/75 hover:border-[#333]'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-white/55 text-xs font-body mt-2">
-              Clientes podem cancelar sem custo até {WINDOW_OPTIONS.find(o => o.value === policy.freeWindowHours)?.label ?? `${policy.freeWindowHours}h antes`} do horário marcado.
-            </p>
-          </div>
-
-          {/* Tipo de multa */}
-          <div>
-            <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
-              Tipo de multa
-            </label>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => set('fineType', 'percent')}
-                className={`flex-1 px-4 py-3 rounded-xl text-sm font-body border transition-all text-left ${
-                  policy.fineType === 'percent'
-                    ? 'bg-red-500/10 border-red-500/30 text-white'
-                    : 'border-[#2a2a2a] text-white/65 hover:text-white/75'
-                }`}
-              >
-                <p className="font-semibold mb-0.5">Percentual</p>
-                <p className="text-xs text-white/65">% do valor do serviço</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => set('fineType', 'fixed')}
-                className={`flex-1 px-4 py-3 rounded-xl text-sm font-body border transition-all text-left ${
-                  policy.fineType === 'fixed'
-                    ? 'bg-red-500/10 border-red-500/30 text-white'
-                    : 'border-[#2a2a2a] text-white/65 hover:text-white/75'
-                }`}
-              >
-                <p className="font-semibold mb-0.5">Valor fixo</p>
-                <p className="text-xs text-white/65">R$ independente do serviço</p>
-              </button>
-            </div>
-          </div>
-
-          {/* Valor da multa */}
-          <div>
-            <label className="text-white/60 text-xs font-semibold font-body tracking-wide uppercase mb-2 block">
-              {policy.fineType === 'fixed' ? 'Valor da multa (R$)' : 'Percentual da multa (%)'}
-            </label>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/55 text-sm font-body">
-                  {policy.fineType === 'fixed' ? 'R$' : '%'}
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  max={policy.fineType === 'percent' ? 100 : undefined}
-                  step={policy.fineType === 'percent' ? 5 : 1}
-                  value={policy.fineValue}
-                  onChange={e => set('fineValue', Number(e.target.value))}
-                  className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg pl-10 pr-4 py-2.5 text-sm text-white font-body w-32 focus:outline-none focus:border-amber-500/50"
-                />
-              </div>
-              <p className="text-white/60 text-xs font-body">
-                = <span className="text-white/75">{fineLabel}</span> cobrado no cancelamento tardio
-              </p>
-            </div>
-          </div>
-
-          {/* Preview */}
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/[0.04] border border-amber-500/15">
-            <Info className="w-4 h-4 text-amber-400/60 shrink-0 mt-0.5" />
-            <p className="text-white/70 text-xs font-body leading-relaxed">
-              Se um cliente cancelar o agendamento com menos de{' '}
-              <span className="text-white/80 font-semibold">{WINDOW_OPTIONS.find(o => o.value === policy.freeWindowHours)?.label}</span>,
-              {' '}será cobrada uma taxa de{' '}
-              <span className="text-white/80 font-semibold">{fineLabel}</span>.
-              {' '}Cancelamentos dentro da janela gratuita continuam sem custo.
-            </p>
-          </div>
-        </>
-      )}
-
-      {/* Salvar */}
-      <div className="flex items-center justify-end gap-3">
-        {saved && (
-          <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-body">
-            <Check className="w-3.5 h-3.5" />
-            Salvo
-          </span>
-        )}
-        <button
-          onClick={onSave}
-          disabled={saving}
-          className="px-5 py-2 rounded-lg bg-amber-500 text-[#0a0a0a] text-sm font-semibold font-body hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? 'Salvando…' : 'Salvar política'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 const DashboardConfiguracoes = () => {
@@ -236,12 +62,6 @@ const DashboardConfiguracoes = () => {
   }, [])
   // barbershop.plan no painel é fixo 'pro'; o plano de verdade é o da conta SaaS.
   const { account } = useSaasAccount()
-  const [policy, setPolicy] = useState<CancellationPolicy>(() =>
-    barbershop?.cancellationPolicy ?? getDefaultCancellationPolicy()
-  )
-  const [policySaved, setPolicySaved] = useState(false)
-  const [saving, setSaving] = useState(false)
-
   const [openTime, setOpenTime] = useState(barbershop?.openTime || '08:00')
   const [closeTime, setCloseTime] = useState(barbershop?.closeTime || '20:00')
   const [hoursSaved, setHoursSaved] = useState(false)
@@ -266,24 +86,6 @@ const DashboardConfiguracoes = () => {
       toast({ title: 'Erro ao salvar horário', variant: 'destructive' })
     } finally {
       setSavingHours(false)
-    }
-  }
-
-  const handleSavePolicy = async () => {
-    if (isDemoMode()) {
-      setPolicySaved(true)
-      setTimeout(() => setPolicySaved(false), 3000)
-      return
-    }
-    setSaving(true)
-    try {
-      await updateBarbershop({ cancellationPolicy: policy })
-      setPolicySaved(true)
-      setTimeout(() => setPolicySaved(false), 3000)
-    } catch {
-      toast({ title: 'Erro ao salvar política', variant: 'destructive' })
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -401,44 +203,6 @@ const DashboardConfiguracoes = () => {
           <div className="flex items-center justify-between py-2">
             <span className="text-white/70 text-sm font-body">Funcionamento</span>
             <span className="text-white/70 text-sm font-body font-semibold">{openTime} — {closeTime}</span>
-          </div>
-        )}
-      </Section>
-
-      {/* Política de cancelamento */}
-      <Section title="Política de Cancelamento" icon={canEdit ? Ban : AlertTriangle} accent>
-        {canEdit ? (
-          <CancellationForm
-            policy={policy}
-            onChange={setPolicy}
-            onSave={handleSavePolicy}
-            saved={policySaved}
-            saving={saving}
-          />
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2">
-              <span className="text-white/70 text-sm font-body">Multa ativa</span>
-              <span className={`text-sm font-body font-semibold ${policy.enabled ? 'text-red-400' : 'text-white/55'}`}>
-                {policy.enabled ? 'Sim' : 'Não'}
-              </span>
-            </div>
-            {policy.enabled && (
-              <>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-white/70 text-sm font-body">Janela gratuita</span>
-                  <span className="text-white/70 text-sm font-body">
-                    {WINDOW_OPTIONS.find(o => o.value === policy.freeWindowHours)?.label}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-white/70 text-sm font-body">Multa</span>
-                  <span className="text-red-400 text-sm font-body font-semibold">
-                    {policy.fineType === 'fixed' ? `R$ ${policy.fineValue}` : `${policy.fineValue}%`}
-                  </span>
-                </div>
-              </>
-            )}
           </div>
         )}
       </Section>

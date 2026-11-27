@@ -24,7 +24,6 @@ export interface Barbershop {
   siteType: 'generic' | 'external'
   customDomain?: string
   embedKey?: string
-  cancellationPolicy?: CancellationPolicy | null
   clubPixKey?: string       // chave PIX usada nas cobranças do Clube VIP
   // Obrigatórios de propósito: se ficarem opcionais, um mapper pode esquecer
   // deles em silêncio e a barbearia volta a abrir 08:00 pra quem agenda.
@@ -132,13 +131,6 @@ export interface BarbershopMembership {
   // Plano vinculado a um barbeiro específico (opcional)
   barberId?: string
   barberName?: string
-}
-
-export interface CancellationPolicy {
-  enabled: boolean
-  freeWindowHours: number       // até X horas antes = cancelamento sem multa
-  fineType: 'fixed' | 'percent' // R$ fixo ou % do serviço
-  fineValue: number
 }
 
 export interface MonthRevenue {

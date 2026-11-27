@@ -256,7 +256,6 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     if (updates.coverImage !== undefined) payload.cover_image = updates.coverImage
     if (updates.siteType !== undefined) payload.site_type = updates.siteType
     if (updates.customDomain !== undefined) payload.custom_domain = updates.customDomain
-    if (updates.cancellationPolicy !== undefined) payload.cancellation_policy = updates.cancellationPolicy
     if (updates.clubPixKey !== undefined) payload.club_pix_key = updates.clubPixKey
     if (updates.openTime !== undefined) payload.open_time = updates.openTime
     if (updates.closeTime !== undefined) payload.close_time = updates.closeTime
