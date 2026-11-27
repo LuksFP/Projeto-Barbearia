@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import ClientReturnPanel from '@/components/dashboard/clients/ClientReturnPanel'
 import { Crown, Search, Phone, Mail, X, Loader2, Calendar, Scissors, Star, UserPlus, Pencil, MessageCircle, Award, Repeat, Ban, FileText, Check } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -40,6 +41,10 @@ function demoApptToRow(a: BarbershopAppointment, client: BarbershopClient): Appo
     barber_name: a.barberName,
     service_id: a.serviceId ?? null,
     service_ids: null,
+    manage_token: a.manageToken ?? a.id,
+    client_changed_at: null,
+    client_change: a.clientChange ?? null,
+    reschedule_count: 0,
     service_name: a.serviceName,
     service_category: a.serviceCategory ?? null,
     date: a.date,
@@ -365,6 +370,8 @@ const ClientDrawer = ({
           <p className="text-white/65 text-sm font-body leading-relaxed whitespace-pre-wrap">{client.notes}</p>
         </div>
       )}
+
+      {!editing && <ClientReturnPanel client={client} />}
 
       {/* Insights derivados do histórico */}
       {!loading && history.length > 0 && (

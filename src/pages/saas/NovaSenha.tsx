@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeOff, Check, X as XIcon, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
@@ -111,9 +111,9 @@ const NovaSenha = () => {
           <p className="text-white/40 text-sm font-body">
             Se o link for válido, o formulário aparecerá em instantes.
             Caso contrário,{' '}
-            <a href="/esqueci-senha" className="text-amber-400/70 hover:text-amber-400 underline underline-offset-2 transition-colors">
+            <Link to="/esqueci-senha" className="text-amber-400/70 hover:text-amber-400 underline underline-offset-2 transition-colors">
               solicite um novo link
-            </a>.
+            </Link>.
           </p>
         </motion.div>
       </div>

@@ -31,7 +31,7 @@ export function dayLabel(dateStr: string, now: Date = new Date()): string {
   return `${WEEKDAYS[d.getDay()]} (${ddmm})`
 }
 
-export function buildReminderMessage(apt: BarbershopAppointment, barbershop: Barbershop): string {
+export function buildReminderMessage(apt: BarbershopAppointment, barbershop: Barbershop, manageLink?: string): string {
   const first = apt.clientName.trim().split(/\s+/)[0]
   return [
     `Oi, ${first}! Tudo certo? 💈`,
@@ -40,7 +40,9 @@ export function buildReminderMessage(apt: BarbershopAppointment, barbershop: Bar
     `🗓️ ${dayLabel(apt.date)} às ${apt.time}`,
     `✂️ ${apt.serviceName}${apt.barberName ? ` com ${apt.barberName}` : ''}`,
     ``,
-    `Posso confirmar? Se precisar remarcar, é só me avisar por aqui. 👍`,
+    manageLink
+      ? `Posso confirmar? Se precisar remarcar ou cancelar, é por aqui: ${manageLink}`
+      : `Posso confirmar? Se precisar remarcar, é só me avisar por aqui. 👍`,
   ].join('\n')
 }
 

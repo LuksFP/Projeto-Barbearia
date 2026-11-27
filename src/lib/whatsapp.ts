@@ -33,6 +33,8 @@ interface BookingMessage {
   barberName?: string
   price?: number
   address?: string
+  /** Link "meu horário" (só se a barbearia deixa mexer por ele). */
+  manageUrl?: string
 }
 
 /** Mensagem de confirmação de horário marcado pelo painel. */
@@ -47,7 +49,7 @@ export function buildBookingConfirmation(b: BookingMessage): string {
     b.price && b.price > 0 ? `💰 ${b.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : null,
     b.address?.trim() ? `📍 ${b.address.trim()}` : null,
     ``,
-    `Se precisar remarcar, é só responder aqui.`,
+    b.manageUrl ? `Precisa remarcar ou cancelar? É por aqui: ${b.manageUrl}` : `Se precisar remarcar, é só responder aqui.`,
   ]
   return linhas.filter((l): l is string => l !== null).join('\n')
 }
@@ -56,6 +58,12 @@ export function buildBookingConfirmation(b: BookingMessage): string {
 export function buildReviewRequest(clientName: string, shopName: string, url: string): string {
   const first = clientName.trim().split(/\s+/)[0] || ''
   return `Oi${first ? ` ${first}` : ''}! Valeu por vir na ${shopName} hoje. Se curtiu o corte, deixa uma avaliação pra gente no Google? Leva um minutinho e ajuda demais a barbearia: ${url}`
+}
+
+/** Pedido de avaliação no site da barbearia, pelo link do horário. */
+export function buildOwnReviewRequest(clientName: string, shopName: string, url: string): string {
+  const first = clientName.trim().split(/\s+/)[0] || ''
+  return `Oi${first ? ` ${first}` : ''}! Valeu por vir na ${shopName}. Conta pra gente como foi? É só dar sua nota aqui: ${url}`
 }
 
 /** Aviso pra quem está na lista de espera. */

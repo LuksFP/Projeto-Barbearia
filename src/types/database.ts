@@ -109,6 +109,10 @@ export type Database = {
       }
       appointments: {
         Row: {
+          manage_token: string
+          client_changed_at: string | null
+          client_change: string | null
+          reschedule_count: number
           barber_id: string | null
           barber_name: string
           barbershop_id: string
@@ -143,6 +147,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          manage_token?: string
+          client_changed_at?: string | null
+          client_change?: string | null
+          reschedule_count?: number
           barber_id?: string | null
           barber_name: string
           barbershop_id: string
@@ -177,6 +185,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          manage_token?: string
+          client_changed_at?: string | null
+          client_change?: string | null
+          reschedule_count?: number
           barber_id?: string | null
           barber_name?: string
           barbershop_id?: string
@@ -369,6 +381,14 @@ export type Database = {
       }
       barbershops: {
         Row: {
+          self_cancel_hours: number | null
+          reviews_enabled: boolean
+          loyalty_enabled: boolean
+          loyalty_goal: number
+          loyalty_reward: string
+          loyalty_since: string | null
+          packages_enabled: boolean
+          birthdays_enabled: boolean
           accent_color: string
           active: boolean
           address: string
@@ -400,6 +420,14 @@ export type Database = {
           whatsapp: string
         }
         Insert: {
+          self_cancel_hours?: number | null
+          reviews_enabled?: boolean
+          loyalty_enabled?: boolean
+          loyalty_goal?: number
+          loyalty_reward?: string
+          loyalty_since?: string | null
+          packages_enabled?: boolean
+          birthdays_enabled?: boolean
           accent_color?: string
           active?: boolean
           address?: string
@@ -431,6 +459,14 @@ export type Database = {
           whatsapp?: string
         }
         Update: {
+          self_cancel_hours?: number | null
+          reviews_enabled?: boolean
+          loyalty_enabled?: boolean
+          loyalty_goal?: number
+          loyalty_reward?: string
+          loyalty_since?: string | null
+          packages_enabled?: boolean
+          birthdays_enabled?: boolean
           accent_color?: string
           active?: boolean
           address?: string
@@ -531,6 +567,8 @@ export type Database = {
       }
       clients: {
         Row: {
+          birth_day: number | null
+          birth_month: number | null
           barbershop_id: string
           created_at: string
           email: string | null
@@ -544,6 +582,8 @@ export type Database = {
           total_visits: number
         }
         Insert: {
+          birth_day?: number | null
+          birth_month?: number | null
           barbershop_id: string
           created_at?: string
           email?: string | null
@@ -557,6 +597,8 @@ export type Database = {
           total_visits?: number
         }
         Update: {
+          birth_day?: number | null
+          birth_month?: number | null
           barbershop_id?: string
           created_at?: string
           email?: string | null
@@ -807,6 +849,75 @@ export type Database = {
         }
         Insert: Record<string, never>
         Update: { status?: string; notified_at?: string | null }
+        Relationships: []
+      }
+      package_uses: {
+        Row: {
+          id: string
+          barbershop_id: string
+          package_id: string
+          appointment_id: string | null
+          original_price: number | null
+          used_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id?: string
+          package_id?: string
+          appointment_id?: string | null
+          original_price?: number | null
+          used_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          package_id?: string
+          appointment_id?: string | null
+          original_price?: number | null
+          used_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      client_packages: {
+        Row: {
+          id: string
+          barbershop_id: string
+          client_id: string
+          name: string
+          total_uses: number
+          price: number
+          sold_on: string
+          sold_by: string | null
+          cancelled_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          barbershop_id: string
+          client_id: string
+          name: string
+          total_uses: number
+          price: number
+          sold_on?: string
+          sold_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          barbershop_id?: string
+          client_id?: string
+          name?: string
+          total_uses?: number
+          price?: number
+          sold_on?: string
+          sold_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+        }
         Relationships: []
       }
       schedule_blocks: {
@@ -1404,6 +1515,42 @@ export type Database = {
           revenue: number
         }[]
       }
+      public_shop_features: {
+        Args: { p_barbershop_id: string }
+        Returns: { self_cancel_hours: number | null; reviews_enabled: boolean }[]
+      }
+      public_manage_get: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      public_manage_cancel: {
+        Args: { p_token: string }
+        Returns: undefined
+      }
+      public_manage_reschedule: {
+        Args: { p_token: string; p_date: string; p_time: string }
+        Returns: undefined
+      }
+      public_manage_review: {
+        Args: { p_token: string; p_rating: number; p_review?: string | null }
+        Returns: undefined
+      }
+      use_package: {
+        Args: { p_package_id: string }
+        Returns: string
+      }
+      undo_package_use: {
+        Args: { p_package_id: string }
+        Returns: undefined
+      }
+      redeem_loyalty: {
+        Args: { p_barbershop_id: string; p_phone: string }
+        Returns: undefined
+      }
+      loyalty_status: {
+        Args: { p_barbershop_id: string; p_phone: string; p_exclude?: string | null }
+        Returns: { visits: number; goal: number; reward: string; rewards_available: number; progress: number }[]
+      }
       public_schedule_blocks: {
         Args: { p_barber_id: string | null; p_barbershop_id: string; p_date: string }
         Returns: {
@@ -1456,6 +1603,8 @@ export type Database = {
       public_barbershop_team: {
         Args: { p_barbershop_id: string }
         Returns: {
+          work_start: string | null
+          work_end: string | null
           active: boolean
           avatar: string
           barbershop_id: string

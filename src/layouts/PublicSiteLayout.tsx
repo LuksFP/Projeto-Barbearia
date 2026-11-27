@@ -26,7 +26,8 @@ type PublicBarbershopRow =
 // Site público lê pela RPC, que não devolve colunas internas (chave PIX,
 // embed_key, conta SaaS). Elas entram vazias; o site não conhece o plano.
 const mapBarbershop = (row: PublicBarbershopRow): Barbershop =>
-  mapBarbershopRow({ ...row, saas_account_id: '', embed_key: '', club_pix_key: '', created_at: '', store_enabled: true, bump_enabled: true, google_review_url: null, monthly_goal: null }, null)
+  mapBarbershopRow({ ...row, saas_account_id: '', embed_key: '', club_pix_key: '', created_at: '', store_enabled: true, bump_enabled: true, google_review_url: null, monthly_goal: null,
+    self_cancel_hours: null, reviews_enabled: false, loyalty_enabled: false, loyalty_goal: 10, loyalty_reward: '', loyalty_since: null, packages_enabled: false, birthdays_enabled: false }, null)
 
 export interface PublicReview {
   rating: number

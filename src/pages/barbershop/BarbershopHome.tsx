@@ -13,6 +13,9 @@ import { supabasePublic } from '@/lib/supabase-public'
 import { waLink } from '@/lib/whatsapp'
 import { barberHours, buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 import { scheduleBlockRepository } from '@/repositories/scheduleBlockRepository'
+import { featuresRepository } from '@/repositories/featuresRepository'
+import { manageUrl } from '@/lib/extras'
+import ManageLinkBox from '@/components/barbershop/ManageLinkBox'
 import BookingBump from '@/components/barbershop/BookingBump'
 import PayOnline from '@/components/barbershop/store/PayOnline'
 import WaitlistJoin from '@/components/barbershop/WaitlistJoin'
@@ -197,6 +200,16 @@ const BookingSection = ({
   const slots = useMemo(() => allSlots.filter(s => s.available), [allSlots])
   // Aviso na tela de horários quando o escolhido foi pego por outra pessoa
   const [slotNotice, setSlotNotice] = useState('')
+  const [manageToken, setManageToken] = useState('')
+  // A barbearia pode desligar o link; se não carregar, não oferece.
+  const [selfService, setSelfService] = useState(false)
+  useEffect(() => {
+    let alive = true
+    featuresRepository.publicFeatures(barbershop.id)
+      .then(f => { if (alive) setSelfService(f.selfCancelHours !== null || f.reviewsEnabled) })
+      .catch(() => { if (alive) setSelfService(false) })
+    return () => { alive = false }
+  }, [barbershop.id])
 
   // Limpa o horário escolhido se ele saiu da lista de disponíveis
   useEffect(() => {
@@ -255,6 +268,11 @@ const BookingSection = ({
       }
     }
 
+    // Chave do link "meu horário": nasce aqui porque o site não lê o agendamento
+    // de volta. Na demo o próprio id serve.
+    const newToken = isDemoBarbershop ? appointmentId : crypto.randomUUID()
+    setManageToken(newToken)
+
     // Demo: não grava no banco (id não é real); guarda no navegador pra aparecer na Agenda da demo
     if (isDemoBarbershop) {
       addDemoBooking({
@@ -281,6 +299,7 @@ const BookingSection = ({
     try {
       const { error } = await supabasePublic.from('appointments').insert({
         id: appointmentId,
+        manage_token: newToken,
         barbershop_id: barbershop.id,
         service_id: selectedServices[0].id,
         // O banco soma duração e preço destes serviços (combo corte + barba etc.)
@@ -398,6 +417,9 @@ const BookingSection = ({
               laterHint="na barbearia"
             />
           </div>
+        )}
+        {selfService && manageToken && (
+          <ManageLinkBox url={manageUrl(window.location.origin, barbershop.slug, manageToken)} path={`/b/${barbershop.slug}/horario/${manageToken}`} primary={primary} />
         )}
         <p className="text-white/40 text-sm font-body mb-8">
           Em breve você receberá uma confirmação. Até lá!

@@ -27,6 +27,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'link-do-cliente-retorno-2026-11',
+    badge: 'Novidade no ar',
+    title: 'O cliente cancela e remarca sozinho',
+    description:
+      'Cada horário marcado ganhou um link só do cliente. E tem opções novas pra ele voltar: você liga só as que quiser.',
+    steps: [
+      'O link aparece pro cliente depois de agendar e vai junto na confirmação e no lembrete do WhatsApp',
+      'Em Configurações, escolha até quando ele pode mexer, ou desligue',
+      'Lá também dá pra ligar avaliação, cartão fidelidade, pacotes e aniversariantes',
+    ],
+    ctaLabel: 'Ver as opções',
+    ctaTo: '/dashboard/configuracoes#recursos',
+  },
+  {
     key: 'folgas-bloqueios-2026-11',
     badge: 'Novidade no ar',
     title: 'Folgas, almoço e feriado: ninguém marca em cima',

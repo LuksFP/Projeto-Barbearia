@@ -103,6 +103,10 @@ export interface BarbershopAppointment {
   recurrenceEveryDays?: number
   /** Registro do dia antigo de um fixo transferido: pra onde foi ("12/03 às 15:00 com Lucas"). */
   transferredTo?: string
+  /** Chave do link "meu horário" do cliente. */
+  manageToken?: string
+  /** O que o cliente fez pelo link (cancelou ou remarcou). */
+  clientChange?: string
 }
 
 export interface BarbershopClient {

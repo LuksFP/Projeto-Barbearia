@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useTenant } from '@/contexts/TenantContext'
 import { usePlanGates } from '@/hooks/usePlanGates'
@@ -663,7 +664,7 @@ const DashboardFinanceiro = () => {
             >
               <div className="flex items-center justify-between mb-5">
                 <p className="text-white/65 text-xs font-semibold uppercase tracking-widest font-body">Comissões</p>
-                <a href="/dashboard/equipe" className="text-amber-400/60 hover:text-amber-400 text-xs font-body transition-colors">Ajustar % na Equipe →</a>
+                <Link to="/dashboard/equipe" className="text-amber-400/60 hover:text-amber-400 text-xs font-body transition-colors">Ajustar % na Equipe →</Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm font-body">

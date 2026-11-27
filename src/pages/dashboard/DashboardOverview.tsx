@@ -8,7 +8,7 @@ import { openOutsideApp } from '@/lib/pwaHead'
 import { toast } from '@/hooks/use-toast'
 import { useTenant, mapAppointment } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
@@ -423,8 +423,7 @@ const DashboardOverview = () => {
                   )}
                 </div>
               </div>
-              <a
-                href="/dashboard/clube"
+              <Link to="/dashboard/clube"
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold font-body transition-colors ${
                   hasOverdue
                     ? 'bg-red-500 text-white hover:bg-red-400'
@@ -432,7 +431,7 @@ const DashboardOverview = () => {
                 }`}
               >
                 Cobrar agora →
-              </a>
+              </Link>
             </div>
           </motion.div>
         )}
@@ -467,9 +466,9 @@ const DashboardOverview = () => {
           <ExternalLink className="w-3 h-3" />
           Ver site
         </a>
-        <a href="/dashboard/personalizar?tab=site" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors shrink-0">
+        <Link to="/dashboard/personalizar?tab=site" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors shrink-0">
           Configurar →
-        </a>
+        </Link>
       </div>
 
       {/* Clientes fixos de hoje: lembrar de confirmar no WhatsApp */}
@@ -485,7 +484,7 @@ const DashboardOverview = () => {
                   : `${fixedList.length} clientes fixos · hoje e amanhã cedo`}
               <span className="text-white/50 font-normal">· manda uma mensagem confirmando</span>
             </p>
-            <a href="/dashboard/fixos" className="text-violet-200/70 hover:text-violet-200 text-xs font-body shrink-0">Ver fixos →</a>
+            <Link to="/dashboard/fixos" className="text-violet-200/70 hover:text-violet-200 text-xs font-body shrink-0">Ver fixos →</Link>
           </div>
           <div className="space-y-2">
             {fixedList.map(apt => (
@@ -556,9 +555,9 @@ const DashboardOverview = () => {
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={5}>
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-heading text-xl tracking-wide text-white">FINANCEIRO</h2>
-            <a href="/dashboard/configuracoes" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
+            <Link to="/dashboard/configuracoes" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
               Configurações →
-            </a>
+            </Link>
           </div>
           <FinancialComparison months={financialMonths} />
         </motion.div>
@@ -568,9 +567,9 @@ const DashboardOverview = () => {
       <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={6}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-heading text-xl tracking-wide text-white">AGENDA DE HOJE</h2>
-          <a href="/dashboard/agenda" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
+          <Link to="/dashboard/agenda" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
             Ver completa →
-          </a>
+          </Link>
         </div>
         <div className="space-y-2">
           {todayApts.length === 0 && (
@@ -617,9 +616,9 @@ const DashboardOverview = () => {
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={7}>
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-heading text-xl tracking-wide text-white">VENCIMENTOS DO CLUBE</h2>
-            <a href="/dashboard/clube" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
+            <Link to="/dashboard/clube" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
               Ver cobranças →
-            </a>
+            </Link>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -666,9 +665,9 @@ const DashboardOverview = () => {
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={7}>
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-heading text-xl tracking-wide text-white">CLUBE VIP</h2>
-            <a href="/dashboard/clube" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
+            <Link to="/dashboard/clube" className="text-amber-400/70 hover:text-amber-400 text-xs font-body transition-colors">
               Gerenciar →
-            </a>
+            </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {memberships.map((mem) => (

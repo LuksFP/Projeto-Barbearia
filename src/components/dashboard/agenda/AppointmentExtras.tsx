@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Star, Repeat, Check, MessageCircle } from 'lucide-react'
-import { buildReviewRequest, waUrl } from '@/lib/whatsapp'
+import { buildOwnReviewRequest, buildReviewRequest, waUrl } from '@/lib/whatsapp'
 import { recurrenceLabel } from '@/lib/recurrence'
 import { buildFixedReminder } from '@/lib/reminders'
 import type { Barbershop, BarbershopAppointment } from '@/types/tenant'
@@ -18,11 +18,13 @@ interface Props {
   onReviewRequested: (apt: BarbershopAppointment) => Promise<void>
   onRepeat: (apt: BarbershopAppointment) => void
   onStopSeries: (apt: BarbershopAppointment) => Promise<void>
+  /** Avaliação no site ligada: link pro cliente dar a nota. */
+  ownReviewUrl?: string
 }
 
 const btn = 'flex items-center gap-1.5 px-3 py-1 max-sm:h-11 rounded-md text-xs font-body font-semibold border transition-all'
 
-const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested, onRepeat, onStopSeries }: Props) => {
+const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested, onRepeat, onStopSeries, ownReviewUrl }: Props) => {
   const shopName = shop.name
   const [armedStop, setArmedStop] = useState(false)
   const open = apt.status === 'pending' || apt.status === 'confirmed'
@@ -36,6 +38,8 @@ const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested
     window.open(waFixed, '_blank', 'noopener') // antes de qualquer await (bloqueio de pop-up)
     void onReminded(apt)
   }
+
+  const waOwn = ownReviewUrl && done ? waUrl(apt.clientPhone, buildOwnReviewRequest(apt.clientName, shopName, ownReviewUrl)) : null
 
   const askReview = () => {
     if (!wa) return
@@ -86,6 +90,12 @@ const AppointmentExtras = ({ apt, shop, reviewUrl, onReminded, onReviewRequested
           Pedir avaliação no Google: cadastre o link
         </Link>
       ))}
+
+      {waOwn && (
+        <a href={waOwn} target="_blank" rel="noopener noreferrer" className={`${btn} border-white/10 text-white/70 hover:text-amber-300`}>
+          <Star className="w-3 h-3" />Pedir nota no site
+        </a>
+      )}
 
       {showRepeat && (
         <button type="button" onClick={() => onRepeat(apt)} className={`${btn} max-sm:hidden border-transparent text-white/55 hover:bg-white/[0.06] hover:text-white`}>

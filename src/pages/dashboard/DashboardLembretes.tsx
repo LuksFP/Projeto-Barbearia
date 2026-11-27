@@ -2,6 +2,9 @@ import { CalendarDays, CalendarClock, Clock, MessageCircle, Check, X, CheckCircl
 import { motion } from 'framer-motion'
 import { useTenant } from '@/contexts/TenantContext'
 import { useReminders } from '@/hooks/useReminders'
+import BirthdaysPanel from '@/components/dashboard/BirthdaysPanel'
+import { useShopFeatures } from '@/hooks/useShopFeatures'
+import { manageUrl } from '@/lib/extras'
 import { buildReminderMessage, buildFixedReminder, buildWhatsappUrl } from '@/lib/reminders'
 import { toast } from '@/hooks/use-toast'
 import { hasStarted } from '@/lib/scheduling'
@@ -19,9 +22,11 @@ interface RowProps {
   onRemind: () => void
   onConfirm: () => void
   onNoShow: () => void
+  /** Barbearia deixa o cliente mexer pelo link. */
+  linkEnabled: boolean
 }
 
-const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow }: RowProps) => {
+const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow, linkEnabled }: RowProps) => {
   const s = STATUS[apt.status as 'pending' | 'confirmed'] ?? STATUS.pending
 
   const sendWhatsapp = () => {
@@ -29,7 +34,9 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
       toast({ title: 'Cliente sem telefone', description: 'Não dá pra lembrar sem um número.', variant: 'destructive' })
       return
     }
-    window.open(buildWhatsappUrl(apt.clientPhone, (apt.recurrenceId ? buildFixedReminder : buildReminderMessage)(apt, barbershop)), '_blank')
+    window.open(buildWhatsappUrl(apt.clientPhone, apt.recurrenceId
+      ? buildFixedReminder(apt, barbershop)
+      : buildReminderMessage(apt, barbershop, linkEnabled && apt.manageToken ? manageUrl(window.location.origin, barbershop.slug, apt.manageToken) : undefined)), '_blank')
     onRemind()
   }
 
@@ -105,6 +112,7 @@ const Section = ({ title, icon: Icon, list, ...rest }: {
   onRemind: (id: string) => void
   onConfirm: (id: string) => void
   onNoShow: (id: string) => void
+  linkEnabled: boolean
 }) => {
   if (list.length === 0) return null
   return (
@@ -119,6 +127,7 @@ const Section = ({ title, icon: Icon, list, ...rest }: {
             key={apt.id}
             apt={apt}
             barbershop={rest.barbershop}
+            linkEnabled={rest.linkEnabled}
             reminded={rest.reminded.includes(apt.id)}
             onRemind={() => rest.onRemind(apt.id)}
             onConfirm={() => rest.onConfirm(apt.id)}
@@ -136,6 +145,7 @@ const DashboardLembretes = () => {
     ready, upcoming, todayList, tomorrowList, pendingCount, remindedTodayCount,
     reminded, setStatus, markReminded,
   } = useReminders()
+  const { features } = useShopFeatures(barbershop?.id)
 
   if (!barbershop) return null
 
@@ -165,6 +175,8 @@ const DashboardLembretes = () => {
         <p className="text-white/55 text-sm font-body mb-1">Reduza faltas confirmando por WhatsApp</p>
         <h1 className="font-heading text-3xl tracking-wide text-white">LEMBRETES</h1>
       </div>
+
+      <BirthdaysPanel />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -197,12 +209,12 @@ const DashboardLembretes = () => {
         <div className="space-y-6">
           <Section
             title="Hoje" icon={CalendarDays} list={todayList}
-            barbershop={barbershop} reminded={reminded}
+            barbershop={barbershop} reminded={reminded} linkEnabled={features.selfCancelHours !== null}
             onRemind={markReminded} onConfirm={confirm} onNoShow={noShow}
           />
           <Section
             title="Amanhã" icon={CalendarClock} list={tomorrowList}
-            barbershop={barbershop} reminded={reminded}
+            barbershop={barbershop} reminded={reminded} linkEnabled={features.selfCancelHours !== null}
             onRemind={markReminded} onConfirm={confirm} onNoShow={noShow}
           />
         </div>

@@ -21,6 +21,8 @@ import { toast } from '@/hooks/use-toast'
 import { barberHours, buildDaySlots, busyRanges, hasStarted, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 import { blockApplies, blockRanges } from '@/lib/blocks'
 import { useScheduleBlocks } from '@/hooks/useScheduleBlocks'
+import { useShopFeatures } from '@/hooks/useShopFeatures'
+import { manageUrl } from '@/lib/extras'
 import { CalendarOff } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
@@ -67,6 +69,8 @@ const EMPTY_APT: NewAptForm = {
 const DashboardAgenda = () => {
   const { barbershop, barbers, services, clients, addClient, refreshClients, isAdmin } = useTenant()
   const { blocks, reload: reloadBlocks } = useScheduleBlocks(barbershop?.id)
+  const { features } = useShopFeatures(barbershop?.id)
+  const linkFor = (token: string | undefined) => barbershop && token ? manageUrl(window.location.origin, barbershop.slug, token) : undefined
   const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(() => localISO(new Date()))
@@ -461,7 +465,7 @@ const DashboardAgenda = () => {
       }
     }
 
-    const finishBooked = () => {
+    const finishBooked = (token?: string) => {
       const price = form.price ? Number(form.price) : totalPrice
       const waHref = waUrl(form.clientPhone, buildBookingConfirmation({
         clientName: form.clientName,
@@ -472,6 +476,7 @@ const DashboardAgenda = () => {
         barberName: brb?.name,
         price,
         address: barbershop.address,
+        manageUrl: features.selfCancelHours !== null ? linkFor(token) : undefined,
       }))
       ensureClient()
       setForm(EMPTY_APT)
@@ -507,7 +512,7 @@ const DashboardAgenda = () => {
         }
         // Guarda na demo: o aviso de mudança recarrega o dia aberto na tela
         addDemoBooking(demoApt)
-        finishBooked()
+        finishBooked(demoApt.id)
         return
       }
       // Resolve serviço e barbeiro selecionados para gravar os campos que
@@ -532,7 +537,7 @@ const DashboardAgenda = () => {
       if (row.date === selectedDate) {
         setAppointments(prev => [...prev, mapAppointment(row)].sort((a, b) => a.time.localeCompare(b.time)))
       }
-      finishBooked()
+      finishBooked(row.manage_token)
     } catch (err: unknown) {
       // 23P01 = exclusion_violation da trava de sobreposição por barbeiro
       const msg = errorText(err)
@@ -842,7 +847,12 @@ const DashboardAgenda = () => {
                     onReviewRequested={handleReviewRequested}
                     onRepeat={setRepeatApt}
                     onStopSeries={handleStopSeries}
+                    ownReviewUrl={features.reviewsEnabled ? linkFor(apt.manageToken) : undefined}
                   />
+                )}
+
+                {apt.clientChange && (
+                  <p className="mt-2 pl-[74px] max-sm:pl-0 text-xs font-body font-semibold text-sky-300">{apt.clientChange}</p>
                 )}
 
                 {/* Cancelado: pode apagar (dono/admin) */}

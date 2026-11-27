@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { PLAN_NAME } from '@/types/saas'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
-import { Building2, MapPin, Instagram, Palette, ShieldCheck, Check, Clock, Loader2, ShoppingBag, Star } from 'lucide-react'
+import { Building2, MapPin, Instagram, Palette, ShieldCheck, Check, Clock, Loader2, ShoppingBag, Star, Gift } from 'lucide-react'
+import ExtrasSettings from '@/components/dashboard/settings/ExtrasSettings'
 import StoreSettings from '@/components/dashboard/products/StoreSettings'
 import GoogleReviewSettings from '@/components/dashboard/settings/GoogleReviewSettings'
 import { isDemoMode } from '@/lib/demo'
@@ -154,6 +156,12 @@ const DashboardConfiguracoes = () => {
       </div>
 
       {/* Horário de funcionamento */}
+      <div id="recursos">
+        <Section title="Link do cliente e fidelização" icon={Gift}>
+          <ExtrasSettings canEdit={canEdit} />
+        </Section>
+      </div>
+
       <Section title="Horário de Funcionamento" icon={Clock} accent>
         <p className="text-white/65 text-sm font-body mb-4">
           Define o intervalo de horários disponíveis para agendamento (na agenda e no site).
@@ -211,9 +219,9 @@ const DashboardConfiguracoes = () => {
         <div className="flex items-center gap-2 p-4 rounded-xl border border-[#1f1f1f] bg-white/[0.01]">
           <span className="text-white/55 text-xs font-body">
             Para editar nome, contato e identidade visual, acesse{' '}
-            <a href="/dashboard/personalizar" className="text-amber-400/70 hover:text-amber-400 transition-colors underline underline-offset-2">
+            <Link to="/dashboard/personalizar" className="text-amber-400/70 hover:text-amber-400 transition-colors underline underline-offset-2">
               Personalizar →
-            </a>
+            </Link>
           </span>
         </div>
       )}

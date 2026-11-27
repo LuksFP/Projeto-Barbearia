@@ -82,6 +82,7 @@ const DashboardAgenda = lazy(() => import("./pages/dashboard/DashboardAgenda"));
 const DashboardLembretes = lazy(() => import("./pages/dashboard/DashboardLembretes"));
 const DashboardFixos = lazy(() => import("./pages/dashboard/DashboardFixos"));
 const DashboardFolgas = lazy(() => import("./pages/dashboard/DashboardFolgas"));
+const ManageAppointmentPage = lazy(() => import("./pages/barbershop/ManageAppointmentPage"));
 const DashboardReativar = lazy(() => import("./pages/dashboard/DashboardReativar"));
 const DashboardEquipe = lazy(() => import("./pages/dashboard/DashboardEquipe"));
 const DashboardClientes = lazy(() => import("./pages/dashboard/DashboardClientes"));
@@ -162,6 +163,7 @@ const App = () => (
                           <Route path="loja" element={<StorePage />} />
                           <Route path="loja/:productId" element={<ProductPage />} />
                           <Route path="pagamento/:paymentId" element={<PaymentReturnPage />} />
+                          <Route path="horario/:token" element={<ManageAppointmentPage />} />
                         </Route>
 
                         {/* ── Dashboard da barbearia ── protegido pelo SaasGuard */}
