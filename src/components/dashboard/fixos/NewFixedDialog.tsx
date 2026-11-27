@@ -8,6 +8,8 @@ import { useTenant } from '@/contexts/TenantContext'
 import { RECURRENCE_OPTIONS, seriesDates } from '@/lib/recurrence'
 import { shortDate, weekdayOf } from '@/lib/fixedClients'
 import { barberHours, buildDaySlots, busyRanges } from '@/lib/scheduling'
+import { blockRanges } from '@/lib/blocks'
+import { useScheduleBlocks } from '@/hooks/useScheduleBlocks'
 import { formatPhoneBR } from '@/lib/phone'
 import type { BarbershopAppointment } from '@/types/tenant'
 
@@ -41,6 +43,7 @@ const chip = (on: boolean) =>
 const NewFixedDialog = ({ open, onClose, loadDay, onCreate }: Props) => {
   const { barbershop, barbers, services, clients } = useTenant()
   const activeBarbers = barbers.filter(b => b.active)
+  const { blocks, reload: reloadBlocks } = useScheduleBlocks(barbershop?.id)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [suggest, setSuggest] = useState(false)
@@ -55,6 +58,7 @@ const NewFixedDialog = ({ open, onClose, loadDay, onCreate }: Props) => {
 
   useEffect(() => {
     if (!open) return
+    void reloadBlocks()
     setName(''); setPhone(''); setServiceIds([]); setTime(''); setEvery(7); setCount(8)
     setFirst(iso(new Date()))
     setBarberId(activeBarbers.length === 1 ? activeBarbers[0].id : '')
@@ -77,10 +81,10 @@ const NewFixedDialog = ({ open, onClose, loadDay, onCreate }: Props) => {
     if (!barberId || !dayApts) return []
     const hours = barberHours(barbershop?.openTime, barbershop?.closeTime, barber)
     return buildDaySlots({
-      step: Math.min(30, duration), duration, busy: busyRanges(dayApts, barberId, first),
+      step: Math.min(30, duration), duration, busy: [...busyRanges(dayApts, barberId, first), ...blockRanges(blocks, barberId, first)],
       open: hours.open, close: hours.close, now: new Date(), date: first,
     }).filter(s => s.available)
-  }, [barberId, dayApts, duration, first, barbershop?.openTime, barbershop?.closeTime, barber])
+  }, [blocks, barberId, dayApts, duration, first, barbershop?.openTime, barbershop?.closeTime, barber])
 
   // Trocou barbeiro/serviço/dia e a hora escolhida não está mais livre: limpa
   useEffect(() => { if (time && dayApts && !slots.some(s => s.time === time)) setTime('') }, [slots]) // eslint-disable-line react-hooks/exhaustive-deps

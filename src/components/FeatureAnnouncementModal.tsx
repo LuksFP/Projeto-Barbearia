@@ -27,6 +27,20 @@ interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    key: 'folgas-bloqueios-2026-11',
+    badge: 'Novidade no ar',
+    title: 'Folgas, almoço e feriado: ninguém marca em cima',
+    description:
+      'Agora você fecha o dia que a barbearia não abre, o horário de almoço e as folgas. O cliente não consegue marcar nesses períodos.',
+    steps: [
+      'Abra “Folgas e bloqueios” e toque nos dias em que a barbearia não abre',
+      'Cadastre a pausa de almoço ou bloqueie datas, como feriado, férias ou consulta',
+      'Quem já estava marcado continua na Agenda. A tela mostra quem é, pra você avisar ou transferir',
+    ],
+    ctaLabel: 'Abrir Folgas e bloqueios',
+    ctaTo: '/dashboard/folgas',
+  },
+  {
     key: 'transferir-horario-2026-11',
     badge: 'Novidade no ar',
     title: 'Transfira o cliente de dia, horário ou barbeiro',

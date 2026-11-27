@@ -24,6 +24,7 @@ import {
   Lightbulb,
   ShoppingBag,
   Repeat,
+  CalendarOff,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
@@ -44,6 +45,7 @@ const navItems = [
   { to: '/dashboard', label: 'Visão Geral', icon: LayoutDashboard, end: true },
   { to: '/dashboard/agenda', label: 'Agenda', icon: CalendarDays },
   { to: '/dashboard/fixos', label: 'Clientes fixos', icon: Repeat },
+  { to: '/dashboard/folgas', label: 'Folgas e bloqueios', icon: CalendarOff },
   { to: '/dashboard/lembretes', label: 'Lembretes', icon: BellRing },
   { to: '/dashboard/equipe', label: 'Equipe', icon: UserCheck },
   { to: '/dashboard/clientes', label: 'Clientes', icon: Users },

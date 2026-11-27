@@ -19,6 +19,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
 import { barberHours, buildDaySlots, busyRanges, hasStarted, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
+import { blockApplies, blockRanges } from '@/lib/blocks'
+import { useScheduleBlocks } from '@/hooks/useScheduleBlocks'
+import { CalendarOff } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { buildBookingConfirmation, waUrl } from '@/lib/whatsapp'
 import { onlinePaymentRepository, payWay, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
@@ -62,6 +66,7 @@ const EMPTY_APT: NewAptForm = {
 
 const DashboardAgenda = () => {
   const { barbershop, barbers, services, clients, addClient, refreshClients, isAdmin } = useTenant()
+  const { blocks, reload: reloadBlocks } = useScheduleBlocks(barbershop?.id)
   const [suggestField, setSuggestField] = useState<'name' | 'phone' | null>(null)
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(() => localISO(new Date()))
@@ -137,6 +142,7 @@ const DashboardAgenda = () => {
       await appointmentRepository.transfer(apt.id, to)
     } catch (err: unknown) {
       const { code, message } = (err ?? {}) as { code?: string; message?: string }
+      if (/bloqueado na agenda/i.test(message ?? '')) throw new Error('Esse horário está bloqueado em Folgas e bloqueios.')
       if (code === '23P01') throw new Error('Esse horário acabou de ser ocupado. Escolha outro.')
       throw new Error(code === '23514' && message ? message : 'Não deu pra transferir. Tente de novo.')
     }
@@ -257,7 +263,7 @@ const DashboardAgenda = () => {
   // ocupados. É o que aparece ao abrir a lista de horário.
   const daySlots = useMemo(() => {
     if (!form.date || !form.barberId || !formApts) return []
-    const busy = busyRanges(formApts, form.barberId, form.date)
+    const busy = [...busyRanges(formApts, form.barberId, form.date), ...blockRanges(blocks, form.barberId, form.date)]
     const hours = barberHours(barbershop?.openTime, barbershop?.closeTime, formBarber)
     return buildDaySlots({
       step: Math.min(30, slotDuration),
@@ -268,18 +274,19 @@ const DashboardAgenda = () => {
       now: new Date(),
       date: form.date,
     })
-  }, [form.date, form.barberId, slotDuration, formApts, barbershop?.openTime, barbershop?.closeTime, formBarber])
+  }, [blocks, form.date, form.barberId, slotDuration, formApts, barbershop?.openTime, barbershop?.closeTime, formBarber])
   const freeSlotCount = daySlots.filter(s => s.available).length
 
   // Término do horário escolhido (usado no resumo e na trava do botão)
   const bookingCheck = useMemo(() => {
     if (!form.date || !form.time || !formApts) return null
-    const busy = form.barberId ? busyRanges(formApts, form.barberId, form.date) : []
+    const busy = [...(form.barberId ? busyRanges(formApts, form.barberId, form.date) : []), ...blockRanges(blocks, form.barberId, form.date)]
     const end = toMin(form.time) + slotDuration
     return { end: toHHMM(end), available: isTimeAvailable(form.time, slotDuration, busy) }
-  }, [form.date, form.time, form.barberId, slotDuration, formApts])
+  }, [blocks, form.date, form.time, form.barberId, slotDuration, formApts])
 
   const openNewModal = () => {
+    void reloadBlocks()
     setForm({ ...EMPTY_APT, date: selectedDate })
     setServicesOpen(false)
     setClientPickerOpen(false)
@@ -389,8 +396,9 @@ const DashboardAgenda = () => {
       setAppointments(prev =>
         prev.map(a => a.id === apt.id ? mapAppointment(updated) : a)
       )
-    } catch {
-      toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
+    } catch (err: unknown) {
+      const blocked = /bloqueado na agenda/i.test(errorText(err))
+      toast({ title: blocked ? 'Esse horário está bloqueado' : 'Erro ao atualizar status', description: blocked ? 'Remova o bloqueio em Folgas e bloqueios pra reabrir.' : undefined, variant: 'destructive' })
     } finally {
       setUpdatingId(null)
     }
@@ -437,7 +445,7 @@ const DashboardAgenda = () => {
     // Guarda: não deixa marcar em cima de um horário já ocupado do barbeiro
     if (form.barberId) {
       if (!formApts) return
-      const busy = busyRanges(formApts, form.barberId, form.date)
+      const busy = [...busyRanges(formApts, form.barberId, form.date), ...blockRanges(blocks, form.barberId, form.date)]
       if (!isTimeAvailable(form.time, duration, busy)) {
         toast({ title: 'Horário ocupado', description: `${brb?.name ?? 'O barbeiro'} já tem atendimento nesse horário.`, variant: 'destructive' })
         return
@@ -528,7 +536,13 @@ const DashboardAgenda = () => {
     } catch (err: unknown) {
       // 23P01 = exclusion_violation da trava de sobreposição por barbeiro
       const msg = errorText(err)
-      const overlap = msg.includes('23P01') || msg.includes('appointments_no_overlap_per_barber')
+      const blocked = /bloqueado na agenda/i.test(msg)
+      const overlap = !blocked && (msg.includes('23P01') || msg.includes('appointments_no_overlap_per_barber'))
+      if (blocked) {
+        // Bloqueio criado em outro aparelho: recarrega pra o horário aparecer fechado
+        setForm(f => ({ ...f, time: '' }))
+        void reloadBlocks()
+      }
       if (overlap) {
         // Alguém marcou antes (site/outro aparelho): rebusca pra o horário aparecer em vermelho
         setForm(f => ({ ...f, time: '' }))
@@ -541,8 +555,8 @@ const DashboardAgenda = () => {
         }
       }
       toast({
-        title: overlap ? 'Horário já ocupado' : 'Erro ao criar agendamento',
-        description: overlap ? `${brb?.name ?? 'Esse barbeiro'} já tem um atendimento que bate com esse horário.` : undefined,
+        title: blocked ? 'Horário bloqueado' : overlap ? 'Horário já ocupado' : 'Erro ao criar agendamento',
+        description: blocked ? 'Esse período está fechado em Folgas e bloqueios.' : overlap ? `${brb?.name ?? 'Esse barbeiro'} já tem um atendimento que bate com esse horário.` : undefined,
         variant: 'destructive',
       })
     } finally {
@@ -666,6 +680,25 @@ const DashboardAgenda = () => {
               <p><span className="text-emerald-300 font-semibold tabular-nums">{brl(sum(receivedLocal))}</span> <span className="text-white/55">recebido no local · {receivedLocal.length}</span></p>
             )}
           </div>
+        )
+      })()}
+
+      {/* Folgas e pausas que valem no dia aberto */}
+      {selectedDate && (() => {
+        const dayBlocks = blocks.filter(b => blockApplies(b, b.barberId, selectedDate))
+        if (dayBlocks.length === 0) return null
+        return (
+          <Link to="/dashboard/folgas" className="flex items-start gap-2.5 rounded-lg border-l-2 border-red-400/50 bg-red-500/[0.06] px-3 py-2.5 hover:bg-red-500/10">
+            <CalendarOff className="w-4 h-4 shrink-0 mt-0.5 text-red-300/80" />
+            <span className="text-xs font-body text-white/75 space-y-0.5">
+              {dayBlocks.map(b => (
+                <span key={b.id} className="block">
+                  <b className="text-white/90">{b.barberId ? barbers.find(x => x.id === b.barberId)?.name ?? 'Barbeiro' : 'Barbearia'}</b>
+                  {' '}bloqueado {b.startTime ? `das ${b.startTime.slice(0, 5)} às ${b.endTime?.slice(0, 5)}` : 'o dia inteiro'}{b.reason ? ` · ${b.reason}` : ''}
+                </span>
+              ))}
+            </span>
+          </Link>
         )
       })()}
 
@@ -1146,13 +1179,15 @@ const DashboardAgenda = () => {
                                 <div
                                   key={sl.time}
                                   aria-disabled="true"
-                                  title={sl.block === 'nao-cabe'
+                                  title={sl.block === 'bloqueado'
+                                    ? `${sl.time} cai numa folga ou pausa.`
+                                    : sl.block === 'nao-cabe'
                                     ? `Às ${sl.time} não dá: ${slotDuration} min iriam até ${sl.end} e invadem o próximo cliente.`
                                     : `${sl.time} já tem cliente marcado com ${formBarber?.name ?? 'esse barbeiro'}.`}
                                   className="py-1.5 rounded-lg border border-red-500/20 bg-red-500/[0.06] text-center cursor-not-allowed select-none"
                                 >
                                   <span className="block text-sm font-heading tracking-wide tabular-nums text-red-300/50 line-through leading-tight">{sl.time}</span>
-                                  <span className="block text-[10px] font-body text-red-300/70 leading-tight">{sl.block === 'nao-cabe' ? 'Não cabe' : 'Ocupado'}</span>
+                                  <span className="block text-[10px] font-body text-red-300/70 leading-tight">{sl.block === 'bloqueado' ? 'Bloqueado' : sl.block === 'nao-cabe' ? 'Não cabe' : 'Ocupado'}</span>
                                 </div>
                               )
                             }

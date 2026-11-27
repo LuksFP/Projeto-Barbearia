@@ -809,6 +809,48 @@ export type Database = {
         Update: { status?: string; notified_at?: string | null }
         Relationships: []
       }
+      schedule_blocks: {
+        Row: {
+          barbershop_id: string
+          barber_id: string | null
+          created_at: string
+          created_by: string | null
+          date_from: string | null
+          date_to: string | null
+          end_time: string | null
+          id: string
+          reason: string
+          start_time: string | null
+          weekdays: number[] | null
+        }
+        Insert: {
+          barbershop_id: string
+          barber_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_from?: string | null
+          date_to?: string | null
+          end_time?: string | null
+          id?: string
+          reason?: string
+          start_time?: string | null
+          weekdays?: number[] | null
+        }
+        Update: {
+          barbershop_id?: string
+          barber_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_from?: string | null
+          date_to?: string | null
+          end_time?: string | null
+          id?: string
+          reason?: string
+          start_time?: string | null
+          weekdays?: number[] | null
+        }
+        Relationships: []
+      }
       fixed_slots: {
         Row: {
           id: string
@@ -1360,6 +1402,13 @@ export type Database = {
           month: string
           profit: number
           revenue: number
+        }[]
+      }
+      public_schedule_blocks: {
+        Args: { p_barber_id: string | null; p_barbershop_id: string; p_date: string }
+        Returns: {
+          slot_duration: number
+          slot_time: string
         }[]
       }
       public_barber_busy_slots: {

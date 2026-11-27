@@ -69,7 +69,7 @@ async function insertSeries(t: SeriesTemplate, dates: string[], recurrenceId: st
     }).select().single()
     if (error) {
       const msg = `${error.code ?? ''} ${error.message ?? ''}`
-      skipped.push({ date, reason: /23P01|no_overlap/.test(msg) ? 'horário ocupado' : /expediente|fechamento/i.test(msg) ? 'fora do expediente' : 'não deu pra marcar' })
+      skipped.push({ date, reason: /bloqueado na agenda/i.test(msg) ? 'agenda bloqueada' : /23P01|no_overlap/.test(msg) ? 'horário ocupado' : /expediente|fechamento/i.test(msg) ? 'fora do expediente' : 'não deu pra marcar' })
     } else if (data) created.push(data)
   }
   // Reserva: o site trata esse horário como ocupado em toda data do ritmo, até "Parar"
@@ -249,6 +249,15 @@ export const appointmentRepository = {
     const { data, error } = await supabase.from('fixed_slots').select('id').eq('barbershop_id', barbershopId).eq('active', true)
     if (error) throw error
     return new Set((data ?? []).map(r => r.id))
+  },
+
+  /** Tudo que está em aberto de uma data em diante (tela Folgas e bloqueios). */
+  async listOpenFrom(barbershopId: string, fromDate: string): Promise<AppointmentRow[]> {
+    const { data, error } = await supabase.from('appointments').select('*')
+      .eq('barbershop_id', barbershopId).in('status', ['pending', 'confirmed'])
+      .gte('date', fromDate).order('date').order('time').limit(1000)
+    if (error) throw error
+    return data ?? []
   },
 
   /** Horários de clientes fixos a partir de `fromDate` (tela Clientes fixos). */

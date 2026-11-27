@@ -81,6 +81,7 @@ const DashboardOverview = lazy(() => import("./pages/dashboard/DashboardOverview
 const DashboardAgenda = lazy(() => import("./pages/dashboard/DashboardAgenda"));
 const DashboardLembretes = lazy(() => import("./pages/dashboard/DashboardLembretes"));
 const DashboardFixos = lazy(() => import("./pages/dashboard/DashboardFixos"));
+const DashboardFolgas = lazy(() => import("./pages/dashboard/DashboardFolgas"));
 const DashboardReativar = lazy(() => import("./pages/dashboard/DashboardReativar"));
 const DashboardEquipe = lazy(() => import("./pages/dashboard/DashboardEquipe"));
 const DashboardClientes = lazy(() => import("./pages/dashboard/DashboardClientes"));
@@ -170,6 +171,7 @@ const App = () => (
                           <Route index element={<DashboardOverview />} />
                           <Route path="agenda" element={<DashboardAgenda />} />
                           <Route path="fixos" element={<DashboardFixos />} />
+                          <Route path="folgas" element={<DashboardFolgas />} />
                           <Route path="lembretes" element={<DashboardLembretes />} />
                           <Route path="equipe" element={<DashboardEquipe />} />
                           <Route path="clientes" element={<DashboardClientes />} />

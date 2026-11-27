@@ -7,6 +7,8 @@ import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { mapAppointment } from '@/contexts/TenantContext'
 import { getDemoAppointments, getDemoPlan, isDemoMode } from '@/lib/demo'
 import { buildTransferNotice, transferSlots } from '@/lib/transfer'
+import { blockRanges } from '@/lib/blocks'
+import { useScheduleBlocks } from '@/hooks/useScheduleBlocks'
 import { waUrl } from '@/lib/whatsapp'
 import { localISO } from '@/lib/month'
 import type { Barbershop, BarbershopAppointment, BarbershopBarber } from '@/types/tenant'
@@ -55,10 +57,11 @@ const TransferForm = ({ apt, shop, barbers, onClose, onConfirm }: Props & { apt:
     return () => { alive = false }
   }, [date, shop.id, reload])
 
+  const { blocks } = useScheduleBlocks(shop.id)
   const barber = barbers.find(b => b.id === barberId)
   const choices = barbers.filter(b => b.active || b.id === apt.barberId)
   const slots = dayApts && date >= today
-    ? transferSlots({ apt, appointments: dayApts, date, barberId, barber, shop: { open: shop.openTime, close: shop.closeTime } })
+    ? transferSlots({ apt, appointments: dayApts, date, barberId, barber, shop: { open: shop.openTime, close: shop.closeTime }, blocked: blockRanges(blocks, barberId, date) })
     : []
   const picked = slots.find(s => s.time === time && s.available)
   const unchanged = date === apt.date && time === apt.time.slice(0, 5) && barberId === apt.barberId

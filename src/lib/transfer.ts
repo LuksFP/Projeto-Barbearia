@@ -1,5 +1,5 @@
 // Transferir um horário marcado: outro dia, outra hora ou outro barbeiro.
-import { barberHours, buildDaySlots, busyRanges, isTimeAvailable, toHHMM, toMin, DEFAULT_CLOSE, DEFAULT_OPEN, type Slot } from './scheduling'
+import { barberHours, buildDaySlots, busyRanges, isTimeAvailable, toHHMM, toMin, DEFAULT_CLOSE, DEFAULT_OPEN, type BusyRange, type Slot } from './scheduling'
 import type { BarbershopAppointment } from '@/types/tenant'
 
 interface Options {
@@ -10,12 +10,14 @@ interface Options {
   barberId: string
   barber?: { workStart?: string; workEnd?: string } | null
   shop: { open?: string; close?: string }
+  /** Folgas e pausas do barbeiro nesse dia (blockRanges). */
+  blocked?: BusyRange[]
   now?: Date
 }
 
-export function transferSlots({ apt, appointments, date, barberId, barber, shop, now = new Date() }: Options): Slot[] {
+export function transferSlots({ apt, appointments, date, barberId, barber, shop, blocked = [], now = new Date() }: Options): Slot[] {
   const duration = apt.durationMin || 30
-  const busy = busyRanges(appointments, barberId, date, apt.id)
+  const busy = [...busyRanges(appointments, barberId, date, apt.id), ...blocked]
   const hours = barberHours(shop.open, shop.close, barber)
   const slots = buildDaySlots({ step: Math.min(30, duration), duration, busy, open: hours.open, close: hours.close, now, date })
 

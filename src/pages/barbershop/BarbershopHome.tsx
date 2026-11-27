@@ -12,6 +12,7 @@ import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 import { supabasePublic } from '@/lib/supabase-public'
 import { waLink } from '@/lib/whatsapp'
 import { barberHours, buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
+import { scheduleBlockRepository } from '@/repositories/scheduleBlockRepository'
 import BookingBump from '@/components/barbershop/BookingBump'
 import PayOnline from '@/components/barbershop/store/PayOnline'
 import WaitlistJoin from '@/components/barbershop/WaitlistJoin'
@@ -169,6 +170,21 @@ const BookingSection = ({
     return () => { active = false }
   }, [step, selectedDate, pickedBarber?.id, canPickTime, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Folgas e pausas do dia: separado dos ocupados pra avisar "não atende" em
+  // vez de "lotado". Se a busca falhar, os ocupados já trazem os bloqueios.
+  const [closedRanges, setClosedRanges] = useState<{ key: string; ranges: BusyRange[] }>({ key: '', ranges: [] })
+  const closedKey = `${selectedDate}|${pickedBarber?.id ?? ''}`
+  useEffect(() => {
+    if (step !== 'datetime' || !selectedDate || !canPickTime) return
+    let active = true
+    scheduleBlockRepository.publicDay(barbershop.id, pickedBarber?.id ?? null, selectedDate)
+      .then(ranges => { if (active) setClosedRanges({ key: closedKey, ranges }) })
+      .catch(() => { if (active) setClosedRanges({ key: closedKey, ranges: [] }) })
+    return () => { active = false }
+  }, [step, selectedDate, pickedBarber?.id, canPickTime, barbershop.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  const blocked = useMemo(() => closedRanges.key === closedKey ? closedRanges.ranges : [], [closedRanges, closedKey])
+  const dayClosed = blocked.some(b => b.start === 0 && b.end >= 1440)
+
   // Grade do dia: dentro do expediente, no passo do tempo de corte, sem os que
   // já passaram. Os ocupados ficam na grade (riscados) pra o cliente ver que
   // aquele horário não está disponível, em vez de sumirem.
@@ -178,13 +194,13 @@ const BookingSection = ({
     return buildDaySlots({
       step: Math.min(30, slotDuration),
       duration: slotDuration,
-      busy,
+      busy: [...busy, ...blocked],
       now: new Date(),
       date: selectedDate,
       open: hours.open,
       close: hours.close,
     })
-  }, [selectedDate, canPickTime, slotDuration, busy, barbershop.openTime, barbershop.closeTime, pickedBarber])
+  }, [selectedDate, canPickTime, slotDuration, busy, blocked, barbershop.openTime, barbershop.closeTime, pickedBarber])
   const slots = useMemo(() => allSlots.filter(s => s.available), [allSlots])
   // Aviso na tela de horários quando o escolhido foi pego por outra pessoa
   const [slotNotice, setSlotNotice] = useState('')
@@ -299,15 +315,18 @@ const BookingSection = ({
       const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message: unknown }).message) : ''
       const code = (e && typeof e === 'object' && 'code' in e) ? String((e as { code: unknown }).code) : ''
       const overlap = code === '23P01' || msg.includes('appointments_no_overlap_per_barber')
+      const closedNow = /bloqueado na agenda/i.test(msg)
       if (overlap) {
         // Volta pra grade: a busca dos ocupados roda de novo e o horário aparece riscado
-        setSlotNotice(`O horário das ${selectedTime} acabou de ser reservado por outro cliente. Escolha outro.`)
+        setSlotNotice(closedNow
+          ? `O horário das ${selectedTime} não está mais disponível. Escolha outro.`
+          : `O horário das ${selectedTime} acabou de ser reservado por outro cliente. Escolha outro.`)
         setSelectedTime('')
         setStep('datetime')
       }
       setBookError(
         overlap
-          ? 'Esse horário acabou de ser reservado. Escolha outro horário.'
+          ? closedNow ? 'Esse horário não está mais disponível. Escolha outro horário.' : 'Esse horário acabou de ser reservado. Escolha outro horário.'
           : /Muitos agendamentos|já passou|fora do expediente|Preço inválido|inválido para esta barbearia/.test(msg)
             ? msg
             : 'Não foi possível criar o agendamento. Tente novamente.',
@@ -557,17 +576,24 @@ const BookingSection = ({
                   {slotNotice}
                 </p>
               )}
-              {allSlots.length > 0 && !loadingSlots ? (
+              {dayClosed && !loadingSlots ? (
+                <p role="status" className="rounded-lg border border-[#2a2a2a] bg-[#161616] px-4 py-5 text-center text-white/70 text-sm font-body">
+                  {pickedBarber ? `${pickedBarber.name} não atende nesse dia.` : 'A barbearia não atende nesse dia.'}
+                  <span className="block text-white/45 text-xs mt-1">Escolha outra data{pickedBarber && barbers.length > 1 ? ' ou outro barbeiro' : ''}.</span>
+                </p>
+              ) : allSlots.length > 0 && !loadingSlots ? (
                 <>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {allSlots.map((s) => {
                       if (!s.available) {
-                        const why = s.block === 'nao-cabe' ? 'Não cabe' : 'Ocupado'
+                        const why = s.block === 'bloqueado' ? 'Fechado' : s.block === 'nao-cabe' ? 'Não cabe' : 'Ocupado'
                         return (
                           <div
                             key={s.time}
                             aria-disabled="true"
-                            title={s.block === 'nao-cabe'
+                            title={s.block === 'bloqueado'
+                              ? `Sem atendimento nesse período.`
+                              : s.block === 'nao-cabe'
                               ? `Às ${s.time} não dá tempo: o atendimento iria até ${s.end} e já tem cliente marcado antes disso.`
                               : `${s.time} já está reservado.`}
                             className="py-2 rounded-lg font-body border text-center cursor-not-allowed select-none"
@@ -605,7 +631,7 @@ const BookingSection = ({
                   {loadingSlots ? 'Carregando horários…' : 'Nenhum horário nesse dia. Tente outra data.'}
                 </p>
               )}
-              {!loadingSlots && (
+              {!loadingSlots && !dayClosed && (
                 <WaitlistJoin
                   key={selectedDate}
                   barbershopId={barbershop.id}

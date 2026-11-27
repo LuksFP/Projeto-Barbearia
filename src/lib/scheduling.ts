@@ -8,7 +8,7 @@ export const DEFAULT_CLOSE = '20:00'
 
 /** Por que o horário não pode ser marcado: já tem gente nele, ou está livre
  *  mas o atendimento escolhido invadiria o próximo. */
-export type SlotBlock = 'ocupado' | 'nao-cabe'
+export type SlotBlock = 'ocupado' | 'nao-cabe' | 'bloqueado'
 
 export interface Slot {
   time: string        // início 'HH:MM'
@@ -20,6 +20,7 @@ export interface Slot {
 export interface BusyRange {
   start: number       // minutos desde 00:00
   end: number
+  blocked?: boolean   // folga/pausa (ver lib/blocks.ts), não é cliente
 }
 
 export function toMin(hhmm: string): number {
@@ -124,7 +125,8 @@ export function buildDaySlots(opts: BuildSlotsOptions): Slot[] {
       slots.push({ time: toHHMM(t), end: toHHMM(end), available })
     } else {
       const startTaken = opts.busy.some(b => t >= b.start && t < b.end)
-      slots.push({ time: toHHMM(t), end: toHHMM(end), available, block: startTaken ? 'ocupado' : 'nao-cabe' })
+      const closed = opts.busy.some(b => b.blocked && overlaps(t, end, b.start, b.end))
+      slots.push({ time: toHHMM(t), end: toHHMM(end), available, block: closed ? 'bloqueado' : startTaken ? 'ocupado' : 'nao-cabe' })
     }
   }
   return slots

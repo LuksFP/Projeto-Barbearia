@@ -14,6 +14,8 @@ import { recurrenceLabel, seriesDates } from '@/lib/recurrence'
 import { busyRanges, isTimeAvailable } from '@/lib/scheduling'
 import { waUrl } from '@/lib/whatsapp'
 import { toast } from '@/hooks/use-toast'
+import { blockRanges } from '@/lib/blocks'
+import { useScheduleBlocks } from '@/hooks/useScheduleBlocks'
 import NewFixedDialog, { type NewFixedInput } from '@/components/dashboard/fixos/NewFixedDialog'
 import type { BarbershopAppointment } from '@/types/tenant'
 
@@ -28,6 +30,7 @@ const skippedText = (r: SeriesResult) =>
 
 const DashboardFixos = () => {
   const { barbershop, barbers, refreshClients } = useTenant()
+  const { blocks } = useScheduleBlocks(barbershop?.id)
   const [apts, setApts] = useState<BarbershopAppointment[] | null>(null)
   const [reservedIds, setReservedIds] = useState<Set<string> | undefined>(undefined)
   const [filterBarber, setFilterBarber] = useState('all')
@@ -103,6 +106,10 @@ const DashboardFixos = () => {
     const all = plan ? getDemoAppointments(plan) : []
     const res: SeriesResult = { created: [], skipped: [] }
     dates.forEach((date, i) => {
+      if (!isTimeAvailable(base.time, base.durationMin, blockRanges(blocks, base.barberId, date))) {
+        res.skipped.push({ date, reason: 'agenda bloqueada' })
+        return
+      }
       if (!isTimeAvailable(base.time, base.durationMin, busyRanges(all, base.barberId, date))) {
         res.skipped.push({ date, reason: 'horário ocupado' })
         return
