@@ -189,8 +189,20 @@ export function useClubBilling() {
     }
   }, [billings])
 
+  // Assinantes ativos por plano: é daqui que saem os números do Clube e da
+  // Visão Geral (o banco mantém memberships.subscriber_count igual, pro site).
+  const subscriberCounts = useMemo(() => {
+    const out: Record<string, number> = {}
+    for (const s of subscribers) {
+      if (s.active === false || !s.membershipId) continue
+      out[s.membershipId] = (out[s.membershipId] ?? 0) + 1
+    }
+    return out
+  }, [subscribers])
+
   return {
     ready,
+    subscriberCounts,
     pixKey,
     subscribers,
     billings,
@@ -203,3 +215,5 @@ export function useClubBilling() {
     setPixKey,
   }
 }
+
+export type ClubBilling = ReturnType<typeof useClubBilling>

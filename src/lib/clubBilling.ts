@@ -2,7 +2,7 @@
 // cobrança PIX (WhatsApp) e boleto visual (impressão). SEM gateway de pagamento:
 // tudo é controle manual + documentos gerados localmente. Persistência em localStorage.
 import type { DemoPlan } from '@/lib/demo'
-import { waNumber } from '@/lib/whatsapp'
+import { waLink } from '@/lib/whatsapp'
 import type { Barbershop, BarbershopMembership } from '@/types/tenant'
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
@@ -186,10 +186,13 @@ export function buildPixMessage(b: SubscriberBilling, barbershop: Barbershop, pi
   return linhas.join('\n')
 }
 
+/** Quanto o plano rende por mês (trimestral e anual divididos). */
+export function membershipMonthly(m: Pick<BarbershopMembership, 'price' | 'period'>): number {
+  return m.period === 'quarterly' ? m.price / 3 : m.period === 'annual' ? m.price / 12 : m.price
+}
+
 export function buildWhatsappUrl(phone: string, message: string): string {
-  // Telefone fora do padrão brasileiro segue como foi digitado
-  const digits = waNumber(phone) ?? phone.replace(/\D/g, '')
-  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
+  return waLink(phone, message)
 }
 
 // ─── Boleto visual (impressão) ─────────────────────────────────────────────────

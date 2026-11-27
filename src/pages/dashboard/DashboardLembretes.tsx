@@ -4,6 +4,7 @@ import { useTenant } from '@/contexts/TenantContext'
 import { useReminders } from '@/hooks/useReminders'
 import { buildReminderMessage, buildFixedReminder, buildWhatsappUrl } from '@/lib/reminders'
 import { toast } from '@/hooks/use-toast'
+import { hasStarted } from '@/lib/scheduling'
 import type { Barbershop, BarbershopAppointment } from '@/types/tenant'
 
 const STATUS = {
@@ -83,7 +84,8 @@ const ReminderRow = ({ apt, barbershop, reminded, onRemind, onConfirm, onNoShow 
         )}
         <button
           onClick={onNoShow}
-          title="Marcar falta / cancelar"
+          title={hasStarted(apt.date, apt.time) ? 'Marcar falta' : 'Cancelar horário'}
+          aria-label={hasStarted(apt.date, apt.time) ? 'Marcar falta' : 'Cancelar horário'}
           className="p-1.5 rounded-lg text-white/55 hover:text-red-400 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
@@ -144,8 +146,17 @@ const DashboardLembretes = () => {
     { label: 'Lembrados hoje', value: `${remindedTodayCount}/${todayList.length}`, icon: BellRing },
   ]
 
-  const confirm = (id: string) => { setStatus(id, 'confirmed'); toast({ title: 'Horário confirmado' }) }
-  const noShow = (id: string) => { setStatus(id, 'cancelled'); toast({ title: 'Agendamento cancelado' }) }
+  const apply = async (id: string, status: BarbershopAppointment['status'], ok: string) => {
+    if (await setStatus(id, status)) toast({ title: ok })
+    else toast({ title: 'Não deu pra salvar', description: 'Abra o horário na Agenda e tente de novo.', variant: 'destructive' })
+  }
+  const confirm = (id: string) => void apply(id, 'confirmed', 'Horário confirmado')
+  // Igual à Agenda: depois que o horário começou é falta, antes é cancelamento
+  const noShow = (id: string) => {
+    const apt = upcoming.find(a => a.id === id)
+    if (apt && hasStarted(apt.date, apt.time)) void apply(id, 'no_show', 'Falta marcada')
+    else void apply(id, 'cancelled', 'Agendamento cancelado')
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">

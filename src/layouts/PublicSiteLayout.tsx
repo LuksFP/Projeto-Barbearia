@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { Outlet, Link, useParams, useLocation } from 'react-router-dom'
 import { Menu, X, Scissors, Phone, ShoppingBag } from 'lucide-react'
+import { waNumber } from '@/lib/whatsapp'
 import { BagProvider, useBag } from '@/components/barbershop/store/bag'
 import BagDrawer from '@/components/barbershop/store/BagDrawer'
 import { supabasePublic } from '@/lib/supabase-public'
@@ -332,8 +333,8 @@ const PublicSiteLayout = () => {
   ]
 
   const primary = barbershop?.primaryColor ?? '#C9A84C'
-  // [A2] Só dígitos + DDI — impede injeção na URL do wa.me
-  const safeWhatsapp = barbershop?.whatsapp?.replace(/\D/g, '') ?? ''
+  // [A2] Só dígitos, com o 55 na frente se veio sem DDI — impede injeção na URL do wa.me
+  const safeWhatsapp = barbershop?.whatsapp ? (waNumber(barbershop.whatsapp) ?? barbershop.whatsapp.replace(/\D/g, '')) : ''
 
   if (isLoading) {
     return (

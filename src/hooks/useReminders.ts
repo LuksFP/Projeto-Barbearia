@@ -64,16 +64,19 @@ export function useReminders() {
     [todayList, reminded],
   )
 
-  const setStatus = useCallback(async (id: string, status: BarbershopAppointment['status']) => {
+  /** Devolve se salvou (o banco recusa, por ex., cancelar horário já pago online). */
+  const setStatus = useCallback(async (id: string, status: BarbershopAppointment['status']): Promise<boolean> => {
     if (demo) {
       setAppts(prev => prev.map(a => a.id === id ? { ...a, status } : a))
-      return
+      return true
     }
     try {
       const row = await appointmentRepository.updateStatus(id, status)
       setAppts(prev => prev.map(a => a.id === id ? mapAppointment(row) : a))
+      return true
     } catch (err) {
       console.error('Falha ao atualizar status:', err)
+      return false
     }
   }, [demo])
 

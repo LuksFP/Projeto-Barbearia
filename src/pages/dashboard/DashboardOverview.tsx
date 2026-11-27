@@ -14,7 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { isDemoMode, getDemoPlan, getDemoFinancials } from '@/lib/demo'
 import { appointmentRepository } from '@/repositories/appointmentRepository'
 import { useClubBilling } from '@/hooks/useClubBilling'
-import { formatBRL, formatDueDate } from '@/lib/clubBilling'
+import { formatBRL, formatDueDate, membershipMonthly } from '@/lib/clubBilling'
+import { localISO, shiftMonth } from '@/lib/month'
 import { AlertTriangle, CalendarClock, Wallet, Repeat, MessageCircle } from 'lucide-react'
 import { upsertDemoBooking } from '@/lib/demoBookings'
 import { productRepository, type StoreMonth } from '@/repositories/productRepository'
@@ -239,7 +240,7 @@ const DashboardOverview = () => {
     appointmentRepository.setReminded(apt.id, true).catch(() => { /* o WhatsApp já abriu */ })
   }
   const { account } = useSaasAccount()
-  const { billings, summary } = useClubBilling()
+  const { billings, summary, ready: clubReady, subscriberCounts } = useClubBilling()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [showSuccess, setShowSuccess] = useState(searchParams.get('checkout') === 'success')
@@ -288,12 +289,23 @@ const DashboardOverview = () => {
       .catch(() => setStoreMonths([]))
   }, [barbershop?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const totalSubs = memberships.reduce((acc, m) => acc + m.subscriberCount, 0)
-  const mrr       = memberships.reduce((acc, m) => acc + m.price * m.subscriberCount, 0)
+  // Assinantes contados da lista de Cobranças do Clube
+  const subsOf    = (m: (typeof memberships)[number]) => clubReady ? (subscriberCounts[m.id] ?? 0) : m.subscriberCount
+  const totalSubs = memberships.reduce((acc, m) => acc + subsOf(m), 0)
+  const mrr       = memberships.reduce((acc, m) => acc + membershipMonthly(m) * subsOf(m), 0)
 
-  const currentMonth  = financialMonths[financialMonths.length - 1]
-  const previousMonth = financialMonths[financialMonths.length - 2]
-  const revDelta      = currentMonth && previousMonth ? pct(currentMonth.total, previousMonth.total) : null
+  // Faturamento = serviços + loja, igual à placa e ao Financeiro. A lista só tem
+  // meses com movimento: procura pelo mês, senão no dia 1º apareceria o mês passado.
+  const thisMonth = localISO(new Date()).slice(0, 7)
+  const lastMonth = shiftMonth(thisMonth, -1)
+  const revenueOf = (ym: string) =>
+    (financialMonths.find(m => m.month === ym)?.total ?? 0) + (storeMonths.find(s => s.month === ym)?.revenue ?? 0)
+  const revNow    = revenueOf(thisMonth)
+  const revPrev   = revenueOf(lastMonth)
+  const revDelta  = revPrev > 0 ? pct(revNow, revPrev) : null
+  const revenueMonths = [...new Set([...financialMonths.map(m => m.month), ...storeMonths.map(s => s.month)])]
+    .sort()
+    .map(month => ({ month, total: revenueOf(month) }))
 
   // Legendas dos cartões: só contas feitas com o que já está carregado (nada fixo no código)
   const toConfirm = todayApts.filter(a => a.status === 'pending').length
@@ -308,14 +320,14 @@ const DashboardOverview = () => {
   const stats = [
     { label: 'Agendamentos hoje', value: todayApts.length, icon: CalendarDays, delta: aptsNote },
     { label: 'Clientes', value: clients.length, icon: Users, delta: recentClients === 0 ? 'nenhum veio nos últimos 30 dias' : `${plural(recentClients, 'veio', 'vieram')} nos últimos 30 dias` },
-    { label: 'Assinantes VIP', value: totalSubs, icon: Crown, delta: activePlans > 0 ? `em ${plural(activePlans, 'plano', 'planos')}` : 'nenhum plano criado' },
+    { label: 'Assinantes VIP', value: totalSubs, icon: Crown, delta: activePlans === 0 ? 'nenhum plano criado' : totalSubs > 0 ? `R$ ${fmt(mrr)}/mês em ${plural(activePlans, 'plano', 'planos')}` : `em ${plural(activePlans, 'plano', 'planos')}` },
     {
       label: 'Receita este mês',
-      value: currentMonth ? `R$ ${fmt(currentMonth.total)}` : `R$ ${fmt(mrr)}`,
+      value: `R$ ${fmt(revNow)}`,
       icon: DollarSign,
       delta: revDelta !== null
         ? `${revDelta >= 0 ? '+' : ''}${revDelta}% vs mês anterior`
-        : 'recorrência mensal',
+        : 'serviços concluídos + loja',
       deltaColor: revDelta !== null
         ? (revDelta >= 0 ? 'text-emerald-400' : 'text-red-400')
         : 'text-white/65',
@@ -534,7 +546,7 @@ const DashboardOverview = () => {
             barbershopId={barbershop.id}
             shopName={barbershop.name}
             canClaim={isAdmin}
-            months={financialMonths.map(m => ({ month: m.month, total: m.total + (storeMonths.find(s => s.month === m.month)?.revenue ?? 0) }))}
+            months={revenueMonths}
           />
         </motion.div>
       )}
@@ -672,10 +684,10 @@ const DashboardOverview = () => {
                   <div className="flex-1 h-1.5 rounded-full bg-[#2a2a2a] overflow-hidden">
                     <div
                       className="h-full rounded-full bg-amber-500"
-                      style={{ width: `${Math.min((mem.subscriberCount / 50) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((subsOf(mem) / 50) * 100, 100)}%` }}
                     />
                   </div>
-                  <span className="text-white/70 text-xs font-body shrink-0">{mem.subscriberCount} assinantes</span>
+                  <span className="text-white/70 text-xs font-body shrink-0">{subsOf(mem)} assinantes</span>
                 </div>
               </div>
             ))}

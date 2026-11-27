@@ -17,6 +17,13 @@ export function waUrl(phone: string, message?: string): string | null {
   return message ? `https://wa.me/${n}?text=${encodeURIComponent(message)}` : `https://wa.me/${n}`
 }
 
+/** Igual ao waUrl, mas telefone fora do padrão brasileiro segue como foi digitado
+ *  (só dígitos) em vez de não gerar link. Usado no site da barbearia e nas cobranças. */
+export function waLink(phone: string, message?: string): string {
+  const n = waNumber(phone) ?? phone.replace(/\D/g, '')
+  return message ? `https://wa.me/${n}?text=${encodeURIComponent(message)}` : `https://wa.me/${n}`
+}
+
 interface BookingMessage {
   clientName: string
   shopName: string

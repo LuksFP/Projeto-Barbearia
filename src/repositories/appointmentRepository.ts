@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
 import type { MonthRevenue } from '@/types/tenant'
+import { localISO } from '@/lib/month'
 
 export type AppointmentRow = Tables<'appointments'>
 export type AppointmentInsert = TablesInsert<'appointments'>
@@ -317,7 +318,7 @@ export const appointmentRepository = {
     from.setMonth(from.getMonth() - months)
     from.setDate(1)
 
-    const rows = await revenueRows(barbershopId, from.toISOString().split('T')[0])
+    const rows = await revenueRows(barbershopId, localISO(from))
 
     const PT_MONTHS = [
       'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -394,7 +395,7 @@ export const appointmentRepository = {
     from.setMonth(from.getMonth() - 3)
     from.setDate(1)
 
-    const data = await revenueRows(barbershopId, from.toISOString().split('T')[0])
+    const data = await revenueRows(barbershopId, localISO(from))
 
     const PT_MONTHS = [
       'Janeiro','Fevereiro','Março','Abril','Maio','Junho',

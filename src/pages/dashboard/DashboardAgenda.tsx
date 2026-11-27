@@ -18,7 +18,7 @@ import { localISO } from '@/lib/month'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopAppointment } from '@/types/tenant'
 import { toast } from '@/hooks/use-toast'
-import { barberHours, buildDaySlots, busyRanges, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
+import { barberHours, buildDaySlots, busyRanges, hasStarted, isTimeAvailable, toMin, toHHMM } from '@/lib/scheduling'
 import { useAppointmentsLive } from '@/hooks/useAppointmentsLive'
 import { buildBookingConfirmation, waUrl } from '@/lib/whatsapp'
 import { onlinePaymentRepository, payWay, type OnlinePayment } from '@/repositories/onlinePaymentRepository'
@@ -42,9 +42,6 @@ const STATUS_TRANSITIONS: Record<string, { label: string; next: string }[]> = {
   no_show:   [{ label: 'Desfazer falta', next: 'confirmed' }],
 }
 
-// "Faltou" só depois que o horário começou (antes disso é cancelamento)
-const hasStarted = (date: string, time: string) =>
-  new Date(`${date}T${time.slice(0, 5)}:00`).getTime() <= Date.now()
 
 interface NewAptForm {
   clientName: string

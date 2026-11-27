@@ -97,10 +97,12 @@ function computeInsights(history: AppointmentRow[]) {
     frequency = Math.round(gaps / (dates.length - 1) / 86_400_000)
   }
 
-  // Antes do "Faltou" existir, falta era marcada como cancelado: conta os dois
-  const noShows = history.filter(a => a.status === 'no_show' || a.status === 'cancelled').length
+  // Falta e cancelamento separados, como na Agenda. Cancelado por transferência
+  // de cliente fixo não conta: o horário só mudou de lugar.
+  const noShows = history.filter(a => a.status === 'no_show').length
+  const cancellations = history.filter(a => a.status === 'cancelled' && !a.transferred_to).length
 
-  return { favoriteService, favoriteBarber, avgTicket, frequency, noShows }
+  return { favoriteService, favoriteBarber, avgTicket, frequency, noShows, cancellations }
 }
 
 // ─── Painel lateral de perfil ─────────────────────────────────────────────────
@@ -394,8 +396,14 @@ const ClientDrawer = ({
           )}
           {insights.noShows > 0 && (
             <div className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2 text-white/65"><Ban className="w-3.5 h-3.5 text-red-400/50" /> Cancelamentos</span>
+              <span className="flex items-center gap-2 text-white/65"><Ban className="w-3.5 h-3.5 text-red-400/50" /> Faltas</span>
               <span className="text-red-400/80">{insights.noShows}</span>
+            </div>
+          )}
+          {insights.cancellations > 0 && (
+            <div className="flex items-center justify-between text-sm font-body">
+              <span className="flex items-center gap-2 text-white/65"><Ban className="w-3.5 h-3.5 text-white/30" /> Cancelamentos</span>
+              <span className="text-white/70">{insights.cancellations}</span>
             </div>
           )}
         </div>

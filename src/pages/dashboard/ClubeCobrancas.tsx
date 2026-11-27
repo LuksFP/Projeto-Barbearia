@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTenant } from '@/contexts/TenantContext'
-import { useClubBilling, type NewSubscriberInput } from '@/hooks/useClubBilling'
+import type { ClubBilling, NewSubscriberInput } from '@/hooks/useClubBilling'
 import { toast } from '@/hooks/use-toast'
 import {
   competenceLabel, formatDueDate, formatBRL,
@@ -203,12 +203,14 @@ const SubForm = ({ draft, onChange, onSave, onCancel, memberships, title }: SubF
 
 // ─── Página de cobranças ────────────────────────────────────────────────────────
 
-const ClubeCobrancas = () => {
+// Recebe o estado do Clube da página: assim os números da aba Planos mudam
+// na hora quando entra ou sai assinante aqui.
+const ClubeCobrancas = ({ club }: { club: ClubBilling }) => {
   const { barbershop, memberships } = useTenant()
   const {
     ready, pixKey, subscribers, billings, summary,
     addSubscriber, updateSubscriber, removeSubscriber, markPaid, revertPaid, setPixKey,
-  } = useClubBilling()
+  } = club
 
   const [creating, setCreating] = useState(false)
   const [newDraft, setNewDraft] = useState<SubDraft>(EMPTY)

@@ -140,3 +140,7 @@ export function isTimeAvailable(
   const end = start + Math.max(5, duration)
   return !busy.some(b => overlaps(start, end, b.start, b.end))
 }
+
+/** O horário já começou? "Faltou" só vale daí em diante; antes disso é cancelamento. */
+export const hasStarted = (date: string, time: string, now: Date = new Date()): boolean =>
+  new Date(`${date}T${time.slice(0, 5)}:00`).getTime() <= now.getTime()

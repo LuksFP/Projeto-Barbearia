@@ -10,6 +10,7 @@ import { motion } from 'framer-motion'
 import type { PublicSiteOutletCtx } from '@/layouts/PublicSiteLayout'
 import type { BarbershopService, BarbershopBarber } from '@/types/tenant'
 import { supabasePublic } from '@/lib/supabase-public'
+import { waLink } from '@/lib/whatsapp'
 import { barberHours, buildDaySlots, toMin, type BusyRange } from '@/lib/scheduling'
 import BookingBump from '@/components/barbershop/BookingBump'
 import PayOnline from '@/components/barbershop/store/PayOnline'
@@ -1034,7 +1035,7 @@ const BarbershopHome = () => {
                   ))}
                 </ul>
                 <a
-                  href={`https://wa.me/${barbershop.whatsapp?.replace(/\D/g, '')}?text=Olá, quero assinar o ${mem.name}`}
+                  href={waLink(barbershop.whatsapp ?? '', `Olá, quero assinar o ${mem.name}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-center py-3 px-6 rounded font-semibold text-sm tracking-wide transition-all hover:opacity-90"
@@ -1117,7 +1118,7 @@ const BarbershopHome = () => {
                   Prefere pelo WhatsApp?
                 </p>
                 <a
-                  href={`https://wa.me/${barbershop.whatsapp?.replace(/\D/g, '')}?text=Olá, gostaria de agendar um horário`}
+                  href={waLink(barbershop.whatsapp ?? '', 'Olá, gostaria de agendar um horário')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-5 py-3 rounded-lg font-semibold text-sm tracking-wide transition-all hover:opacity-85 w-full justify-center"

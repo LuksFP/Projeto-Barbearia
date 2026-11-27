@@ -9,6 +9,8 @@ import { isDemoMode } from '@/lib/demo'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarbershopMembership } from '@/types/tenant'
 import ClubeCobrancas from './ClubeCobrancas'
+import { useClubBilling } from '@/hooks/useClubBilling'
+import { membershipMonthly } from '@/lib/clubBilling'
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
@@ -293,7 +295,11 @@ const PlanCard = ({ mem, onEdit, editing }: PlanCardProps) => {
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 const DashboardClube = () => {
-  const { barbershop, barbers, memberships, updateMemberships } = useTenant()
+  const { barbershop, barbers, memberships: savedMemberships, updateMemberships } = useTenant()
+  const clubBilling = useClubBilling()
+  // Assinantes contados da lista da aba Cobranças (o contador salvo no plano
+  // só serve de valor enquanto a lista carrega).
+  const memberships = savedMemberships.map(m => clubBilling.ready ? { ...m, subscriberCount: clubBilling.subscriberCounts[m.id] ?? 0 } : m)
   const { club } = usePlanGates()
 
   const [view, setView]             = useState<'planos' | 'cobrancas'>('planos')
@@ -306,10 +312,7 @@ const DashboardClube = () => {
   const activeBarbers = barbers.filter(b => b.active)
 
   const totalSubs = memberships.reduce((acc, m) => acc + m.subscriberCount, 0)
-  const mrr       = memberships.reduce((acc, m) => {
-    const monthly = m.period === 'monthly' ? m.price : m.period === 'quarterly' ? m.price / 3 : m.price / 12
-    return acc + monthly * m.subscriberCount
-  }, 0)
+  const mrr       = memberships.reduce((acc, m) => acc + membershipMonthly(m) * m.subscriberCount, 0)
 
   // ── Editar ──────────────────────────────────────────────────────────────────
 
@@ -344,7 +347,7 @@ const DashboardClube = () => {
           benefits: next.benefits,
         })
       }
-      updateMemberships(memberships.map(m => m.id === editingId ? next : m))
+      updateMemberships(savedMemberships.map(m => m.id === editingId ? next : m))
       setEditingId(null)
     } catch (err) {
       console.error('Failed to update membership:', err)
@@ -384,7 +387,7 @@ const DashboardClube = () => {
         barberId: newDraft.scope === 'barber' ? newDraft.barberId : undefined,
         barberName: newDraft.scope === 'barber' ? barberObj?.name : undefined,
       }
-      updateMemberships([...memberships, created])
+      updateMemberships([...savedMemberships, created])
       setCreating(false)
     } catch (err) {
       console.error('Failed to create membership:', err)
@@ -454,7 +457,7 @@ const DashboardClube = () => {
         ))}
       </div>
 
-      {view === 'cobrancas' && <ClubeCobrancas />}
+      {view === 'cobrancas' && <ClubeCobrancas club={clubBilling} />}
 
       {view === 'planos' && (<>
 

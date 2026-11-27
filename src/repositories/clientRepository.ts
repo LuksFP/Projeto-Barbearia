@@ -37,16 +37,4 @@ export const clientRepository = {
     if (error) throw error
     return data
   },
-
-  async incrementVisit(id: string): Promise<void> {
-    // A RPC increment_client_visits nunca existiu no banco: a chamada falhava
-    // sempre e caía aqui. Vai direto.
-    const { data: client } = await supabase.from('clients').select('total_visits').eq('id', id).single()
-    if (client) {
-      await supabase
-        .from('clients')
-        .update({ total_visits: client.total_visits + 1, last_visit: new Date().toISOString().split('T')[0] })
-        .eq('id', id)
-    }
-  },
 }

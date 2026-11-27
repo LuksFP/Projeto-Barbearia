@@ -4,6 +4,7 @@ import type {
   BarbershopMembership, BarbershopAppointment, BarbershopClient, TenantUser,
 } from '@/types/tenant'
 import { useSaasAccount } from '@/contexts/SaasAccountContext'
+import { localISO } from '@/lib/month'
 import { supabase } from '@/lib/supabase'
 import { barbershopRepository, mapBarbershopRow, type BarbershopUpdate } from '@/repositories/barbershopRepository'
 import { serviceRepository } from '@/repositories/serviceRepository'
@@ -204,7 +205,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
     setIsLoading(true)
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = localISO(new Date())
 
     resolveId.then(bsId => {
       if (!bsId) { setIsLoading(false); return }
@@ -284,7 +285,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const refreshAppointments = useCallback(async () => {
     if (!barbershop || isDemoMode()) return
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = localISO(new Date())
       const rows = await appointmentRepository.listByBarbershop(barbershop.id, today)
       setAppointments(rows.map(mapAppointment))
     } catch { /* silencioso */ }
